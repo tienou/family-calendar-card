@@ -150,11 +150,12 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                         ${this.addBooleanField('hidePastEvents', 'Hide past events')}
                         ${this.addBooleanField('hideAllDayEvents', 'Hide all day events')}
                         ${this.addSelectField('multiDayMode', 'Multi day mode', [
+                            { value: 'banner', label: 'Banner (merged)' },
                             { value: 'default', label: 'Default' },
                             { value: 'multiple', label: 'Multiple' },
                             { value: 'single', label: 'Single' },
-                        ], true)}
-                        ${this.addHint('How multi-day events are displayed: once, on each day, or first day only')}
+                        ], true, 'banner')}
+                        ${this.addHint('Banner: continuous strip across days (default). Others: repeated blocks or first day only')}
                         ${this.addTextField('filter', 'Filter events (regex)')}
                         ${this.addHint('Only show events whose title matches this pattern')}
                         ${this.addTextField('filterText', 'Filter event text (regex)')}

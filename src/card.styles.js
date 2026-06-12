@@ -505,6 +505,44 @@ export default css`
         cursor: pointer;
     }
 
+    /* ── Multi-day banner events: continuous strip across day columns ── */
+    .container .day .events .event.banner {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Bleed over the column gap and the day border to join the next slice */
+    .container .day .events .event.banner-start,
+    .container .day .events .event.banner-middle {
+        margin-right: calc(-1 * var(--days-spacing) - 1px);
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .container .day .events .event.banner-middle,
+    .container .day .events .event.banner-end {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-left-width: 0 !important;
+    }
+
+    /* Slices carrying the label paint above the following empty slices so
+       the text can overflow across the band */
+    .container .day .events .event.banner-start,
+    .container .day .events .event.banner-rowstart {
+        z-index: 2;
+    }
+
+    .container .day .events .event.banner .inner {
+        overflow: visible;
+        min-width: 0;
+    }
+
+    .container .day .events .event.banner .title {
+        white-space: nowrap;
+        overflow: visible;
+    }
+
     .container .day .events .event .additionalColor {
         width: var(--event-border-width);
         background-color: var(--event-additional-color);

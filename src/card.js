@@ -201,7 +201,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._dateFormat = config.dateFormat ?? 'cccc d LLLL yyyy';
         this._timeFormat = config.timeFormat ?? 'HH:mm';
         this._multiDayTimeFormat = config.multiDayTimeFormat ?? 'd LLL HH:mm';
-        this._multiDayMode = config.multiDayMode ?? 'default';
+        this._multiDayMode = config.multiDayMode ?? 'banner';
         this._locationLink = config.locationLink ?? 'https://www.google.com/maps/search/?api=1&query=';
         this._showTitle = config.showTitle ?? true;
         this._showEventTitle = config.showEventTitle ?? true;
@@ -1005,13 +1005,13 @@ export class SkylightFamilyCalendarCard extends LitElement {
                     </div>
                 </div>
                 <div class="selected-day-list">
-                    ${this._renderEvents(this._selectedDay)}
+                    ${this._renderEvents(this._selectedDay, true)}
                 </div>
             </div>
         `;
     }
 
-    _renderEvents(day) {
+    _renderEvents(day, plain = false) {
         const dayEvents = [];
         day.events.map((eventKey) => {
             if (!this._calendarEvents[eventKey]) {
@@ -1053,12 +1053,20 @@ export class SkylightFamilyCalendarCard extends LitElement {
             moreEvents = true;
         }
 
+        // First column of a 7-day row: repeat the banner label there
+        const isRowStart = day.date.weekday === this._startDate?.weekday;
+
         return html`
             ${dayEvents.map((event) => {
                 const doneColors = [event.colors[0]];
+                const banner = !plain && this._multiDayMode === 'banner' && event.multiDay;
+                const bannerClasses = banner
+                    ? ' banner banner-' + (event.multiDayPosition ?? 'middle') + (isRowStart ? ' banner-rowstart' : '')
+                    : '';
+                const showBannerText = !banner || event.multiDayPosition === 'start' || isRowStart;
                 return html`
                     <div
-                        class="event ${event.class}"
+                        class="event ${event.class}${bannerClasses}"
                         data-entity="${event.calendars[0]}"
                         data-additional-entities="${event.calendars.join(',')}"
                         data-summary="${event.summary}"
@@ -1084,6 +1092,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
                                 ></div>
                             `
                         })}
+                        ${banner ? html`
+                            <div class="inner">
+                                <div class="title">${showBannerText && this._showEventTitle ? event.summary : html` `}</div>
+                            </div>
+                        ` : html`
                         <div class="inner">
                             ${this._showTime ?
                                 html`<div class="time">
@@ -1112,6 +1125,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                                 ''
                             }
                         </div>
+                        `}
                         ${event.icon ?
                             html`
                                 <div class="icon">
@@ -1135,6 +1149,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
     }
 
     _renderEventTime(event) {
+        // True all-day events (no time on the original dates), including
+        // multi-day vacations: show the "entire day" label, not 00:00 times
+        if (event.fullDay && this._isFullDay(event.originalStart, event.originalEnd, true)) {
+            return html`${this._language.fullDay}`;
+        }
         if (event.multiDay && this._multiDayMode !== 'default') {
             return html`
                 ${event.originalStart.toFormat(this._multiDayTimeFormat)}
@@ -1860,7 +1879,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
             || calendarFilter && summary.match(calendarFilter);
     }
 
-    _addEvent(event, startDate, endDate, fullDay, calendar, multiDay) {
+    _addEvent(event, startDate, endDate, fullDay, calendar, multiDay, multiDayPosition) {
         multiDay = multiDay ?? false;
 
         if (
@@ -1902,6 +1921,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 originalEnd: this._convertApiDate(event.end),
                 fullDay: fullDay,
                 multiDay: multiDay,
+                multiDayPosition: multiDayPosition ?? null,
                 colors: [calendar.color ?? 'inherit'],
                 icon: calendar.icon ?? null,
                 calendars: [calendar.entity],
@@ -1999,12 +2019,20 @@ export class SkylightFamilyCalendarCard extends LitElement {
     }
 
     _handleMultiDayEvent(event, startDate, endDate, calendar) {
+        const originalStart = startDate;
         while (startDate < endDate) {
             let eventStartDate = startDate;
             startDate = startDate.plus({ days: 1 }).startOf('day');
             let eventEndDate = startDate < endDate ? startDate : endDate;
 
-            this._addEvent(event, eventStartDate, eventEndDate, this._isFullDay(eventStartDate, eventEndDate), calendar, true);
+            let position = 'middle';
+            if (eventStartDate.toMillis() === originalStart.toMillis()) {
+                position = 'start';
+            } else if (eventEndDate.toMillis() === endDate.toMillis()) {
+                position = 'end';
+            }
+
+            this._addEvent(event, eventStartDate, eventEndDate, this._isFullDay(eventStartDate, eventEndDate), calendar, true, position);
 
             if (this._multiDayMode === 'single' && eventStartDate >= this._startDate) {
                 break;
@@ -2065,11 +2093,28 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 const dateKey = startDate.toISODate();
                 if (this._events.hasOwnProperty(dateKey) && !isOutsideMonth) {
                     events = this._events[dateKey].sort((event1, event2) => {
-                        if (this._calendarEvents[event1].start.toISO() === this._calendarEvents[event2].start.toISO()) {
-                            return this._calendarEvents[event1].calendarSorting < this._calendarEvents[event2].calendarSorting ? 1 : (this._calendarEvents[event1].calendarSorting > this._calendarEvents[event2].calendarSorting) ? -1 : 0;
+                        const e1 = this._calendarEvents[event1];
+                        const e2 = this._calendarEvents[event2];
+
+                        // Banner mode: multi-day bands always on top so they
+                        // align across days, ordered by their original start
+                        if (this._multiDayMode === 'banner' && e1.multiDay !== e2.multiDay) {
+                            return e1.multiDay ? -1 : 1;
+                        }
+                        if (this._multiDayMode === 'banner' && e1.multiDay && e2.multiDay) {
+                            const s1 = e1.originalStart?.toISO() ?? '';
+                            const s2 = e2.originalStart?.toISO() ?? '';
+                            if (s1 !== s2) {
+                                return s1 > s2 ? 1 : -1;
+                            }
+                            return e1.summary > e2.summary ? 1 : (e1.summary < e2.summary ? -1 : 0);
                         }
 
-                        return this._calendarEvents[event1].start > this._calendarEvents[event2].start ? 1 : -1;
+                        if (e1.start.toISO() === e2.start.toISO()) {
+                            return e1.calendarSorting < e2.calendarSorting ? 1 : (e1.calendarSorting > e2.calendarSorting) ? -1 : 0;
+                        }
+
+                        return e1.start > e2.start ? 1 : -1;
                     });
 
                     const previousNumberOfEvents = numberOfEvents;

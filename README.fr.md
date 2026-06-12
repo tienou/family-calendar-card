@@ -27,7 +27,7 @@ Une carte calendrier familial pour Home Assistant, inspiree de Skylight. Affiche
 - Fond colore complet des evenements avec les couleurs du calendrier
 - Mise en valeur du jour actuel (badge orange)
 - Horaires en gras, lieu avec icone epingle
-- Modes d'affichage des evenements multi-jours
+- **Evenements multi-jours fusionnes** : vacances et sejours affiches en bande coloree continue a travers les jours (style Google Agenda), option multiDayMode pour revenir a l'ancien rendu
 - **Persistance de la vue** : la vue selectionnee est sauvegardee dans le localStorage et restauree au rechargement
 
 ### Double theme
@@ -134,6 +134,7 @@ calendars:
 | `hideWeekend` | boolean | `false` | Masquer les week-ends |
 | `combineSimilarEvents` | boolean | `false` | Combiner les evenements en double |
 | `updateInterval` | number | `60` | Intervalle de rafraichissement en secondes |
+| `multiDayMode` | string | `banner` | Multi-jours : `banner` (bande fusionnee), `default`, `multiple`, `single` |
 | `theme` | string | `skylight` | Theme : `skylight` ou `homeassistant` |
 
 ### Options des calendriers

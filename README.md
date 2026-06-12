@@ -27,7 +27,7 @@ A Skylight-inspired family calendar card for Home Assistant. Displays events fro
 - Full-color event backgrounds with calendar colors
 - Today highlighting (orange badge)
 - Bold event times, location with pin icon
-- Multi-day event display modes
+- **Merged multi-day events**: vacations and trips display as a continuous colored banner across days (Google Calendar style), with `multiDayMode` to restore legacy rendering
 - **View persistence**: selected view is saved to localStorage and restored on reload
 
 ### Dual Themes
@@ -134,6 +134,7 @@ calendars:
 | `hideWeekend` | boolean | `false` | Hide weekend days |
 | `combineSimilarEvents` | boolean | `false` | Combine duplicate events |
 | `updateInterval` | number | `60` | Auto-refresh interval in seconds |
+| `multiDayMode` | string | `banner` | Multi-day events: `banner` (merged strip), `default`, `multiple`, `single` |
 | `theme` | string | `skylight` | Theme: `skylight` or `homeassistant` |
 
 ### Calendar options
