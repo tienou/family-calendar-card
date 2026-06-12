@@ -755,7 +755,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         </div>
                     </div>
                     <div class="calendar-container">
-                        <div class="container${this._actions ? ' hasActions' : ''}${this._numberOfDaysIsMonth ? ' month-view' : ''}" style="${this._dayHeaderFontSize ? '--day-header-font-size: ' + this._dayHeaderFontSize + ';' : ''}${this._dayHeaderColor ? '--day-header-color: ' + this._dayHeaderColor + ';' : ''}" @click="${this._handleContainerClick}" @touchstart="${this._handleTouchStart}" @touchend="${this._handleTouchEnd}">
+                        <div class="container${this._actions ? ' hasActions' : ''}${this._numberOfDaysIsMonth ? ' month-view' : ''}" style="${this._dayHeaderFontSize ? '--day-header-font-size: ' + this._dayHeaderFontSize + ';' : ''}${this._dayHeaderColor ? '--day-header-color: ' + this._dayHeaderColor + ';' : ''}" @click="${this._handleContainerClick}" @pointerdown="${this._handlePointerDown}" @pointerup="${this._handlePointerUp}" @pointercancel="${this._handlePointerCancel}">
                             ${this._renderHeader()}
                             ${this._renderWeekDays()}
                             ${this._renderDays()}
@@ -2698,21 +2698,31 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this.requestUpdate();
     }
 
-    _handleTouchStart(e) {
-        if (e.touches.length !== 1) return;
-        this._touchStartX = e.touches[0].clientX;
-        this._touchStartY = e.touches[0].clientY;
+    // Pointer events unify finger, stylus and mouse input. Windows tablets
+    // (and pens in general) do not fire touch events, only pointer events.
+    _handlePointerDown(e) {
+        if (!e.isPrimary) return;
+        this._touchStartX = e.clientX;
+        this._touchStartY = e.clientY;
+        this._touchPointerType = e.pointerType;
     }
 
-    _handleTouchEnd(e) {
-        if (this._touchStartX === undefined) return;
-        const deltaX = e.changedTouches[0].clientX - this._touchStartX;
-        const deltaY = e.changedTouches[0].clientY - this._touchStartY;
+    _handlePointerCancel() {
+        this._touchStartX = undefined;
+        this._touchStartY = undefined;
+    }
+
+    _handlePointerUp(e) {
+        if (!e.isPrimary || this._touchStartX === undefined) return;
+        const deltaX = e.clientX - this._touchStartX;
+        const deltaY = e.clientY - this._touchStartY;
+        const pointerType = this._touchPointerType;
         this._touchStartX = undefined;
         this._touchStartY = undefined;
 
-        // Swipe: horizontal movement > 50px and more horizontal than vertical
-        if (Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Swipe: horizontal movement > 50px and more horizontal than vertical.
+        // Mouse drags are excluded so desktop text selection keeps working.
+        if (pointerType !== 'mouse' && Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
             if (deltaX < 0) {
                 this._navigationOffset++;
             } else {
@@ -2723,7 +2733,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         }
 
         // Tap in month view: select the tapped day
-        if (this._numberOfDaysIsMonth) {
+        if (this._numberOfDaysIsMonth && pointerType !== 'mouse') {
             const target = e.target.closest?.('.day');
             if (target && !target.classList.contains('header') && !target.classList.contains('outside')) {
                 const dayNum = parseInt(target.dataset.date);

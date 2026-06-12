@@ -262,6 +262,12 @@ export default css`
         display: flex;
         flex-wrap: wrap;
         gap: var(--days-spacing);
+        /* Let vertical scrolling through but keep horizontal gestures
+           (swipe navigation) for the card — required on Windows touch
+           devices where the browser would otherwise consume them */
+        touch-action: pan-y;
+        -webkit-user-select: none;
+        user-select: none;
     }
 
     .container.hasActions {
@@ -1322,8 +1328,10 @@ export default css`
         }
     }
 
-    /* ── Touch devices: hide navigation arrows, keep month + reset ── */
-    @media (any-pointer: coarse) {
+    /* ── Small touch screens (phones): hide navigation arrows, swipe
+       replaces them. Larger touch devices (Windows tablets, wall-mounted
+       displays) keep the arrows alongside swipe/pen navigation. ── */
+    @media (any-pointer: coarse) and (max-width: 768px) {
         .container .navigation ul li:first-child,
         .container .navigation ul li:last-child {
             display: none;
