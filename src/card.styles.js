@@ -1399,6 +1399,18 @@ export default css`
         }
     }
 
+    /* ── Touch devices: taller form inputs for comfortable pen
+       handwriting directly in the fields (Windows Ink) ── */
+    @media (any-pointer: coarse) {
+        .create-event-form .form-input {
+            min-height: 48px;
+            font-size: 1.05em;
+        }
+        .create-event-form .duration-btn {
+            min-height: 44px;
+        }
+    }
+
     /* ── Small touch screens (phones): hide navigation arrows, swipe
        replaces them. Larger touch devices (Windows tablets, wall-mounted
        displays) keep the arrows alongside swipe/pen navigation. ── */
