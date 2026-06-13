@@ -717,14 +717,44 @@ export class SkylightFamilyCalendarCard extends LitElement {
 
     updated() {
         // Initialise the handwriting canvas once the create dialog is open
-        if (this._showCreateEventDialog && this._showHandwritingCanvas() && !this._canvasReady) {
-            if (this.shadowRoot?.querySelector('#quick-canvas')) {
+        if (this._showCreateEventDialog && this._showHandwritingCanvas()) {
+            this._maximizeHandwritingDialog();
+            if (!this._canvasReady && this.shadowRoot?.querySelector('#quick-canvas')) {
                 this._initCanvas();
                 this._canvasReady = true;
             }
         } else if (!this._showCreateEventDialog && this._canvasReady) {
             this._canvasReady = false;
         }
+    }
+
+    // ha-dialog caps its surface width internally and ignores the --mdc-dialog
+    // width variables in some HA builds. Inject a style into the dialog's own
+    // shadow root to force the surface to full width.
+    _maximizeHandwritingDialog() {
+        const dlg = this.shadowRoot?.querySelector('ha-dialog.hw-dialog');
+        if (!dlg) return;
+        const root = dlg.shadowRoot;
+        if (!root) {
+            setTimeout(() => this._maximizeHandwritingDialog(), 50);
+            return;
+        }
+        if (root.querySelector('#sk-hw-style')) return;
+        const style = document.createElement('style');
+        style.id = 'sk-hw-style';
+        style.textContent =
+            '.mdc-dialog__surface{width:calc(100vw - 12px)!important;max-width:calc(100vw - 12px)!important;}'
+            + '.mdc-dialog__container{max-width:100vw!important;}';
+        root.appendChild(style);
+        // The canvas was sized to the old (narrow) width — re-init at the new
+        // full width on the next frame for a crisp, full-width drawing area.
+        this._canvasReady = false;
+        requestAnimationFrame(() => {
+            if (this._showCreateEventDialog && this._showHandwritingCanvas()) {
+                this._initCanvas();
+                this._canvasReady = true;
+            }
+        });
     }
 
     _startClock() {
