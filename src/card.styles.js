@@ -1477,15 +1477,20 @@ export default css`
     .create-event-form .quick-add-row > .field-icon {
         color: var(--primary-color, #03a9f4);
     }
-    /* ── Maximised handwriting dialog (tablet): widest possible, canvas sized
-       so the Create button stays visible without scrolling ── */
+    /* ── Maximised handwriting dialog (tablet): full width, canvas sized so
+       the Create button stays visible without scrolling ── */
     ha-dialog.hw-dialog {
-        --mdc-dialog-min-width: 98vw;
-        --mdc-dialog-max-width: 98vw;
+        --mdc-dialog-min-width: calc(100vw - 12px);
+        --mdc-dialog-max-width: calc(100vw - 12px);
         --mdc-dialog-max-height: 96vh;
+        --dialog-content-padding: 6px;
+        --mdc-dialog-content-padding: 6px;
+    }
+    ha-dialog.hw-dialog .create-event-form {
+        padding: 0;
     }
     ha-dialog.hw-dialog .hw-row {
-        margin-bottom: 8px;
+        margin: 0 0 8px 0;
     }
     ha-dialog.hw-dialog .hw-canvas {
         height: 50vh;
