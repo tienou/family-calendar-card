@@ -1491,10 +1491,17 @@ function e(e){return e&&e.__esModule?e.default:e}let t=globalThis,n=t.ShadowRoot
         .create-event-form .with-icon > .field-icon {
             left: 12px;
         }
-        /* Text fields you handwrite into need extra vertical room */
+        /* Text fields you handwrite into need a tall ink area (Windows Ink) */
         .create-event-form input[type="text"].form-input {
-            min-height: 68px;
-            font-size: 1.2em;
+            min-height: 200px;
+            font-size: 1.3em;
+        }
+        /* Keep the leading icon and clear button at the top of the tall field */
+        .create-event-form .with-icon > .field-icon,
+        .create-event-form .input-clear,
+        .create-event-form .location-maps-icon {
+            top: 26px;
+            transform: none;
         }
         .create-event-form .input-clear {
             width: 44px;
