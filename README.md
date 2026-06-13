@@ -12,7 +12,7 @@ A Skylight-inspired family calendar card for Home Assistant. Displays events fro
 - **Full CRUD**: Create, edit, and delete events directly from the card (no external helpers needed)
 - **Quick add**: write the time and the title in one go (e.g. "9h dentist" or "dentist 9h") — the card splits them automatically. No time written → all-day event. Ideal for pen/stylus entry.
 - **AI quick add** (optional): if an `ai_task` entity is configured in Home Assistant, an "Analyze with AI" button parses free natural-language text (e.g. "thursday 8pm cinema with the kids") into title + time + duration via your configured LLM. Auto-enabled when an `ai_task` entity exists; disable with `aiQuickAdd: false` or force the entity with `aiTaskEntity`.
-- **✍️ Handwriting recognition** (optional): with a `geminiApiKey`, the quick-add area becomes a **drawing canvas** — write the event with a stylus and Gemini Vision reads your handwriting (far better than the OS recognizer) and fills title + time + duration. Ideal for pen tablets where OS handwriting is unreliable.
+- **✍️ Handwriting recognition** (optional): with a `geminiApiKey` **or** `claudeApiKey`, the quick-add area becomes a **drawing canvas** — write the event with a stylus and the AI (Google Gemini or Anthropic Claude) reads your handwriting (far better than the OS recognizer) and fills title + time + duration. Ideal for pen tablets where OS handwriting is unreliable.
 - **Simple forms**: only title, start, duration (presets) and location are shown — everything else is in a collapsible "Advanced options" drawer
 - **All-day events**: create and edit date-only events, including multi-day ones
 - **Recurrence support**: Daily, weekly, monthly, yearly — with interval, day selection, and end options (in the advanced drawer)
@@ -144,6 +144,9 @@ calendars:
 | `aiTaskEntity` | string | auto | `ai_task.*` entity to use for AI quick add (auto-detected if unset) |
 | `geminiApiKey` | string | - | Google Gemini API key → enables the handwriting drawing canvas in quick add |
 | `geminiModel` | string | `gemini-2.0-flash` | Gemini model used for handwriting recognition |
+| `claudeApiKey` | string | - | Anthropic Claude API key → enables the handwriting canvas via Claude Vision |
+| `claudeModel` | string | `claude-opus-4-8` | Claude model used for handwriting recognition (e.g. `claude-haiku-4-5` for lower cost/latency) |
+| `aiProvider` | string | auto | Force the handwriting provider: `gemini` or `claude` (auto-selected if only one key is set; Claude preferred when both) |
 | `theme` | string | `skylight` | Theme: `skylight` or `homeassistant` |
 
 ### Calendar options
@@ -182,6 +185,15 @@ geminiModel: gemini-2.0-flash   # optional
 ```
 
 Get a free key at [Google AI Studio](https://aistudio.google.com/apikey). The drawn image is sent to Google for recognition. The key is stored in the dashboard config — for a shared dashboard, restrict it to the *Generative Language API* in Google Cloud.
+
+**Or use Anthropic Claude** instead of Gemini:
+
+```yaml
+claudeApiKey: YOUR_ANTHROPIC_API_KEY
+claudeModel: claude-opus-4-8   # optional; claude-haiku-4-5 is cheaper/faster
+```
+
+Get a key at the [Anthropic Console](https://console.anthropic.com/). If both keys are set, Claude is used by default — override with `aiProvider: gemini`. The drawn image is sent to Anthropic for recognition.
 
 ### 🔔 Notification Markers
 

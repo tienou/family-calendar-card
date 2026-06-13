@@ -208,6 +208,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._aiQuickAdd = config.aiQuickAdd ?? null; // null = auto-detect an ai_task entity
         this._geminiApiKey = config.geminiApiKey ?? '';
         this._geminiModel = config.geminiModel ?? 'gemini-2.0-flash';
+        this._claudeApiKey = config.claudeApiKey ?? '';
+        this._claudeModel = config.claudeModel ?? 'claude-opus-4-8';
+        this._aiProvider = config.aiProvider ?? null; // 'gemini' | 'claude' | null (auto)
         this._noCardBackground = config.noCardBackground ?? false;
         this._eventBackground = config.eventBackground ?? 'var(--card-background-color, inherit)';
         this._compact = config.compact ?? true;
@@ -710,7 +713,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
 
     updated() {
         // Initialise the handwriting canvas once the create dialog is open
-        if (this._showCreateEventDialog && this._geminiApiKey && !this._canvasReady) {
+        if (this._showCreateEventDialog && this._handwritingEnabled() && !this._canvasReady) {
             if (this.shadowRoot?.querySelector('#quick-canvas')) {
                 this._initCanvas();
                 this._canvasReady = true;
@@ -2338,9 +2341,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
     }
 
     _renderQuickAdd() {
-        // With a Gemini API key: a handwriting canvas read by Gemini Vision —
-        // bypasses Windows handwriting recognition entirely.
-        if (this._geminiApiKey) {
+        // With a vision API key (Gemini or Claude): a handwriting canvas read
+        // by the model — bypasses Windows handwriting recognition entirely.
+        if (this._handwritingEnabled()) {
             return html`
                 <div class="form-row">
                     <div class="hw-zone">
@@ -2445,50 +2448,133 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._drawing = false;
     }
 
-    // Send the drawn handwriting image to Gemini Vision and fill the form
+    _handwritingEnabled() {
+        return !!(this._geminiApiKey || this._claudeApiKey);
+    }
+
+    _resolveAiProvider() {
+        if (this._aiProvider === 'claude' && this._claudeApiKey) return 'claude';
+        if (this._aiProvider === 'gemini' && this._geminiApiKey) return 'gemini';
+        if (this._claudeApiKey) return 'claude';
+        if (this._geminiApiKey) return 'gemini';
+        return null;
+    }
+
+    _handwritingPrompt() {
+        return 'This image shows a handwritten calendar event. Read the handwriting and extract a JSON object with: '
+            + 'title (the subject only, without time or date words), '
+            + 'time (start time as HH:MM in 24-hour format if a clock time is written, otherwise an empty string), '
+            + 'duration_minutes (integer; default 60 if unspecified, 0 for an all-day event). '
+            + 'Keep the title in its original language.';
+    }
+
+    // Tolerant JSON extraction (handles bare JSON or ```json fenced output)
+    _extractJson(text) {
+        if (!text) return null;
+        let t = String(text).trim();
+        const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (fence) t = fence[1].trim();
+        try { return JSON.parse(t); } catch (_) {}
+        const m = t.match(/\{[\s\S]*\}/);
+        if (m) { try { return JSON.parse(m[0]); } catch (_) {} }
+        return null;
+    }
+
+    // Send the drawn handwriting image to the configured vision model
     async _analyzeHandwriting() {
         if (this._aiLoading) return;
         const canvas = this.shadowRoot?.querySelector('#quick-canvas');
-        if (!canvas || !this._hasDrawing || !this._geminiApiKey) return;
+        if (!canvas || !this._hasDrawing) return;
+        const provider = this._resolveAiProvider();
+        if (!provider) return;
         const base64 = canvas.toDataURL('image/png').split(',')[1];
         this._aiLoading = true;
         try {
-            const model = this._geminiModel || 'gemini-2.0-flash';
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(this._geminiApiKey)}`;
-            const resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: 'This image shows a handwritten calendar event. Read the handwriting and extract a JSON object with: title (the subject only, without time or date words), time (start time as HH:MM in 24-hour format if a clock time is written, otherwise an empty string), duration_minutes (integer; default 60 if unspecified, 0 for an all-day event). Keep the title in its original language.' },
-                            { inlineData: { mimeType: 'image/png', data: base64 } },
-                        ],
-                    }],
-                    generationConfig: {
-                        responseMimeType: 'application/json',
-                        responseSchema: {
-                            type: 'OBJECT',
-                            properties: {
-                                title: { type: 'STRING' },
-                                time: { type: 'STRING' },
-                                duration_minutes: { type: 'INTEGER' },
-                            },
-                            required: ['title'],
-                        },
-                    },
-                }),
-            });
-            const json = await resp.json();
-            if (!resp.ok) throw new Error(json?.error?.message || ('HTTP ' + resp.status));
-            const txt = json.candidates?.[0]?.content?.parts?.[0]?.text;
-            const data = JSON.parse(txt);
-            this._applyAiQuickAdd(data.title, data.time, data.duration_minutes);
+            const data = provider === 'claude'
+                ? await this._analyzeWithClaude(base64)
+                : await this._analyzeWithGemini(base64);
+            if (data) this._applyAiQuickAdd(data.title, data.time, data.duration_minutes);
         } catch (e) {
             console.error('Skylight Family Calendar: handwriting analysis failed', e);
         } finally {
             this._aiLoading = false;
         }
+    }
+
+    async _analyzeWithGemini(base64) {
+        const model = this._geminiModel || 'gemini-2.0-flash';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(this._geminiApiKey)}`;
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: this._handwritingPrompt() },
+                        { inlineData: { mimeType: 'image/png', data: base64 } },
+                    ],
+                }],
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                    responseSchema: {
+                        type: 'OBJECT',
+                        properties: {
+                            title: { type: 'STRING' },
+                            time: { type: 'STRING' },
+                            duration_minutes: { type: 'INTEGER' },
+                        },
+                        required: ['title'],
+                    },
+                },
+            }),
+        });
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json?.error?.message || ('HTTP ' + resp.status));
+        return this._extractJson(json.candidates?.[0]?.content?.parts?.[0]?.text);
+    }
+
+    // Anthropic Messages API — direct browser call (anthropic-dangerous-direct-browser-access)
+    async _analyzeWithClaude(base64) {
+        const model = this._claudeModel || 'claude-opus-4-8';
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+                'x-api-key': this._claudeApiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: JSON.stringify({
+                model,
+                max_tokens: 256,
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } },
+                        { type: 'text', text: this._handwritingPrompt() + ' Respond with only the JSON object.' },
+                    ],
+                }],
+                output_config: {
+                    format: {
+                        type: 'json_schema',
+                        schema: {
+                            type: 'object',
+                            properties: {
+                                title: { type: 'string' },
+                                time: { type: 'string' },
+                                duration_minutes: { type: 'integer' },
+                            },
+                            required: ['title', 'time', 'duration_minutes'],
+                            additionalProperties: false,
+                        },
+                    },
+                },
+            }),
+        });
+        const json = await resp.json();
+        if (!resp.ok) throw new Error(json?.error?.message || ('HTTP ' + resp.status));
+        const textBlock = (json.content || []).find(b => b.type === 'text');
+        return this._extractJson(textBlock?.text);
     }
 
     _getAiTaskEntity() {
