@@ -1439,12 +1439,49 @@ export default css`
         color: var(--primary-text-color);
     }
 
+    /* ── Leading field icon (replaces the text label on the main fields) ── */
+    .create-event-form .field-icon {
+        color: var(--secondary-text-color, #888);
+        --mdc-icon-size: 22px;
+        flex-shrink: 0;
+    }
+    .create-event-form .with-icon {
+        position: relative;
+    }
+    .create-event-form .with-icon > .field-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+    .create-event-form .with-icon .form-input {
+        padding-left: 40px;
+    }
+    .create-event-form .field-row-icon {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .create-event-form .field-row-icon .duration-picker {
+        flex: 1;
+    }
+
     /* ── Touch devices: taller form inputs for comfortable pen
        handwriting directly in the fields (Windows Ink) ── */
     @media (any-pointer: coarse) {
         .create-event-form .form-input {
             min-height: 52px;
             font-size: 1.05em;
+        }
+        .create-event-form .field-icon {
+            --mdc-icon-size: 26px;
+        }
+        .create-event-form .with-icon .form-input {
+            padding-left: 46px;
+        }
+        .create-event-form .with-icon > .field-icon {
+            left: 12px;
         }
         /* Text fields you handwrite into need extra vertical room */
         .create-event-form input[type="text"].form-input {

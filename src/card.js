@@ -1324,33 +1324,35 @@ export class SkylightFamilyCalendarCard extends LitElement {
             >
                 <div class="create-event-form">
                     <div class="form-row">
-                        <label for="event-title">${this._language.eventTitle} *</label>
-                        <div class="input-clear-wrapper">
+                        <div class="input-clear-wrapper with-icon">
+                            <ha-icon class="field-icon" icon="mdi:format-title"></ha-icon>
                             <input type="text" id="event-title" class="form-input" required placeholder="${this._language.eventTitle}" />
                             <button type="button" class="input-clear" @click="${() => this._clearInput('event-title')}" title="${this._language.cancel}">
                                 <ha-icon icon="mdi:close-circle"></ha-icon>
                             </button>
                         </div>
                     </div>
-                    <div class="form-row" style="${isAllDay ? 'display: none' : ''}">
-                        <label for="event-start-time">${this._language.eventStart} *</label>
+                    <div class="form-row with-icon" style="${isAllDay ? 'display: none' : ''}">
+                        <ha-icon class="field-icon" icon="mdi:clock-outline"></ha-icon>
                         <input type="time" id="event-start-time" class="form-input" .value="${startTimeValue}" required />
                     </div>
                     <div class="form-row">
-                        <label>${this._language.eventDuration}</label>
-                        <div class="duration-picker">
-                            ${this.constructor.DURATION_PRESETS.map((minutes) => html`
-                                <button type="button" class="duration-btn ${String(minutes) === this._createDuration ? 'active' : ''}"
-                                    @click="${() => { this._createDuration = String(minutes); this._createEndTouched = false; }}">${this._formatDuration(minutes)}</button>
-                            `)}
-                            <button type="button" class="duration-btn ${isAllDay ? 'active' : ''}"
-                                @click="${() => { this._createDuration = 'allday'; this._createEndTouched = false; }}">${this._language.fullDay}</button>
+                        <div class="field-row-icon">
+                            <ha-icon class="field-icon" icon="mdi:timer-outline"></ha-icon>
+                            <div class="duration-picker">
+                                ${this.constructor.DURATION_PRESETS.map((minutes) => html`
+                                    <button type="button" class="duration-btn ${String(minutes) === this._createDuration ? 'active' : ''}"
+                                        @click="${() => { this._createDuration = String(minutes); this._createEndTouched = false; }}">${this._formatDuration(minutes)}</button>
+                                `)}
+                                <button type="button" class="duration-btn ${isAllDay ? 'active' : ''}"
+                                    @click="${() => { this._createDuration = 'allday'; this._createEndTouched = false; }}">${this._language.fullDay}</button>
+                            </div>
                         </div>
                     </div>
                     ${this._showLocationInForm ? html`
                     <div class="form-row location-row">
-                        <label for="event-location">${this._language.eventLocation ?? 'Location'}</label>
-                        <div class="input-clear-wrapper">
+                        <div class="input-clear-wrapper with-icon">
+                            <ha-icon class="field-icon" icon="mdi:map-marker"></ha-icon>
                             <input type="text" id="event-location" class="form-input" placeholder="${this._language.eventLocation ?? 'Location'}"
                                 @input="${this._handleLocationInput}" autocomplete="off" />
                             <button type="button" class="input-clear" @click="${() => this._clearInput('event-location')}" title="${this._language.cancel}">
@@ -1495,8 +1497,8 @@ export class SkylightFamilyCalendarCard extends LitElement {
             >
                 <div class="create-event-form">
                     <div class="form-row">
-                        <label for="edit-event-title">${this._language.eventTitle} *</label>
-                        <div class="input-clear-wrapper">
+                        <div class="input-clear-wrapper with-icon">
+                            <ha-icon class="field-icon" icon="mdi:format-title"></ha-icon>
                             <input type="text" id="edit-event-title" class="form-input" required
                                 .value="${form.title}"
                                 @input="${(e) => { this._editFormData = { ...this._editFormData, title: e.target.value }; }}" />
@@ -1505,34 +1507,36 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             </button>
                         </div>
                     </div>
-                    <div class="form-row" style="${form.allDay ? 'display: none' : ''}">
-                        <label for="edit-event-start-time">${this._language.eventStart} *</label>
+                    <div class="form-row with-icon" style="${form.allDay ? 'display: none' : ''}">
+                        <ha-icon class="field-icon" icon="mdi:clock-outline"></ha-icon>
                         <input type="time" id="edit-event-start-time" class="form-input" required
                             .value="${form.startTime}"
                             @input="${(e) => this._updateEditStart({ startTime: e.target.value })}" />
                     </div>
                     <div class="form-row">
-                        <label>${this._language.eventDuration}</label>
-                        <div class="duration-picker">
-                            ${this.constructor.DURATION_PRESETS.map((minutes) => html`
-                                <button type="button" class="duration-btn ${String(minutes) === duration ? 'active' : ''}"
-                                    @click="${() => this._setEditDuration(String(minutes))}">${this._formatDuration(minutes)}</button>
-                            `)}
-                            <button type="button" class="duration-btn ${duration === 'allday' ? 'active' : ''}"
-                                @click="${() => this._setEditDuration('allday')}">${this._language.fullDay}</button>
+                        <div class="field-row-icon">
+                            <ha-icon class="field-icon" icon="mdi:timer-outline"></ha-icon>
+                            <div class="duration-picker">
+                                ${this.constructor.DURATION_PRESETS.map((minutes) => html`
+                                    <button type="button" class="duration-btn ${String(minutes) === duration ? 'active' : ''}"
+                                        @click="${() => this._setEditDuration(String(minutes))}">${this._formatDuration(minutes)}</button>
+                                `)}
+                                <button type="button" class="duration-btn ${duration === 'allday' ? 'active' : ''}"
+                                    @click="${() => this._setEditDuration('allday')}">${this._language.fullDay}</button>
+                            </div>
                         </div>
                     </div>
                     ${this._showLocationInForm ? html`
                     <div class="form-row location-row">
-                        <label for="edit-event-location">${this._language.eventLocation ?? 'Location'}</label>
-                        <div class="location-input-wrapper${form.location ? ' has-maps' : ''}">
+                        <div class="location-input-wrapper with-icon${form.location ? ' has-maps' : ''}">
+                            <ha-icon class="field-icon" icon="mdi:map-marker"></ha-icon>
                             <input type="text" id="edit-event-location" class="form-input" placeholder="${this._language.eventLocation ?? 'Location'}"
                                 .value="${form.location ?? ''}"
                                 @input="${(e) => { this._editFormData = { ...this._editFormData, location: e.target.value }; this._handleLocationInput(e); }}"
                                 autocomplete="off" />
                             ${form.location ? html`
                             <a class="location-maps-icon" href="${this._locationLink}${encodeURIComponent(form.location)}" target="_blank" title="${this._language.openInMaps ?? 'Google Maps'}">
-                                <ha-icon icon="mdi:map-marker"></ha-icon>
+                                <ha-icon icon="mdi:open-in-new"></ha-icon>
                             </a>
                             ` : ''}
                             <button type="button" class="input-clear" @click="${() => { this._editFormData = { ...this._editFormData, location: '' }; this._clearInput('edit-event-location'); }}" title="${this._language.cancel}">
