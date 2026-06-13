@@ -1234,7 +1234,8 @@ export default css`
         flex-wrap: wrap;
     }
     .day-btn,
-    .duration-btn {
+    .duration-btn,
+    .slot-btn {
         padding: 6px 10px;
         border: 1px solid var(--divider-color, rgba(0, 0, 0, 0.15));
         border-radius: 4px;
@@ -1245,7 +1246,8 @@ export default css`
         font-family: var(--skylight-font);
     }
     .day-btn.active,
-    .duration-btn.active {
+    .duration-btn.active,
+    .slot-btn.active {
         background-color: var(--primary-color, #03a9f4);
         color: var(--text-primary-color, #fff);
         border-color: var(--primary-color, #03a9f4);
@@ -1254,6 +1256,34 @@ export default css`
         flex: 1;
         min-height: 36px;
         white-space: nowrap;
+    }
+
+    /* ── Tap-only time picker (hour grid + minutes) ── */
+    .create-event-form .field-row-icon.slots {
+        align-items: flex-start;
+    }
+    .create-event-form .field-row-icon.slots > .field-icon {
+        margin-top: 8px;
+    }
+    .create-event-form .time-slot-picker {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+    .create-event-form .slot-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .create-event-form .slot-grid.minutes {
+        padding-top: 4px;
+        border-top: 1px dashed var(--divider-color, rgba(0, 0, 0, 0.15));
+    }
+    .create-event-form .slot-btn {
+        min-width: 46px;
+        text-align: center;
     }
 
     /* ══════════════════════════════════════════════════════
@@ -1514,6 +1544,11 @@ export default css`
         }
         .create-event-form .duration-btn {
             min-height: 48px;
+        }
+        .create-event-form .slot-btn {
+            min-height: 48px;
+            min-width: 56px;
+            font-size: 1em;
         }
     }
 

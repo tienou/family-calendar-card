@@ -197,6 +197,8 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._showWeekDayText = config.showWeekDayText ?? true;
         this._startDate = this._getStartDate();
         this._updateInterval = config.updateInterval ?? 60;
+        this._slotStartHour = config.slotStartHour ?? 7;
+        this._slotEndHour = config.slotEndHour ?? 22;
         this._noCardBackground = config.noCardBackground ?? false;
         this._eventBackground = config.eventBackground ?? 'var(--card-background-color, inherit)';
         this._compact = config.compact ?? true;
@@ -1355,11 +1357,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             </button>
                         </div>
                     </div>
-                    <div class="form-row with-icon" style="${isAllDay ? 'display: none' : ''}">
-                        <ha-icon class="field-icon" icon="mdi:clock-outline"></ha-icon>
-                        <input type="text" id="event-start-time" class="form-input" required placeholder="8:30"
-                            .value="${this._createStartTime ?? startTimeValue}"
-                            @change="${(e) => { const t = this._parseTime(e.target.value); this._createStartTime = t || (this._createStartTime ?? startTimeValue); }}" />
+                    <div class="form-row" style="${isAllDay ? 'display: none' : ''}">
+                        <div class="field-row-icon slots">
+                            <ha-icon class="field-icon" icon="mdi:clock-outline"></ha-icon>
+                            ${this._renderTimeSlots(this._createStartTime ?? startTimeValue, false)}
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="field-row-icon">
@@ -1532,11 +1534,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             </button>
                         </div>
                     </div>
-                    <div class="form-row with-icon" style="${form.allDay ? 'display: none' : ''}">
-                        <ha-icon class="field-icon" icon="mdi:clock-outline"></ha-icon>
-                        <input type="text" id="edit-event-start-time" class="form-input" required placeholder="8:30"
-                            .value="${form.startTime}"
-                            @change="${(e) => { const t = this._parseTime(e.target.value); if (t) { this._updateEditStart({ startTime: t }); } else { e.target.value = form.startTime; } }}" />
+                    <div class="form-row" style="${form.allDay ? 'display: none' : ''}">
+                        <div class="field-row-icon slots">
+                            <ha-icon class="field-icon" icon="mdi:clock-outline"></ha-icon>
+                            ${this._renderTimeSlots(form.startTime, true)}
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="field-row-icon">
@@ -2278,7 +2280,8 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._createShowAdvanced = false;
         this._createEndTouched = false;
         this._createTitle = null;
-        this._createStartTime = null;
+        const now = DateTime.now();
+        this._createStartTime = String(Math.min(now.hour + 1, 23)).padStart(2, '0') + ':00';
         this._showCreateEventDialog = { date: day.date };
     }
 
@@ -2846,6 +2849,60 @@ export class SkylightFamilyCalendarCard extends LitElement {
         const startInput = this.shadowRoot?.querySelector('#event-start-date')?.value;
         if (startInput) return DateTime.fromISO(startInput).day;
         return DateTime.now().day;
+    }
+
+    // Tap-only time picker: hour grid + minute row, no handwriting needed
+    _renderTimeSlots(selected, isEdit) {
+        const parts = String(selected || '09:00').split(':');
+        const selH = parseInt(parts[0]);
+        const selM = parseInt(parts[1]);
+        const hours = [];
+        for (let h = this._slotStartHour; h <= this._slotEndHour; h++) hours.push(h);
+        const pickH = (h) => isEdit ? this._setEditTime(h, null) : this._setCreateTime(h, null);
+        const pickM = (m) => isEdit ? this._setEditTime(null, m) : this._setCreateTime(null, m);
+        return html`
+            <div class="time-slot-picker">
+                <div class="slot-grid">
+                    ${hours.map(h => html`
+                        <button type="button" class="slot-btn ${h === selH ? 'active' : ''}"
+                            @click="${() => pickH(h)}">${h}h</button>
+                    `)}
+                </div>
+                <div class="slot-grid minutes">
+                    ${[0, 15, 30, 45].map(m => html`
+                        <button type="button" class="slot-btn ${m === selM ? 'active' : ''}"
+                            @click="${() => pickM(m)}">${String(m).padStart(2, '0')}</button>
+                    `)}
+                </div>
+            </div>
+        `;
+    }
+
+    _setCreateTime(h, m) {
+        const cur = String(this._createStartTime || '09:00').split(':').map(Number);
+        const nh = h ?? cur[0];
+        const nm = m ?? cur[1];
+        this._createStartTime = String(nh).padStart(2, '0') + ':' + String(nm).padStart(2, '0');
+        if (this._createDuration === 'allday') this._createDuration = '60';
+    }
+
+    _setEditTime(h, m) {
+        const form = this._editFormData;
+        const cur = String(form.startTime || '09:00').split(':').map(Number);
+        const nh = h ?? cur[0];
+        const nm = m ?? cur[1];
+        const newStart = String(nh).padStart(2, '0') + ':' + String(nm).padStart(2, '0');
+        if (form.allDay) {
+            // Switching from all-day to a timed event: default to a 1 h slot
+            const start = DateTime.fromISO(`${form.startDate}T${newStart}`);
+            const end = start.plus({ minutes: 60 });
+            this._editFormData = {
+                ...form, allDay: false, startTime: newStart,
+                endDate: end.toFormat('yyyy-MM-dd'), endTime: end.toFormat('HH:mm'),
+            };
+        } else {
+            this._updateEditStart({ startTime: newStart });
+        }
     }
 
     // Lenient handwriting-friendly time parser: accepts "14h30", "14:30",
