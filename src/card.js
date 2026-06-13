@@ -209,7 +209,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._aiTaskEntity = config.aiTaskEntity ?? null;
         this._aiQuickAdd = config.aiQuickAdd ?? null; // null = auto-detect an ai_task entity
         this._geminiApiKey = config.geminiApiKey ?? '';
-        this._geminiModel = config.geminiModel ?? 'gemini-2.0-flash';
+        this._geminiModel = config.geminiModel ?? 'gemini-2.5-flash';
         this._claudeApiKey = config.claudeApiKey ?? '';
         this._claudeModel = config.claudeModel ?? 'claude-opus-4-8';
         this._aiProvider = config.aiProvider ?? null; // 'gemini' | 'claude' | null (auto)

@@ -143,7 +143,7 @@ calendars:
 | `aiQuickAdd` | boolean | auto | "Analyze with AI" button on quick add (auto-enabled if an `ai_task` entity exists; `false` to disable) |
 | `aiTaskEntity` | string | auto | `ai_task.*` entity to use for AI quick add (auto-detected if unset) |
 | `geminiApiKey` | string | - | Google Gemini API key → enables the handwriting drawing canvas in quick add |
-| `geminiModel` | string | `gemini-2.0-flash` | Gemini model used for handwriting recognition |
+| `geminiModel` | string | `gemini-2.5-flash` | Gemini model used for handwriting recognition |
 | `claudeApiKey` | string | - | Anthropic Claude API key → enables the handwriting canvas via Claude Vision |
 | `claudeModel` | string | `claude-opus-4-8` | Claude model used for handwriting recognition (e.g. `claude-haiku-4-5` for lower cost/latency) |
 | `aiProvider` | string | auto | Force the handwriting provider: `gemini` or `claude` (auto-selected if only one key is set; Claude preferred when both) |
@@ -181,7 +181,7 @@ Set `geminiApiKey` to turn the quick-add area into a handwriting canvas. Write t
 
 ```yaml
 geminiApiKey: YOUR_GEMINI_API_KEY
-geminiModel: gemini-2.0-flash   # optional
+geminiModel: gemini-2.5-flash   # optional
 ```
 
 Get a free key at [Google AI Studio](https://aistudio.google.com/apikey). The drawn image is sent to Google for recognition. The key is stored in the dashboard config — for a shared dashboard, restrict it to the *Generative Language API* in Google Cloud.

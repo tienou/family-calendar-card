@@ -309,7 +309,7 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                         <p style="margin: 0 0 8px 0; font-weight: 500;">✍️ Handwriting recognition</p>
                         ${this.addTextField('geminiApiKey', 'Google Gemini API key')}
                         ${this.addHint('Paste your key here to enable stylus handwriting in the quick-add area. Free key at aistudio.google.com/apikey')}
-                        ${this.addTextField('geminiModel', 'Gemini model', 'text', 'gemini-2.0-flash')}
+                        ${this.addTextField('geminiModel', 'Gemini model', 'text', 'gemini-2.5-flash')}
                         ${this.addTextField('claudeApiKey', 'Anthropic Claude API key (alternative)')}
                         ${this.addHint('Use Claude instead of Gemini. Key from console.anthropic.com')}
                         ${this.addTextField('claudeModel', 'Claude model', 'text', 'claude-opus-4-8')}

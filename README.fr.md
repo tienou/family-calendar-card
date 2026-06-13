@@ -143,7 +143,7 @@ calendars:
 | `aiQuickAdd` | boolean | auto | Bouton « Analyser avec l'IA » sur la saisie rapide (auto si une entite `ai_task` existe ; `false` pour desactiver) |
 | `aiTaskEntity` | string | auto | Entite `ai_task.*` a utiliser (auto-detectee si non definie) |
 | `geminiApiKey` | string | - | Cle API Google Gemini → active la zone de dessin manuscrite dans la saisie rapide |
-| `geminiModel` | string | `gemini-2.0-flash` | Modele Gemini pour la reconnaissance d'ecriture |
+| `geminiModel` | string | `gemini-2.5-flash` | Modele Gemini pour la reconnaissance d'ecriture |
 | `claudeApiKey` | string | - | Cle API Anthropic Claude → active la zone de dessin via Claude Vision |
 | `claudeModel` | string | `claude-opus-4-8` | Modele Claude pour la reconnaissance (ex. `claude-haiku-4-5` pour moins cher/rapide) |
 | `aiProvider` | string | auto | Forcer le fournisseur : `gemini` ou `claude` (auto si une seule cle ; Claude prioritaire si les deux) |
