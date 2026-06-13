@@ -716,45 +716,17 @@ export class SkylightFamilyCalendarCard extends LitElement {
     }
 
     updated() {
-        // Initialise the handwriting canvas once the create dialog is open
+        // Initialise the handwriting canvas once the create overlay is open
         if (this._showCreateEventDialog && this._showHandwritingCanvas()) {
-            this._maximizeHandwritingDialog();
             if (!this._canvasReady && this.shadowRoot?.querySelector('#quick-canvas')) {
-                this._initCanvas();
+                // Wait one frame so the full-screen overlay is laid out before
+                // sizing the canvas bitmap to its displayed box.
                 this._canvasReady = true;
+                requestAnimationFrame(() => this._initCanvas());
             }
         } else if (!this._showCreateEventDialog && this._canvasReady) {
             this._canvasReady = false;
         }
-    }
-
-    // ha-dialog caps its surface width internally and ignores the --mdc-dialog
-    // width variables in some HA builds. Inject a style into the dialog's own
-    // shadow root to force the surface to full width.
-    _maximizeHandwritingDialog() {
-        const dlg = this.shadowRoot?.querySelector('ha-dialog.hw-dialog');
-        if (!dlg) return;
-        const root = dlg.shadowRoot;
-        if (!root) {
-            setTimeout(() => this._maximizeHandwritingDialog(), 50);
-            return;
-        }
-        if (root.querySelector('#sk-hw-style')) return;
-        const style = document.createElement('style');
-        style.id = 'sk-hw-style';
-        style.textContent =
-            '.mdc-dialog__surface{width:calc(100vw - 12px)!important;max-width:calc(100vw - 12px)!important;}'
-            + '.mdc-dialog__container{max-width:100vw!important;}';
-        root.appendChild(style);
-        // The canvas was sized to the old (narrow) width — re-init at the new
-        // full width on the next frame for a crisp, full-width drawing area.
-        this._canvasReady = false;
-        requestAnimationFrame(() => {
-            if (this._showCreateEventDialog && this._showHandwritingCanvas()) {
-                this._initCanvas();
-                this._canvasReady = true;
-            }
-        });
     }
 
     _startClock() {
@@ -1569,38 +1541,38 @@ export class SkylightFamilyCalendarCard extends LitElement {
         `;
     }
 
-    // Tablet-only minimal dialog: just the handwriting canvas + Create.
+    // Tablet-only: a full-screen custom overlay (not ha-dialog, whose width
+    // can't be overridden in some HA builds). We control the size entirely.
     _renderHandwritingCreateDialog() {
+        const date = this._showCreateEventDialog?.date;
         return html`
-            <ha-dialog
-                open
-                class="hw-dialog"
-                @closed="${this._closeCreateEventDialog}"
-                .heading="${this._renderCreateEventDialogHeading()}"
-            >
-                <div class="create-event-form hw-form">
-                    <div class="form-row hw-row">
-                        <div class="hw-zone">
-                            <canvas id="quick-canvas" class="hw-canvas" width="640" height="200"
-                                @pointerdown="${this._canvasPointerDown}"
-                                @pointermove="${this._canvasPointerMove}"
-                                @pointerup="${this._canvasPointerUp}"
-                                @pointerleave="${this._canvasPointerUp}"></canvas>
-                            <div class="hw-hint">${this._language.handwriteHint}</div>
-                            <div class="hw-actions">
-                                <button type="button" class="hw-clear" @click="${this._clearCanvas}">
-                                    <ha-icon icon="mdi:eraser"></ha-icon> ${this._language.clearDrawing}
-                                </button>
-                            </div>
-                            ${this._aiError ? html`<div class="hw-error">${this._aiError}</div>` : ''}
-                        </div>
+            <div class="hw-overlay" @click="${(e) => { if (e.target === e.currentTarget) this._closeCreateEventDialog(); }}">
+                <div class="hw-modal create-event-form">
+                    <div class="hw-modal-header">
+                        <span>${this._language.newEvent}${date ? ' — ' + date.toFormat('cccc d LLLL') : ''}</span>
+                        <button type="button" class="hw-close" @click="${this._closeCreateEventDialog}">
+                            <ha-icon icon="mdi:close"></ha-icon>
+                        </button>
                     </div>
-                    <div class="form-actions">
+                    <div class="hw-zone">
+                        <canvas id="quick-canvas" class="hw-canvas" width="640" height="200"
+                            @pointerdown="${this._canvasPointerDown}"
+                            @pointermove="${this._canvasPointerMove}"
+                            @pointerup="${this._canvasPointerUp}"
+                            @pointerleave="${this._canvasPointerUp}"></canvas>
+                        <div class="hw-hint">${this._language.handwriteHint}</div>
+                    </div>
+                    ${this._aiError ? html`<div class="hw-error">${this._aiError}</div>` : ''}
+                    <div class="hw-modal-actions">
+                        <button type="button" class="hw-clear" @click="${this._clearCanvas}">
+                            <ha-icon icon="mdi:eraser"></ha-icon> ${this._language.clearDrawing}
+                        </button>
+                        <span style="flex:1"></span>
                         <button class="btn btn-cancel" @click="${this._closeCreateEventDialog}">${this._language.cancel}</button>
                         <button class="btn btn-submit" @click="${this._handleHandwritingCreate}">${this._language.create}</button>
                     </div>
                 </div>
-            </ha-dialog>
+            </div>
         `;
     }
 

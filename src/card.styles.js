@@ -1477,23 +1477,66 @@ export default css`
     .create-event-form .quick-add-row > .field-icon {
         color: var(--primary-color, #03a9f4);
     }
-    /* ── Maximised handwriting dialog (tablet): full width, canvas sized so
-       the Create button stays visible without scrolling ── */
-    ha-dialog.hw-dialog {
-        --mdc-dialog-min-width: calc(100vw - 12px);
-        --mdc-dialog-max-width: calc(100vw - 12px);
-        --mdc-dialog-max-height: 96vh;
-        --dialog-content-padding: 6px;
-        --mdc-dialog-content-padding: 6px;
+    /* ── Full-screen handwriting overlay (tablet) — own modal, not ha-dialog ── */
+    .hw-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.55);
     }
-    ha-dialog.hw-dialog .create-event-form {
-        padding: 0;
+    .hw-overlay .hw-modal {
+        display: flex;
+        flex-direction: column;
+        width: 98vw;
+        height: 94vh;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        gap: 10px;
+        background: var(--card-background-color, #fff);
+        color: var(--primary-text-color);
+        border-radius: 12px;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
     }
-    ha-dialog.hw-dialog .hw-row {
-        margin: 0 0 8px 0;
+    .hw-overlay .hw-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 1.15em;
+        font-weight: 600;
+        text-transform: capitalize;
     }
-    ha-dialog.hw-dialog .hw-canvas {
-        height: 50vh;
+    .hw-overlay .hw-close {
+        border: none;
+        background: none;
+        color: var(--secondary-text-color, #888);
+        cursor: pointer;
+        padding: 4px;
+        --mdc-icon-size: 26px;
+    }
+    .hw-overlay .hw-zone {
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        width: 100%;
+    }
+    .hw-overlay .hw-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        background: #ffffff;
+        border: 2px solid var(--primary-color, #03a9f4);
+        border-radius: 8px;
+        touch-action: none;
+        cursor: crosshair;
+    }
+    .hw-overlay .hw-modal-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     /* ── Handwriting canvas (Gemini Vision quick add) ── */
