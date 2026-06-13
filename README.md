@@ -11,6 +11,7 @@ A Skylight-inspired family calendar card for Home Assistant. Displays events fro
 ### Event Management
 - **Full CRUD**: Create, edit, and delete events directly from the card (no external helpers needed)
 - **Quick add**: write the time and the title in one go (e.g. "9h dentist" or "dentist 9h") — the card splits them automatically. No time written → all-day event. Ideal for pen/stylus entry.
+- **AI quick add** (optional): if an `ai_task` entity is configured in Home Assistant, an "Analyze with AI" button parses free natural-language text (e.g. "thursday 8pm cinema with the kids") into title + time + duration via your configured LLM. Auto-enabled when an `ai_task` entity exists; disable with `aiQuickAdd: false` or force the entity with `aiTaskEntity`.
 - **Simple forms**: only title, start, duration (presets) and location are shown — everything else is in a collapsible "Advanced options" drawer
 - **All-day events**: create and edit date-only events, including multi-day ones
 - **Recurrence support**: Daily, weekly, monthly, yearly — with interval, day selection, and end options (in the advanced drawer)
@@ -136,6 +137,10 @@ calendars:
 | `combineSimilarEvents` | boolean | `false` | Combine duplicate events |
 | `updateInterval` | number | `60` | Auto-refresh interval in seconds |
 | `multiDayMode` | string | `banner` | Multi-day events: `banner` (merged strip), `default`, `multiple`, `single` |
+| `slotStartHour` | number | `7` | First hour shown in the time-slot picker |
+| `slotEndHour` | number | `22` | Last hour shown in the time-slot picker |
+| `aiQuickAdd` | boolean | auto | "Analyze with AI" button on quick add (auto-enabled if an `ai_task` entity exists; `false` to disable) |
+| `aiTaskEntity` | string | auto | `ai_task.*` entity to use for AI quick add (auto-detected if unset) |
 | `theme` | string | `skylight` | Theme: `skylight` or `homeassistant` |
 
 ### Calendar options

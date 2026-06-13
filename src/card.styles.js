@@ -1477,6 +1477,33 @@ export default css`
     .create-event-form .quick-add-row > .field-icon {
         color: var(--primary-color, #03a9f4);
     }
+    .create-event-form .ai-analyze-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        margin-top: 8px;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: var(--primary-color, #03a9f4);
+        color: var(--text-primary-color, #fff);
+        font-size: 0.95em;
+        font-family: var(--skylight-font);
+        cursor: pointer;
+    }
+    .create-event-form .ai-analyze-btn[disabled] {
+        opacity: 0.6;
+        cursor: default;
+    }
+    .create-event-form .ai-analyze-btn ha-icon.spin {
+        animation: skylight-spin 1s linear infinite;
+    }
+    @keyframes skylight-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
 
     /* ── Leading field icon (replaces the text label on the main fields) ── */
     .create-event-form .field-icon {

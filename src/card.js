@@ -104,6 +104,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
     _createEndTouched = false;
     _createTitle = null;
     _createStartTime = null;
+    _aiLoading = false;
     _selectedDay = null;
     _clockInterval = null;
     _views;
@@ -168,7 +169,8 @@ export class SkylightFamilyCalendarCard extends LitElement {
             _createDuration: { type: String },
             _createShowAdvanced: { type: Boolean },
             _createTitle: { type: String },
-            _createStartTime: { type: String }
+            _createStartTime: { type: String },
+            _aiLoading: { type: Boolean }
         }
     }
 
@@ -199,6 +201,8 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._updateInterval = config.updateInterval ?? 60;
         this._slotStartHour = config.slotStartHour ?? 7;
         this._slotEndHour = config.slotEndHour ?? 22;
+        this._aiTaskEntity = config.aiTaskEntity ?? null;
+        this._aiQuickAdd = config.aiQuickAdd ?? null; // null = auto-detect an ai_task entity
         this._noCardBackground = config.noCardBackground ?? false;
         this._eventBackground = config.eventBackground ?? 'var(--card-background-color, inherit)';
         this._compact = config.compact ?? true;
@@ -309,6 +313,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 eventDate: 'Date',
                 advancedOptions: 'Advanced options',
                 quickAdd: 'e.g. 9am dentist',
+                aiAnalyze: 'Analyze with AI',
             },
             localeTexts,
             config.texts ?? {}
@@ -372,6 +377,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
             eventDate: 'Date',
             advancedOptions: 'Options avancées',
             quickAdd: 'ex : 9h dentiste',
+            aiAnalyze: 'Analyser avec l’IA',
         },
         de: {
             fullDay: 'Ganzt\u00e4gig', noEvents: 'Keine Termine', moreEvents: 'Mehr Termine',
@@ -403,6 +409,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
             eventDate: 'Datum',
             advancedOptions: 'Erweiterte Optionen',
             quickAdd: 'z. B. 9 Uhr Zahnarzt',
+            aiAnalyze: 'Mit KI analysieren',
         },
         es: {
             fullDay: 'Todo el d\u00eda', noEvents: 'Sin eventos', moreEvents: 'M\u00e1s eventos',
@@ -434,6 +441,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
             eventDate: 'Fecha',
             advancedOptions: 'Opciones avanzadas',
             quickAdd: 'ej.: 9h dentista',
+            aiAnalyze: 'Analizar con IA',
         },
         it: {
             fullDay: 'Tutto il giorno', noEvents: 'Nessun evento', moreEvents: 'Pi\u00f9 eventi',
@@ -465,6 +473,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
             eventDate: 'Data',
             advancedOptions: 'Opzioni avanzate',
             quickAdd: 'es.: 9 dentista',
+            aiAnalyze: 'Analizza con IA',
         },
         nl: {
             fullDay: 'Hele dag', noEvents: 'Geen evenementen', moreEvents: 'Meer evenementen',
@@ -496,6 +505,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
             eventDate: 'Datum',
             advancedOptions: 'Geavanceerde opties',
             quickAdd: 'bijv.: 9u tandarts',
+            aiAnalyze: 'Analyseren met AI',
         },
         pt: {
             fullDay: 'Dia inteiro', noEvents: 'Sem eventos', moreEvents: 'Mais eventos',
@@ -527,6 +537,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
             eventDate: 'Data',
             advancedOptions: 'Op\u00e7\u00f5es avan\u00e7adas',
             quickAdd: 'ex.: 9h dentista',
+            aiAnalyze: 'Analisar com IA',
         },
     };
 
@@ -1345,6 +1356,12 @@ export class SkylightFamilyCalendarCard extends LitElement {
                                 <ha-icon icon="mdi:close-circle"></ha-icon>
                             </button>
                         </div>
+                        ${this._isAiQuickAddAvailable() ? html`
+                        <button type="button" class="ai-analyze-btn" ?disabled="${this._aiLoading}" @click="${this._runAiQuickAdd}">
+                            <ha-icon class="${this._aiLoading ? 'spin' : ''}" icon="${this._aiLoading ? 'mdi:loading' : 'mdi:auto-fix'}"></ha-icon>
+                            <span>${this._language.aiAnalyze}</span>
+                        </button>
+                        ` : ''}
                     </div>
                     <div class="form-row">
                         <div class="input-clear-wrapper with-icon">
@@ -2280,6 +2297,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._createShowAdvanced = false;
         this._createEndTouched = false;
         this._createTitle = null;
+        this._aiLoading = false;
         const now = DateTime.now();
         this._createStartTime = String(Math.min(now.hour + 1, 23)).padStart(2, '0') + ':00';
         this._showCreateEventDialog = { date: day.date };
@@ -2294,6 +2312,76 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._createEndTouched = false;
         this._createTitle = null;
         this._createStartTime = null;
+        this._aiLoading = false;
+    }
+
+    _getAiTaskEntity() {
+        if (this._aiTaskEntity) return this._aiTaskEntity;
+        if (!this.hass) return null;
+        return Object.keys(this.hass.states).find(e => e.startsWith('ai_task.')) ?? null;
+    }
+
+    _isAiQuickAddAvailable() {
+        return this._aiQuickAdd !== false && !!this._getAiTaskEntity();
+    }
+
+    // Ask the HA-configured LLM (ai_task) to parse the quick-add text into a
+    // structured {title, time, duration}. Falls back to the local regex parser.
+    async _runAiQuickAdd() {
+        const text = this.shadowRoot.querySelector('#event-quick')?.value?.trim();
+        if (!text || this._aiLoading) return;
+        const entity = this._getAiTaskEntity();
+        if (!entity) { this._handleQuickAdd(text); return; }
+
+        this._aiLoading = true;
+        try {
+            const res = await this.hass.callWS({
+                type: 'call_service',
+                domain: 'ai_task',
+                service: 'generate_data',
+                service_data: {
+                    task_name: 'quick_add_calendar_event',
+                    entity_id: entity,
+                    instructions: `Extract a single calendar event from this text written by a user: "${text}".\n`
+                        + `- title: the subject only, without any time or date words.\n`
+                        + `- time: the start time in 24-hour HH:MM format if a clock time is mentioned, otherwise an empty string.\n`
+                        + `- duration_minutes: the duration in minutes (default 60 when unspecified; use 0 for an all-day event).\n`
+                        + `Keep the title in the same language as the input. Do not invent a time that is not present.`,
+                    structure: {
+                        title: { selector: { text: {} }, description: 'Event title, without the time', required: true },
+                        time: { selector: { text: {} }, description: 'Start time HH:MM (24h), or empty if none' },
+                        duration_minutes: { selector: { number: {} }, description: 'Duration in minutes, 0 means all-day' },
+                    },
+                },
+                return_response: true,
+            });
+            const data = res?.response?.data ?? res?.response ?? {};
+            this._applyAiQuickAdd(data.title, data.time, data.duration_minutes);
+        } catch (e) {
+            console.error('Skylight Family Calendar: AI quick-add failed, using local parser', e);
+            this._handleQuickAdd(text);
+        } finally {
+            this._aiLoading = false;
+        }
+    }
+
+    _applyAiQuickAdd(title, time, duration) {
+        if (title && String(title).trim()) {
+            this._createTitle = String(title).trim();
+        }
+        const parsed = time ? this._parseTime(String(time)) : null;
+        const dur = parseInt(duration);
+        if (parsed) {
+            this._createStartTime = parsed;
+            if (!isNaN(dur) && dur > 0) {
+                this._createDuration = String(dur);
+            } else if (this._createDuration === 'allday') {
+                this._createDuration = '60';
+            }
+        } else {
+            // No clock time → all-day event (matches the manual quick-add rule)
+            this._createDuration = 'allday';
+        }
     }
 
     // Quick add: from one handwritten string, extract the start time (token

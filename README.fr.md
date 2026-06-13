@@ -11,6 +11,7 @@ Une carte calendrier familial pour Home Assistant, inspiree de Skylight. Affiche
 ### Gestion des evenements
 - **CRUD complet** : Creer, modifier et supprimer des evenements directement depuis la carte (aucun helper externe necessaire)
 - **Saisie rapide** : ecrivez l'heure et l'objet d'un seul coup (ex. « 9h dentiste » ou « dentiste 9h ») — la carte les separe automatiquement. Sans heure ecrite, l'evenement est sur toute la journee. Ideal au stylet.
+- **Saisie rapide IA** (optionnel) : si une entite `ai_task` est configuree dans Home Assistant, un bouton « Analyser avec l'IA » interprete une phrase libre (ex. « jeudi 20h cine avec les enfants ») en titre + heure + duree via votre LLM. Active automatiquement si une entite `ai_task` existe ; desactivable avec `aiQuickAdd: false` ou forcer l'entite avec `aiTaskEntity`.
 - **Formulaires simples** : seuls titre, debut, duree (presets) et lieu sont affiches — le reste est dans un tiroir « Options avancees »
 - **Evenements journee entiere** : creation et modification d'evenements sans horaire, y compris multi-jours
 - **Recurrence** : Quotidienne, hebdomadaire, mensuelle, annuelle — avec intervalle, selection des jours et options de fin (dans le tiroir avance)
@@ -136,6 +137,10 @@ calendars:
 | `combineSimilarEvents` | boolean | `false` | Combiner les evenements en double |
 | `updateInterval` | number | `60` | Intervalle de rafraichissement en secondes |
 | `multiDayMode` | string | `banner` | Multi-jours : `banner` (bande fusionnee), `default`, `multiple`, `single` |
+| `slotStartHour` | number | `7` | Premiere heure du selecteur de creneaux |
+| `slotEndHour` | number | `22` | Derniere heure du selecteur de creneaux |
+| `aiQuickAdd` | boolean | auto | Bouton « Analyser avec l'IA » sur la saisie rapide (auto si une entite `ai_task` existe ; `false` pour desactiver) |
+| `aiTaskEntity` | string | auto | Entite `ai_task.*` a utiliser (auto-detectee si non definie) |
 | `theme` | string | `skylight` | Theme : `skylight` ou `homeassistant` |
 
 ### Options des calendriers
