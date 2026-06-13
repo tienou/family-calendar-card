@@ -2556,48 +2556,48 @@ Keep the title in the same language as the input. Do not invent a time that is n
                 name="${e}"
                 label="${t??e}"
                 type="${i??"text"}"
-                value="${this.getConfigValue(e,n)}"
-                @keyup="${this._valueChanged}"
+                .value="${String(this.getConfigValue(e,n)??"")}"
                 @change="${this._valueChanged}"
-            />
+            ></ha-textfield>
         `}addEntityPickerField(e,t,i,n){return P`
             <ha-entity-picker
                 .hass="${this.hass}"
                 name="${e}"
                 label="${t??e}"
-                value="${this.getConfigValue(e,n)}"
+                .value="${this.getConfigValue(e,n)}"
                 .includeDomains="${i}"
+                allow-custom-entity
                 @value-changed="${this._valueChanged}"
-            />
+            ></ha-entity-picker>
         `}addIconPickerField(e,t,i){return P`
             <ha-icon-picker
                 .hass="${this.hass}"
                 name="${e}"
                 label="${t??e}"
-                value="${this.getConfigValue(e,i)}"
+                .value="${this.getConfigValue(e,i)}"
                 @value-changed="${this._valueChanged}"
-            />
+            ></ha-icon-picker>
         `}addSelectField(e,t,i,n,a){return P`
             <ha-select
+                naturalMenuWidth
                 name="${e}"
                 label="${t??e}"
                 .value="${this.getConfigValue(e,a)}"
-                .clearable="${n}"
-                .options="${i}"
+                .clearable="${n??!1}"
                 @selected="${this._valueChanged}"
-                @closed="${e=>{e.stopPropagation()}}"
+                @closed="${e=>e.stopPropagation()}"
             >
+                ${(i??[]).map(e=>P`
+                    <ha-list-item value="${e.value}">${e.label}</ha-list-item>
+                `)}
             </ha-select>
         `}addBooleanField(e,t,i){return P`
-            <ha-formfield
-                label="${t??e}"
-            >
+            <ha-formfield label="${t??e}">
                 <ha-switch
                     name="${e}"
-                    .checked="${this.getConfigValue(e,i)}"
-                    value="true"
+                    .checked="${!!this.getConfigValue(e,i)}"
                     @change="${this._valueChanged}"
-                />
+                ></ha-switch>
             </ha-formfield>
         `}addExpansionPanel(e,t,i){return P`
             <ha-expansion-panel
@@ -2616,5 +2616,5 @@ Keep the title in the same language as the input. Do not invent a time that is n
                 <ha-icon icon="${t}"></ha-icon>
                 ${e}
             </ha-button>
-        `}_valueChanged(e){let t=e.target,i=e.detail?e.detail.value??t.value??"":t.value??"";"HA-SWITCH"===t.tagName&&(i=t.checked),this.setConfigValue(t.attributes.name.value,i)}getConfigValue(e,t){return this._config?(t=t??"",e.split(".").reduce((e,i)=>e[i]??t,this._config)??t):""}setConfigValue(e,t){let i=JSON.parse(JSON.stringify(this._config)),n=e.split("."),a=n.pop(),r=n.reduce((e,t)=>(e[t]||(e[t]={}),e[t]),i);""===t?delete r[a]:r[a]=t,this._config=i,this.dispatchConfigChangedEvent()}dispatchConfigChangedEvent(){let e=new CustomEvent("config-changed",{detail:{config:this._config},bubbles:!0,composed:!0});this.dispatchEvent(e)}}),console.info(`%c SKYLIGHT-FAMILY-CALENDAR %c v${ay.version} `,"color: white; background: #4A90E2; font-weight: 700;","color: #4A90E2; background: white; font-weight: 700;");
+        `}_valueChanged(e){let t,i=e.target;if(!i||!i.attributes.name)return;let n=i.attributes.name.value;if(t="HA-SWITCH"===i.tagName?i.checked:e.detail&&void 0!==e.detail.value?e.detail.value:i.value??"","HA-TEXTFIELD"===i.tagName&&"number"===i.getAttribute("type")&&""!==t&&null!=t){let e=Number(t);Number.isNaN(e)||(t=e)}this.getConfigValue(n)!==t&&this.setConfigValue(n,t)}getConfigValue(e,t){return this._config?(t=t??"",e.split(".").reduce((e,i)=>e[i]??t,this._config)??t):""}setConfigValue(e,t){let i=JSON.parse(JSON.stringify(this._config)),n=e.split("."),a=n.pop(),r=n.reduce((e,t)=>(e[t]||(e[t]={}),e[t]),i);""===t?delete r[a]:r[a]=t,this._config=i,this.dispatchConfigChangedEvent()}dispatchConfigChangedEvent(){let e=new CustomEvent("config-changed",{detail:{config:this._config},bubbles:!0,composed:!0});this.dispatchEvent(e)}}),console.info(`%c SKYLIGHT-FAMILY-CALENDAR %c v${ay.version} `,"color: white; background: #4A90E2; font-weight: 700;","color: #4A90E2; background: white; font-weight: 700;");
 //# sourceMappingURL=skylight-family-calendar-card.js.map

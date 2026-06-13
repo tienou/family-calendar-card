@@ -332,10 +332,9 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                 name="${name}"
                 label="${label ?? name}"
                 type="${type ?? 'text'}"
-                value="${this.getConfigValue(name, defaultValue)}"
-                @keyup="${this._valueChanged}"
+                .value="${String(this.getConfigValue(name, defaultValue) ?? '')}"
                 @change="${this._valueChanged}"
-            />
+            ></ha-textfield>
         `;
     }
 
@@ -345,10 +344,11 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                 .hass="${this.hass}"
                 name="${name}"
                 label="${label ?? name}"
-                value="${this.getConfigValue(name, defaultValue)}"
+                .value="${this.getConfigValue(name, defaultValue)}"
                 .includeDomains="${includeDomains}"
+                allow-custom-entity
                 @value-changed="${this._valueChanged}"
-            />
+            ></ha-entity-picker>
         `;
     }
 
@@ -358,38 +358,38 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                 .hass="${this.hass}"
                 name="${name}"
                 label="${label ?? name}"
-                value="${this.getConfigValue(name, defaultValue)}"
+                .value="${this.getConfigValue(name, defaultValue)}"
                 @value-changed="${this._valueChanged}"
-            />
+            ></ha-icon-picker>
         `;
     }
 
     addSelectField(name, label, options, clearable, defaultValue) {
         return html`
             <ha-select
+                naturalMenuWidth
                 name="${name}"
                 label="${label ?? name}"
                 .value="${this.getConfigValue(name, defaultValue)}"
-                .clearable="${clearable}"
-                .options="${options}"
+                .clearable="${clearable ?? false}"
                 @selected="${this._valueChanged}"
-                @closed="${(event) => { event.stopPropagation(); }}"
+                @closed="${(event) => event.stopPropagation()}"
             >
+                ${(options ?? []).map((option) => html`
+                    <ha-list-item value="${option.value}">${option.label}</ha-list-item>
+                `)}
             </ha-select>
         `;
     }
 
     addBooleanField(name, label, defaultValue) {
         return html`
-            <ha-formfield
-                label="${label ?? name}"
-            >
+            <ha-formfield label="${label ?? name}">
                 <ha-switch
                     name="${name}"
-                    .checked="${this.getConfigValue(name, defaultValue)}"
-                    value="true"
+                    .checked="${!!this.getConfigValue(name, defaultValue)}"
                     @change="${this._valueChanged}"
-                />
+                ></ha-switch>
             </ha-formfield>
         `;
     }
@@ -421,13 +421,30 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
 
     _valueChanged(event) {
         const target = event.target;
-        let value = event.detail ? event.detail.value ?? target.value ?? '' : target.value ?? '';
+        if (!target || !target.attributes.name) return;
+        const name = target.attributes.name.value;
 
+        let value;
         if (target.tagName === 'HA-SWITCH') {
             value = target.checked;
+        } else if (event.detail && event.detail.value !== undefined) {
+            value = event.detail.value;
+        } else {
+            value = target.value ?? '';
         }
 
-        this.setConfigValue(target.attributes.name.value, value);
+        // Store numeric text fields as numbers, not strings
+        if (target.tagName === 'HA-TEXTFIELD' && target.getAttribute('type') === 'number'
+            && value !== '' && value != null) {
+            const num = Number(value);
+            if (!Number.isNaN(num)) value = num;
+        }
+
+        // Skip no-op writes (avoids churn / dirtying the dashboard on open)
+        const current = this.getConfigValue(name);
+        if (current === value) return;
+
+        this.setConfigValue(name, value);
     }
 
     getConfigValue(key, defaultValue) {
