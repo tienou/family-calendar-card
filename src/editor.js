@@ -259,6 +259,8 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                         ${this.addHint('Custom background color for all events (hex or CSS color)')}
                         ${this.addBooleanField('compact', 'Compact mode')}
                         ${this.addHint('Reduce spacing and padding for smaller displays')}
+                        ${this.addBooleanField('fillHeight', 'Fill available height')}
+                        ${this.addHint('Stretch the day rows so the calendar fills the screen height (best in a panel / full-height view, e.g. a wall tablet)')}
                         ${this.addTextField('dayHeaderFontSize', 'Day header font size')}
                         ${this.addHint('e.g. 1.2em or 18px for the weekday header text')}
                         ${this.addTextField('dayHeaderColor', 'Day header color')}

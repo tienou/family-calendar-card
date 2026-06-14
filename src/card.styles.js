@@ -218,6 +218,28 @@ export default css`
         width: 100%;
     }
 
+    /* Fill the available height (e.g. a wall-mounted tablet in a panel view):
+       the card becomes a flex column, the calendar grid takes the remaining
+       space, and each day cell is grown (in JS) so the week rows fill the
+       height — the header/navigation rows keep their natural size. */
+    ha-card.fill-height {
+        height: 100%;
+        box-sizing: border-box;
+    }
+    ha-card.fill-height .card-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-sizing: border-box;
+    }
+    ha-card.fill-height .calendar-container {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+    ha-card.fill-height .container .day:not(.header) {
+        min-height: var(--day-fill-height, auto);
+    }
+
     /* ── Calendar Card Content ────────── */
 
     .card-header-row {

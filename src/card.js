@@ -340,6 +340,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
 
         // Skylight-specific config
         this._showHeader = config.showHeader ?? true;
+        this._fillHeight = config.fillHeight ?? false;
         const defaultViews = ['Today', 'Tomorrow', 'Week', 'Biweek', 'Month'];
         this._views = typeof config.views === 'string'
             ? config.views.split(',').map(v => v.trim()).filter(Boolean)
@@ -721,6 +722,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         this._startClock();
+        if (!this._onResize) {
+            this._onResize = () => this._applyFillHeight();
+        }
+        window.addEventListener('resize', this._onResize);
         if (this._initialized) {
             this._waitForHassAndConfig();
         }
@@ -731,6 +736,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._stopClock();
         this._clearUpdateEventsTimeouts();
         clearTimeout(this._locationSearchTimeout);
+        if (this._onResize) {
+            window.removeEventListener('resize', this._onResize);
+        }
         if (this._weatherUnsub) {
             this._weatherUnsub.then((unsub) => unsub()).catch(() => {});
             this._weatherUnsub = null;
@@ -751,6 +759,40 @@ export class SkylightFamilyCalendarCard extends LitElement {
         } else if (this._canvasReady) {
             this._canvasReady = false;
         }
+        this._applyFillHeight();
+    }
+
+    // When fillHeight is on, make the day rows grow so the grid fills the card.
+    // Only the day rows stretch (the weekday-header / navigation rows keep their
+    // natural height), so we compute the per-cell height in JS rather than using
+    // align-content/grid stretch which would also inflate the header rows.
+    _applyFillHeight() {
+        const grid = this.shadowRoot?.querySelector('.container');
+        if (!grid) return;
+        if (!this._fillHeight) {
+            grid.style.removeProperty('--day-fill-height');
+            return;
+        }
+        const container = this.shadowRoot?.querySelector('.calendar-container');
+        const dayCells = grid ? [...grid.querySelectorAll('.day:not(.header)')] : [];
+        if (!container || dayCells.length === 0) return;
+        requestAnimationFrame(() => {
+            const contRect = container.getBoundingClientRect();
+            // Distinct vertical positions = number of visual week rows.
+            const tops = dayCells.map((c) => Math.round(c.getBoundingClientRect().top - contRect.top));
+            const rows = new Set(tops).size || 1;
+            const firstTop = Math.min(...tops);
+            const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
+            const avail = container.clientHeight - firstTop - gap * (rows - 1);
+            const per = Math.floor(avail / rows);
+            // Only grow cells (never shrink below their natural size), and ignore
+            // the case where the card isn't height-constrained (avail too small).
+            if (per > 40) {
+                grid.style.setProperty('--day-fill-height', per + 'px');
+            } else {
+                grid.style.removeProperty('--day-fill-height');
+            }
+        });
     }
 
     _startClock() {
@@ -790,6 +832,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
         }
         if (this._compact) {
             cardClasses.push('compact');
+        }
+        if (this._fillHeight) {
+            cardClasses.push('fill-height');
         }
         cardClasses.push('theme-' + this._theme);
 
