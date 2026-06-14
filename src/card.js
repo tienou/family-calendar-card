@@ -111,6 +111,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
     _hasDrawing = false;
     _canvasReady = false;
     _eraserMode = false;
+    _createCalendar = null;
     _selectedDay = null;
     _clockInterval = null;
     _views;
@@ -179,7 +180,8 @@ export class SkylightFamilyCalendarCard extends LitElement {
             _aiLoading: { type: Boolean },
             _aiError: { type: String },
             _aiResult: { type: String },
-            _eraserMode: { type: Boolean }
+            _eraserMode: { type: Boolean },
+            _createCalendar: { type: String }
         }
     }
 
@@ -1563,6 +1565,18 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             <ha-icon icon="mdi:close"></ha-icon>
                         </button>
                     </div>
+                    ${this._calendars && this._calendars.length > 1 ? html`
+                    <div class="hw-cal-picker">
+                        ${this._calendars.map((cal) => html`
+                            <button type="button" class="hw-cal-btn ${this._createCalendar === cal.entity ? 'active' : ''}"
+                                style="--cal-color: ${cal.color || '#888'}"
+                                @click="${() => { this._createCalendar = cal.entity; }}">
+                                <span class="hw-cal-dot" style="background: ${cal.color || '#888'}"></span>
+                                ${this._getCalendarDisplayName(cal)}
+                            </button>
+                        `)}
+                    </div>
+                    ` : ''}
                     <div class="hw-zone">
                         <canvas id="quick-canvas" class="hw-canvas" width="640" height="200"
                             @pointerdown="${this._canvasPointerDown}"
@@ -2382,6 +2396,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._hasDrawing = false;
         this._canvasReady = false;
         this._eraserMode = false;
+        this._createCalendar = this._defaultCalendar || (this._calendars && this._calendars[0] && this._calendars[0].entity) || null;
         const now = DateTime.now();
         this._createStartTime = String(Math.min(now.hour + 1, 23)).padStart(2, '0') + ':00';
         this._showCreateEventDialog = { date: day.date };
@@ -2569,7 +2584,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         }
         const base64 = canvas.toDataURL('image/png').split(',')[1];
         const date = this._showCreateEventDialog?.date;
-        const calendar = this._defaultCalendar
+        const calendar = this._createCalendar || this._defaultCalendar
             || (this._calendars && this._calendars[0] && this._calendars[0].entity);
         this._closeCreateEventDialog();
         this._backgroundCreateFromImage(provider, base64, date, calendar);

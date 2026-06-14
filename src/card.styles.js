@@ -1508,6 +1508,39 @@ export default css`
         font-weight: 600;
         text-transform: capitalize;
     }
+    .hw-overlay .hw-cal-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .hw-overlay .hw-cal-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        min-height: 40px;
+        border: 1px solid var(--divider-color, rgba(0, 0, 0, 0.2));
+        border-radius: 20px;
+        background: transparent;
+        color: var(--primary-text-color);
+        font-size: 0.95em;
+        font-family: var(--skylight-font);
+        cursor: pointer;
+    }
+    .hw-overlay .hw-cal-btn.active {
+        background: var(--cal-color, var(--primary-color, #03a9f4));
+        border-color: var(--cal-color, var(--primary-color, #03a9f4));
+        color: #fff;
+    }
+    .hw-overlay .hw-cal-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .hw-overlay .hw-cal-btn.active .hw-cal-dot {
+        display: none;
+    }
     .hw-overlay .hw-close {
         border: none;
         background: none;
