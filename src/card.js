@@ -750,8 +750,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
     }
 
     updated() {
-        // Initialise the handwriting canvas once the create/edit overlay is open
-        const overlayOpen = (this._showCreateEventDialog || this._showEditEventDialog) && this._showHandwritingCanvas();
+        // Initialise the handwriting canvas once the create overlay is open. The
+        // tablet edit overlay no longer has a canvas (title is read-only there).
+        const overlayOpen = this._showCreateEventDialog && this._showHandwritingCanvas();
         if (overlayOpen) {
             if (!this._canvasReady && this.shadowRoot?.querySelector('#quick-canvas')) {
                 // Wait one frame so the full-screen overlay is laid out before
@@ -1963,27 +1964,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             <ha-icon icon="mdi:format-title"></ha-icon>
                             <span>${form.title || '—'}</span>
                         </div>
-                        <div class="hw-zone hw-zone-edit">
-                            <canvas id="quick-canvas" class="hw-canvas" width="640" height="200"
-                                @pointerdown="${this._canvasPointerDown}"
-                                @pointermove="${this._canvasPointerMove}"
-                                @pointerup="${this._canvasPointerUp}"
-                                @pointerleave="${this._canvasPointerUp}"></canvas>
-                            <div class="hw-hint">${this._language.handwriteHint}</div>
-                        </div>
-                        <div class="hw-modal-actions">
-                            <button type="button" class="hw-clear hw-pen ${!this._eraserMode ? 'active' : ''}" @click="${this._usePen}">
-                                <ha-icon icon="mdi:pencil"></ha-icon> ${this._language.pen}
-                            </button>
-                            <button type="button" class="hw-clear hw-eraser ${this._eraserMode ? 'active' : ''}" @click="${this._useEraser}">
-                                <ha-icon icon="mdi:eraser"></ha-icon> ${this._language.eraser}
-                            </button>
-                            <button type="button" class="hw-clear" @click="${this._clearCanvas}">
-                                <ha-icon icon="mdi:delete-outline"></ha-icon> ${this._language.clearDrawing}
-                            </button>
-                        </div>
                         ${this._renderEditAdvanced(form, false)}
-                        ${this._aiError ? html`<div class="hw-error">${this._aiError}</div>` : ''}
                     </div>
                     <div class="hw-modal-actions">
                         <button class="btn btn-delete" @click="${this._handleDeleteEventFromEdit}">
@@ -2000,34 +1981,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
         `;
     }
 
-    // Tablet edit save: if the title was rewritten with the pen, read it with
-    // the AI first, then run the normal update (which handles recurrence).
-    async _handleEditOverlaySave() {
-        if (this._aiLoading) return;
-        const canvas = this.shadowRoot?.querySelector('#quick-canvas');
-        const provider = this._resolveAiProvider();
-        if (canvas && this._hasDrawing && provider) {
-            this._aiError = null;
-            this._aiLoading = true;
-            try {
-                const base64 = canvas.toDataURL('image/png').split(',')[1];
-                const data = provider === 'claude'
-                    ? await this._analyzeWithClaude(base64)
-                    : await this._analyzeWithGemini(base64);
-                const { title, time, durationMin } = this._parseAiResult(data);
-                if (title) this._editFormData = { ...this._editFormData, title };
-                if (time) {
-                    const [h, mn] = time.split(':').map(Number);
-                    this._setEditTime(h, mn);
-                    if (durationMin && durationMin > 0) this._setEditDuration(String(durationMin));
-                }
-            } catch (e) {
-                this._aiError = (e && e.message) ? e.message : String(e);
-                this._aiLoading = false;
-                return;
-            }
-            this._aiLoading = false;
-        }
+    // Tablet edit save: the event title is read-only on tablet (no handwriting
+    // rewrite), so just run the normal update (which handles recurrence).
+    _handleEditOverlaySave() {
         this._handleUpdateEvent();
     }
 
