@@ -1286,6 +1286,23 @@ export default css`
     .create-event-form .field-row-icon.slots > .field-icon {
         margin-top: 8px;
     }
+    /* Hour : minute dropdowns (desktop / phone) */
+    .create-event-form .time-dropdowns {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+    .create-event-form .time-select {
+        width: auto;
+        min-width: 76px;
+        cursor: pointer;
+    }
+    .create-event-form .time-sep {
+        font-weight: 600;
+        color: var(--secondary-text-color, #888);
+    }
     .create-event-form .time-slot-picker {
         flex: 1;
         display: flex;
@@ -1748,8 +1765,8 @@ export default css`
        handwriting directly in the fields (Windows Ink) ── */
     @media (any-pointer: coarse) {
         .create-event-form .form-input {
-            min-height: 52px;
-            font-size: 1.05em;
+            min-height: 44px;
+            font-size: 1em;
         }
         .create-event-form .field-icon {
             --mdc-icon-size: 26px;
@@ -1759,18 +1776,6 @@ export default css`
         }
         .create-event-form .with-icon > .field-icon {
             left: 12px;
-        }
-        /* Text fields you handwrite into need a tall ink area (Windows Ink) */
-        .create-event-form input[type="text"].form-input {
-            min-height: 200px;
-            font-size: 1.3em;
-        }
-        /* Keep the leading icon and clear button at the top of the tall field */
-        .create-event-form .with-icon > .field-icon,
-        .create-event-form .input-clear,
-        .create-event-form .location-maps-icon {
-            top: 26px;
-            transform: none;
         }
         .create-event-form .input-clear {
             width: 44px;

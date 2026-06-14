@@ -1414,7 +1414,6 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 .heading="${this._renderCreateEventDialogHeading()}"
             >
                 <div class="create-event-form">
-                    ${this._renderQuickAdd()}
                     <div class="form-row">
                         <div class="input-clear-wrapper with-icon">
                             <ha-icon class="field-icon" icon="mdi:format-title"></ha-icon>
@@ -1427,9 +1426,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         </div>
                     </div>
                     <div class="form-row" style="${isAllDay ? 'display: none' : ''}">
-                        <div class="field-row-icon slots">
+                        <div class="field-row-icon">
                             <ha-icon class="field-icon" icon="mdi:clock-outline"></ha-icon>
-                            ${this._renderTimeSlots(this._createStartTime ?? startTimeValue, false)}
+                            ${this._renderTimeDropdowns(this._createStartTime ?? startTimeValue, false)}
                         </div>
                     </div>
                     <div class="form-row">
@@ -1659,9 +1658,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         </div>
                     </div>
                     <div class="form-row" style="${form.allDay ? 'display: none' : ''}">
-                        <div class="field-row-icon slots">
+                        <div class="field-row-icon">
                             <ha-icon class="field-icon" icon="mdi:clock-outline"></ha-icon>
-                            ${this._renderTimeSlots(form.startTime, true)}
+                            ${this._renderTimeDropdowns(form.startTime, true)}
                         </div>
                     </div>
                     <div class="form-row">
@@ -3520,6 +3519,34 @@ export class SkylightFamilyCalendarCard extends LitElement {
     }
 
     // Tap-only time picker: hour grid + minute row, no handwriting needed
+    // Hour + minute dropdowns for the desktop / phone keyboard forms. The tablet
+    // keeps the touch-friendly button grid (_renderTimeSlots) for the stylus.
+    _renderTimeDropdowns(selected, isEdit) {
+        const parts = String(selected || '09:00').split(':');
+        const selH = parseInt(parts[0]);
+        const selM = parseInt(parts[1]);
+        const hours = [];
+        for (let h = this._slotStartHour; h <= this._slotEndHour; h++) hours.push(h);
+        // Keep the event's own hour selectable even if it falls outside the
+        // configured slot range (e.g. an early-morning event being edited).
+        if (!hours.includes(selH)) { hours.push(selH); hours.sort((a, b) => a - b); }
+        const minutes = [0, 15, 30, 45];
+        if (!minutes.includes(selM)) { minutes.push(selM); minutes.sort((a, b) => a - b); }
+        const onH = (e) => { const h = parseInt(e.target.value); isEdit ? this._setEditTime(h, null) : this._setCreateTime(h, null); };
+        const onM = (e) => { const m = parseInt(e.target.value); isEdit ? this._setEditTime(null, m) : this._setCreateTime(null, m); };
+        return html`
+            <div class="time-dropdowns">
+                <select class="form-input time-select" @change="${onH}">
+                    ${hours.map((h) => html`<option value="${h}" ?selected="${h === selH}">${String(h).padStart(2, '0')} h</option>`)}
+                </select>
+                <span class="time-sep">:</span>
+                <select class="form-input time-select" @change="${onM}">
+                    ${minutes.map((m) => html`<option value="${m}" ?selected="${m === selM}">${String(m).padStart(2, '0')}</option>`)}
+                </select>
+            </div>
+        `;
+    }
+
     _renderTimeSlots(selected, isEdit) {
         const parts = String(selected || '09:00').split(':');
         const selH = parseInt(parts[0]);
