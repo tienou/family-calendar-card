@@ -518,6 +518,11 @@ export default css`
     .container .day .events .event.banner {
         position: relative;
         z-index: 1;
+        /* Uniform band thickness along the whole strip: every slice is as tall
+           as one line of text (its .inner), and the icon is vertically centred
+           without adding height — so the titled+icon slice matches the empty
+           continuation slices instead of bulging. */
+        align-items: center;
     }
 
     /* Joins to the slice on its left: square the edge and bleed left far enough
@@ -548,6 +553,15 @@ export default css`
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    /* The banner icon must not make its slice taller than the others */
+    .container .day .events .event.banner .icon {
+        padding-top: 0;
+        padding-bottom: 0;
+        --mdc-icon-size: var(--event-icon-size, 18px);
+        display: flex;
+        align-items: center;
     }
 
     .container .day .events .event .additionalColor {
