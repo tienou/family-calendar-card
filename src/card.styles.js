@@ -261,7 +261,11 @@ export default css`
         container-type: inline-size;
         display: flex;
         flex-wrap: wrap;
-        gap: var(--days-spacing);
+        /* No horizontal gap: day cells touch (separated by their 1px border),
+           so multi-day banners are visually continuous across columns. Vertical
+           spacing between week rows is kept. */
+        row-gap: var(--days-spacing);
+        column-gap: 0;
         /* Let vertical scrolling through but keep horizontal gestures
            (swipe navigation) for the card — required on Windows touch
            devices where the browser would otherwise consume them */
@@ -360,7 +364,9 @@ export default css`
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        width: calc((100% - (var(--days-columns) - 1) * var(--days-spacing)) / var(--days-columns));
+        /* No horizontal gap between cells: full column width so adjacent
+           cells touch and multi-day banners run continuously across them. */
+        width: calc(100% / var(--days-columns));
         margin: 0 0 var(--days-spacing) 0;
         border-right: 1px solid var(--divider-color, rgba(0,0,0,0.08));
         border-bottom: 1px solid var(--divider-color, rgba(0,0,0,0.08));
@@ -506,26 +512,25 @@ export default css`
     }
 
     /* ── Multi-day banner events: continuous strip across day columns ──
-       Each day cell is position:relative, so a later (right) cell paints over
-       the previous one. We therefore bleed each joined slice to the LEFT so
-       the right-hand cell covers the inter-column gap. ── */
+       Day cells now touch horizontally (container has column-gap:0), so a
+       banner slice only has to bleed a couple of px over the 1px cell border
+       to meet its neighbour seamlessly (same colour = no visible seam). ── */
     .container .day .events .event.banner {
         position: relative;
         z-index: 1;
     }
 
-    /* Joins to the slice on its left: bleed left over the gap + border */
+    /* Joins to the slice on its left: square the left edge and cover the border */
     .container .day .events .event.banner.ljoin {
-        margin-left: calc(-1 * var(--days-spacing) - 2px);
+        margin-left: -2px;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
         border-left-width: 0 !important;
     }
 
-    /* Continues to the right: also bleed right so the gap is covered from both
-       sides regardless of which cell paints on top (same colour = no seam) */
+    /* Continues to the right: square the right edge and cover the border */
     .container .day .events .event.banner.rjoin {
-        margin-right: calc(-1 * var(--days-spacing) - 2px);
+        margin-right: -2px;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
     }
