@@ -602,6 +602,18 @@ export class SkylightFamilyCalendarCard extends LitElement {
         });
     }
 
+    // Guaranteed real colour for an event slice. An event must NEVER use the CSS
+    // keyword 'inherit': it would inherit the card background — invisible on a
+    // light card, a solid black bar on a dark one. Fall back to a stable pastel
+    // based on the calendar's position so colourless calendars stay visible.
+    _calendarColor(calendar) {
+        if (calendar && calendar.color) return calendar.color;
+        const list = this._calendars || [];
+        const idx = list.findIndex((c) => c.entity === (calendar && calendar.entity));
+        const palette = this.constructor.PASTEL_COLORS;
+        return palette[(idx >= 0 ? idx : 0) % palette.length];
+    }
+
     _getWeatherConfig(weatherConfiguration) {
         if (
             !weatherConfiguration
@@ -2215,7 +2227,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
 
         if (this._calendarEvents.hasOwnProperty(eventKey)) {
             this._calendarEvents[eventKey].calendars.push(calendar.entity);
-            this._calendarEvents[eventKey].colors.push(calendar.color ?? 'inherit')
+            this._calendarEvents[eventKey].colors.push(this._calendarColor(calendar))
             if (calendar.name && this._calendarEvents[eventKey].calendarNames.indexOf(calendar.name) === -1) {
                 this._calendarEvents[eventKey].calendarNames.push(calendar.name);
             }
@@ -2234,7 +2246,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 fullDay: fullDay,
                 multiDay: multiDay,
                 multiDayPosition: multiDayPosition ?? null,
-                colors: [calendar.color ?? 'inherit'],
+                colors: [this._calendarColor(calendar)],
                 icon: calendar.icon ?? null,
                 calendars: [calendar.entity],
                 calendarSorting: calendar.sorting,
