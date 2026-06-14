@@ -519,17 +519,21 @@ function e(e){return e&&e.__esModule?e.default:e}let t=globalThis,i=t.ShadowRoot
         z-index: 1;
     }
 
-    /* Joins to the slice on its left: square the left edge and cover the border */
+    /* Joins to the slice on its left: square the edge and bleed left far enough
+       to swallow whatever insets the band inside the cell — the row-gap in the
+       skylight theme (--days-spacing) OR the day cell's inner padding in the HA
+       theme (where --days-spacing is 0, so this resolves to -8px). Over-bleed is
+       invisible because neighbouring slices share the same colour. */
     .container .day .events .event.banner.ljoin {
-        margin-left: -2px;
+        margin-left: calc(-1 * var(--days-spacing) - 8px);
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
         border-left-width: 0 !important;
     }
 
-    /* Continues to the right: square the right edge and cover the border */
+    /* Continues to the right: square the edge and bleed right the same amount */
     .container .day .events .event.banner.rjoin {
-        margin-right: -2px;
+        margin-right: calc(-1 * var(--days-spacing) - 8px);
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
     }
