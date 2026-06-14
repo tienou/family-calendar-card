@@ -783,10 +783,14 @@ export class SkylightFamilyCalendarCard extends LitElement {
             const rows = new Set(tops).size || 1;
             const firstTop = Math.min(...tops);
             const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
-            const avail = container.clientHeight - firstTop - gap * (rows - 1);
+            // Available height = from the first day-cell row down to the bottom of
+            // the viewport. Using the viewport (not the card's own height) makes it
+            // fill in any view type — masonry / sections, not just a panel view.
+            const bottomMargin = 12;
+            const firstCellViewportTop = contRect.top + firstTop;
+            const avail = window.innerHeight - firstCellViewportTop - bottomMargin - gap * (rows - 1);
             const per = Math.floor(avail / rows);
-            // Only grow cells (never shrink below their natural size), and ignore
-            // the case where the card isn't height-constrained (avail too small).
+            // Only grow cells when there is real space to fill (avail large enough).
             if (per > 40) {
                 grid.style.setProperty('--day-fill-height', per + 'px');
             } else {
