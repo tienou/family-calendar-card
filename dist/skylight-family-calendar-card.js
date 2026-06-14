@@ -727,6 +727,27 @@ function e(e){return e&&e.__esModule?e.default:e}let t=globalThis,i=t.ShadowRoot
         color: var(--primary-color, #03a9f4);
     }
 
+    /* Native <details> disclosure: expands instantly with no card re-render.
+       Hide the default marker and rotate our own chevron when open. */
+    .create-event-form .advanced-details {
+        width: 100%;
+    }
+    .create-event-form summary.advanced-toggle {
+        list-style: none;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    .create-event-form summary.advanced-toggle::-webkit-details-marker,
+    .create-event-form summary.advanced-toggle::marker {
+        display: none;
+    }
+    .create-event-form .adv-chevron {
+        transition: transform 0.15s ease;
+    }
+    .create-event-form .advanced-details[open] .adv-chevron {
+        transform: rotate(180deg);
+    }
+
     .create-event-form .notify-row .notify-label {
         display: flex;
         align-items: center;
@@ -2183,11 +2204,12 @@ function e(e){return e&&e.__esModule?e.default:e}let t=globalThis,i=t.ShadowRoot
                         <ul class="location-suggestions" id="event-location-suggestions"></ul>
                     </div>
                     `:""}
-                    <button type="button" class="advanced-toggle" @click="${()=>{this._createShowAdvanced=!this._createShowAdvanced}}">
-                        <ha-icon icon="${this._createShowAdvanced?"mdi:chevron-up":"mdi:chevron-down"}"></ha-icon>
+                    <details class="advanced-details">
+                    <summary class="advanced-toggle">
+                        <ha-icon class="adv-chevron" icon="mdi:chevron-down"></ha-icon>
                         <span>${this._language.advancedOptions}</span>
-                    </button>
-                    <div class="advanced-section" style="${this._createShowAdvanced?"":"display: none"}">
+                    </summary>
+                    <div class="advanced-section">
                     <div class="form-row">
                         <label for="event-start-date">${this._language.eventDate}</label>
                         <input type="date" id="event-start-date" class="form-input" .value="${o}" required />
@@ -2274,6 +2296,7 @@ function e(e){return e&&e.__esModule?e.default:e}let t=globalThis,i=t.ShadowRoot
                         </label>
                     </div>
                     </div>
+                    </details>
                     <div class="form-actions">
                         <button class="btn btn-cancel" @click="${this._closeCreateEventDialog}">${this._language.cancel}</button>
                         <button class="btn btn-submit" @click="${this._handleCreateEvent}">${this._language.create}</button>
@@ -2400,11 +2423,12 @@ function e(e){return e&&e.__esModule?e.default:e}let t=globalThis,i=t.ShadowRoot
                 </div>
             </ha-dialog>
         `}_renderEditAdvanced(e,t){return P`
-            <button type="button" class="advanced-toggle" @click="${()=>{this._editFormData={...this._editFormData,showAdvanced:!e.showAdvanced}}}">
-                <ha-icon icon="${e.showAdvanced?"mdi:chevron-up":"mdi:chevron-down"}"></ha-icon>
+            <details class="advanced-details">
+            <summary class="advanced-toggle">
+                <ha-icon class="adv-chevron" icon="mdi:chevron-down"></ha-icon>
                 <span>${this._language.advancedOptions}</span>
-            </button>
-            <div class="advanced-section" style="${e.showAdvanced?"":"display: none"}">
+            </summary>
+            <div class="advanced-section">
                 <div class="form-row">
                     <label for="edit-event-start-date">${this._language.eventDate}</label>
                     <input type="date" id="edit-event-start-date" class="form-input" required
@@ -2506,6 +2530,7 @@ function e(e){return e&&e.__esModule?e.default:e}let t=globalThis,i=t.ShadowRoot
                     </label>
                 </div>
             </div>
+            </details>
         `}_renderEditOverlay(){let e=this._editFormData,t=this._getFormDuration(e),i=e.startDate?eh.DateTime.fromISO(e.startDate):null;return P`
             <div class="hw-overlay" @click="${e=>{e.target===e.currentTarget&&this._closeEditEventDialog()}}">
                 <div class="hw-modal create-event-form">

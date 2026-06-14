@@ -728,6 +728,27 @@ export default css`
         color: var(--primary-color, #03a9f4);
     }
 
+    /* Native <details> disclosure: expands instantly with no card re-render.
+       Hide the default marker and rotate our own chevron when open. */
+    .create-event-form .advanced-details {
+        width: 100%;
+    }
+    .create-event-form summary.advanced-toggle {
+        list-style: none;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    .create-event-form summary.advanced-toggle::-webkit-details-marker,
+    .create-event-form summary.advanced-toggle::marker {
+        display: none;
+    }
+    .create-event-form .adv-chevron {
+        transition: transform 0.15s ease;
+    }
+    .create-event-form .advanced-details[open] .adv-chevron {
+        transform: rotate(180deg);
+    }
+
     .create-event-form .notify-row .notify-label {
         display: flex;
         align-items: center;

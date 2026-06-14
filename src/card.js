@@ -1457,11 +1457,12 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         <ul class="location-suggestions" id="event-location-suggestions"></ul>
                     </div>
                     ` : ''}
-                    <button type="button" class="advanced-toggle" @click="${() => { this._createShowAdvanced = !this._createShowAdvanced; }}">
-                        <ha-icon icon="${this._createShowAdvanced ? 'mdi:chevron-up' : 'mdi:chevron-down'}"></ha-icon>
+                    <details class="advanced-details">
+                    <summary class="advanced-toggle">
+                        <ha-icon class="adv-chevron" icon="mdi:chevron-down"></ha-icon>
                         <span>${this._language.advancedOptions}</span>
-                    </button>
-                    <div class="advanced-section" style="${this._createShowAdvanced ? '' : 'display: none'}">
+                    </summary>
+                    <div class="advanced-section">
                     <div class="form-row">
                         <label for="event-start-date">${this._language.eventDate}</label>
                         <input type="date" id="event-start-date" class="form-input" .value="${startDateValue}" required />
@@ -1552,6 +1553,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         </label>
                     </div>
                     </div>
+                    </details>
                     <div class="form-actions">
                         <button class="btn btn-cancel" @click="${this._closeCreateEventDialog}">${this._language.cancel}</button>
                         <button class="btn btn-submit" @click="${this._handleCreateEvent}">${this._language.create}</button>
@@ -1713,11 +1715,12 @@ export class SkylightFamilyCalendarCard extends LitElement {
     // overlay. includeCalendar=false on tablet (calendar picked via buttons).
     _renderEditAdvanced(form, includeCalendar) {
         return html`
-            <button type="button" class="advanced-toggle" @click="${() => { this._editFormData = { ...this._editFormData, showAdvanced: !form.showAdvanced }; }}">
-                <ha-icon icon="${form.showAdvanced ? 'mdi:chevron-up' : 'mdi:chevron-down'}"></ha-icon>
+            <details class="advanced-details">
+            <summary class="advanced-toggle">
+                <ha-icon class="adv-chevron" icon="mdi:chevron-down"></ha-icon>
                 <span>${this._language.advancedOptions}</span>
-            </button>
-            <div class="advanced-section" style="${form.showAdvanced ? '' : 'display: none'}">
+            </summary>
+            <div class="advanced-section">
                 <div class="form-row">
                     <label for="edit-event-start-date">${this._language.eventDate}</label>
                     <input type="date" id="edit-event-start-date" class="form-input" required
@@ -1823,6 +1826,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                     </label>
                 </div>
             </div>
+            </details>
         `;
     }
 
