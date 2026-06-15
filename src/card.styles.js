@@ -521,6 +521,25 @@ export default css`
         border-radius: var(--event-border-radius);
     }
 
+    /* "+N" chip shown when a cell's events were clipped to fit (fill height).
+       Tappable to open the full day. Compact and visible (not the card-bg box). */
+    .container .day .events .more {
+        background: var(--divider-color, rgba(0, 0, 0, 0.18));
+        color: var(--primary-text-color);
+        align-self: flex-start;
+        padding: 0 7px;
+        margin-top: 2px;
+        border-radius: 10px;
+        font-size: 0.78em;
+        font-weight: 700;
+        line-height: 1.5;
+        cursor: pointer;
+        opacity: 0.85;
+    }
+    .container .day .events .more:hover {
+        opacity: 1;
+    }
+
     .container .day .events .event {
         display: flex;
         border-left: var(--event-border-width) solid var(--border-color, var(--divider-color, #ffffff));
@@ -1584,6 +1603,13 @@ export default css`
         color: var(--primary-text-color);
         border-radius: 12px;
         box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+    }
+    /* Day-events popup reuses the overlay/modal shell but is a compact centred
+       box (not the full-screen handwriting modal). */
+    .hw-overlay .hw-modal.day-events-modal {
+        width: min(520px, 92vw);
+        height: auto;
+        max-height: 82vh;
     }
     .hw-overlay .hw-modal-header {
         display: flex;

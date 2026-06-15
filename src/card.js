@@ -181,7 +181,8 @@ export class SkylightFamilyCalendarCard extends LitElement {
             _aiLoading: { type: Boolean },
             _aiError: { type: String },
             _aiResult: { type: String },
-            _eraserMode: { type: Boolean }
+            _eraserMode: { type: Boolean },
+            _dayEventsPopup: { type: Object }
             // _createCalendar is intentionally NOT reactive: selecting a calendar
             // in the handwriting overlay updates the active button via direct DOM
             // so it never triggers a (costly) re-render of the overlay/canvas.
@@ -779,6 +780,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         if (!this._fillHeight) {
             grid.style.removeProperty('--day-fill-height');
             this._fillSig = null;
+            this._fillEventCap = 0;
             return;
         }
         const container = this.shadowRoot?.querySelector('.calendar-container');
@@ -804,11 +806,28 @@ export class SkylightFamilyCalendarCard extends LitElement {
             const firstCellViewportTop = contRect.top + firstTop;
             const avail = window.innerHeight - firstCellViewportTop - bottomMargin - gap * (rows - 1);
             const per = Math.floor(avail / rows);
-            // Only grow cells when there is real space to fill (avail large enough).
+            // Only size cells when there is real space to fill (avail large enough).
             if (per > 40) {
                 grid.style.setProperty('--day-fill-height', per + 'px');
+                // Compute how many events fit per cell → cap with a "+N" chip.
+                // Measure a sample cell's header + one event (CSS clip is the
+                // safety net if the estimate is slightly off).
+                const sample = dayCells.find((c) => c.querySelector('.events .event'));
+                const headerEl = (sample || dayCells[0]).querySelector('.day-header');
+                const eventEl = sample && sample.querySelector('.events .event');
+                const headerH = headerEl ? headerEl.offsetHeight : 36;
+                const eventH = eventEl
+                    ? eventEl.offsetHeight + (parseFloat(getComputedStyle(eventEl).marginBottom) || 0)
+                    : 30;
+                // Reserve ~20px for the "+N" chip so it isn't clipped.
+                const cap = Math.max(1, Math.floor((per - headerH - 20) / Math.max(18, eventH)));
+                if (cap !== this._fillEventCap) {
+                    this._fillEventCap = cap;
+                    this.requestUpdate();
+                }
             } else {
                 grid.style.removeProperty('--day-fill-height');
+                this._fillEventCap = 0;
             }
         });
     }
@@ -950,6 +969,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                     ${this._renderEditEventDialog()}
                     ${this._renderRecurringConfirmDialog()}
                     ${this._renderDeleteRecurringDialog()}
+                    ${this._dayEventsPopup ? this._renderDayEventsPopup() : ''}
                     ${this._loader}
                 </div>
             </ha-card>
@@ -1173,6 +1193,28 @@ export class SkylightFamilyCalendarCard extends LitElement {
         `;
     }
 
+    // Popup listing every event of a day — opened by tapping the "+N" chip on a
+    // cell whose events were clipped to keep the month on one page.
+    _renderDayEventsPopup() {
+        const day = this._dayEventsPopup;
+        if (!day) return html``;
+        return html`
+            <div class="hw-overlay" @click="${(e) => { if (e.target === e.currentTarget) this._dayEventsPopup = null; }}">
+                <div class="hw-modal day-events-modal">
+                    <div class="hw-modal-header">
+                        <span>${day.date.toFormat('cccc d LLLL')}</span>
+                        <button type="button" class="hw-close" @click="${() => { this._dayEventsPopup = null; }}">
+                            <ha-icon icon="mdi:close"></ha-icon>
+                        </button>
+                    </div>
+                    <div class="hw-edit-scroll">
+                        ${this._renderEvents(day, true)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     _renderEvents(day, plain = false) {
         const dayEvents = [];
         day.events.map((eventKey) => {
@@ -1213,10 +1255,16 @@ export class SkylightFamilyCalendarCard extends LitElement {
             return this._numberOfDays > 1 ? html`` : this._renderNoEvents();
         }
 
-        let moreEvents = false;
-        if (this._maxDayEvents > 0 && dayEvents.length > this._maxDayEvents) {
-            dayEvents.splice(this._maxDayEvents);
-            moreEvents = true;
+        // Cap the events shown in a grid cell so the cell can't overflow: the
+        // fill-height cap (how many fit, computed from the cell height) takes
+        // precedence, else the configured maxDayEvents. Never cap the plain list
+        // (the day-events popup / single-day view shows everything).
+        let moreCount = 0;
+        const eventLimit = plain ? 0
+            : (this._fillHeight && this._fillEventCap ? this._fillEventCap : (this._maxDayEvents || 0));
+        if (eventLimit > 0 && dayEvents.length > eventLimit) {
+            moreCount = dayEvents.length - eventLimit;
+            dayEvents.splice(eventLimit);
         }
 
         // Row boundaries of the grid: a banner band is "joined" to a neighbour
@@ -1312,10 +1360,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
                     </div>
                 `
             })}
-            ${moreEvents ?
+            ${moreCount > 0 ?
                 html`
-                    <div class="more">
-                        ${this._language.moreEvents}
+                    <div class="more" @click="${(e) => { e.stopPropagation(); this._dayEventsPopup = day; }}"
+                        title="${this._language.moreEvents}">
+                        +${moreCount}
                     </div>
                 ` :
                 ''
