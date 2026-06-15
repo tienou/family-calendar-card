@@ -181,8 +181,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
             _aiLoading: { type: Boolean },
             _aiError: { type: String },
             _aiResult: { type: String },
-            _eraserMode: { type: Boolean },
-            _createCalendar: { type: String }
+            _eraserMode: { type: Boolean }
+            // _createCalendar is intentionally NOT reactive: selecting a calendar
+            // in the handwriting overlay updates the active button via direct DOM
+            // so it never triggers a (costly) re-render of the overlay/canvas.
         }
     }
 
@@ -1664,7 +1666,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         ${this._calendars.map((cal) => html`
                             <button type="button" class="hw-cal-btn ${this._createCalendar === cal.entity ? 'active' : ''}"
                                 style="--cal-color: ${cal.color || '#888'}"
-                                @click="${() => { this._createCalendar = cal.entity; }}">
+                                @click="${(e) => this._selectCreateCalendar(e, cal.entity)}">
                                 <span class="hw-cal-dot" style="background: ${cal.color || '#888'}"></span>
                                 ${this._getCalendarDisplayName(cal)}
                             </button>
@@ -2753,6 +2755,18 @@ export class SkylightFamilyCalendarCard extends LitElement {
     // the whole month each time.
     _fullscreenOverlayOpen() {
         return (this._showCreateEventDialog || this._showEditEventDialog) && this._showHandwritingCanvas();
+    }
+
+    // Calendar selection in the handwriting create overlay: update the active
+    // button directly (no reactive write → no re-render of the overlay/canvas,
+    // which was making selection laggy on the tablet).
+    _selectCreateCalendar(e, entity) {
+        this._createCalendar = entity;
+        const btn = e.currentTarget;
+        const picker = btn.closest('.hw-cal-picker');
+        if (picker) {
+            picker.querySelectorAll('.hw-cal-btn').forEach((b) => b.classList.toggle('active', b === btn));
+        }
     }
 
     _resolveAiProvider() {
