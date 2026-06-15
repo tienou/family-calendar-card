@@ -218,11 +218,19 @@ function e(e){return e&&e.__esModule?e.default:e}let t=globalThis,i=t.ShadowRoot
     }
 
     /* Fill the available height (e.g. a wall-mounted tablet): each day cell is
-       grown (height computed in JS from the viewport) so the week rows fill down
-       to the bottom of the screen. Only the day cells stretch — the weekday /
+       sized (height computed in JS from the viewport) so the week rows fill down
+       to the bottom of the screen. Only the day cells are sized — the weekday /
        navigation rows keep their natural size. Works in any view type. */
     ha-card.fill-height .container .day:not(.header) {
-        min-height: var(--day-fill-height, auto);
+        /* Fixed height (not min-height): caps the cell so a day with many events
+           can't push the grid taller than the screen — the whole month stays on
+           one page. Overflowing events are clipped inside the cell below. */
+        height: var(--day-fill-height, auto);
+    }
+    ha-card.fill-height .container .day:not(.header) .events {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
     }
 
     /* ── Calendar Card Content ────────── */
