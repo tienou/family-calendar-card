@@ -1,6 +1,7 @@
 import { html, LitElement } from 'lit';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
 import { guard } from 'lit-html/directives/guard.js';
+import { version } from '../package.json';
 import { DateTime, Settings as LuxonSettings, Info as LuxonInfo } from 'luxon';
 import styles from './card.styles';
 import clear_night from 'data-url:./icons/clear_night.png';
@@ -1754,7 +1755,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         const date = this._showCreateEventDialog?.date;
         return html`
             <div class="header_title">
-                <span>${this._language.newEvent}${date ? ' — ' + date.toFormat('cccc d LLLL') : ''}</span>
+                <span>${this._language.newEvent}${date ? ' — ' + date.toFormat('cccc d LLLL') : ''} <small style="opacity:0.45;font-weight:400;font-size:0.65em;">v${version}</small></span>
                 <ha-icon-button
                     .label="${this.hass?.localize('ui.dialogs.generic.close') ?? 'Close'}"
                     dialogAction="close"
@@ -2803,7 +2804,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
     // so interacting with the overlay (e.g. picking a calendar) doesn't re-render
     // the whole month each time.
     _fullscreenOverlayOpen() {
-        return (this._showCreateEventDialog || this._showEditEventDialog) && this._showHandwritingCanvas();
+        // A create/edit dialog is open over the calendar. On the tablet it's a
+        // full-screen overlay; on desktop the ha-dialog scrim covers the grid —
+        // either way the month grid behind is hidden, so skip rendering it to keep
+        // dialog interactions (duration, calendar…) snappy.
+        return !!(this._showCreateEventDialog || this._showEditEventDialog);
     }
 
     // Calendar selection in the handwriting create overlay: update the active
