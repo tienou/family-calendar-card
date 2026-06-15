@@ -2089,7 +2089,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
             return;
         }
 
-        this._updateEvents();
+        this._updateEvents(false);
     }
 
     _subscribeToWeatherForecast() {
@@ -2126,11 +2126,18 @@ export class SkylightFamilyCalendarCard extends LitElement {
         });
     }
 
-    _updateEvents() {
-        if (this._loading > 0) {
+    async _updateEvents(force = true) {
+        // In-flight guard uses a dedicated boolean (reliably reset below), NOT the
+        // shared _loading spinner counter — that counter can desync (weather sub,
+        // races) and would otherwise block every refresh, so a created/edited
+        // event only appeared at the next 60s auto-refresh. A forced refresh
+        // (user action) queues one re-run if a fetch is already in flight, so it
+        // is never lost; the periodic/initial refresh just skips when busy.
+        if (this._eventsLoading) {
+            if (force) this._refreshAgain = true;
             return;
         }
-
+        this._eventsLoading = true;
         this._loading++;
         this._updateLoader();
 
@@ -2143,90 +2150,82 @@ export class SkylightFamilyCalendarCard extends LitElement {
         if (this._numberOfDaysIsMonth) {
             this._numberOfDays = this._startDate.daysInMonth;
         }
-        let startDate = this._startDate;
-        let endDate = this._startDate.plus({ days: this._numberOfDays });
-        let now = DateTime.now();
-        let runStartdate = this._startDate.toISO();
+        const startDate = this._startDate;
+        const endDate = this._startDate.plus({ days: this._numberOfDays });
+        const now = DateTime.now();
+        const runStartdate = this._startDate.toISO();
 
         if (this._weather && this._weatherForecast === null) {
             this._subscribeToWeatherForecast();
         }
 
+        const fetches = [];
         let calendarNumber = 0;
         this._calendars.forEach(calendar => {
             if (!calendar.entity || !this.hass.states[calendar.entity]) {
                 return;
             }
-
-            if (!calendar.name) {
-                calendar = {
-                    ...calendar,
-                    name: this.hass.formatEntityAttributeValue(this.hass.states[calendar.entity], 'friendly_name')
-                }
+            let cal = calendar;
+            if (!cal.name) {
+                cal = { ...cal, name: this.hass.formatEntityAttributeValue(this.hass.states[cal.entity], 'friendly_name') };
             }
-            if (!calendar.sorting) {
-                calendar = {
-                    ...calendar,
-                    sorting: calendarNumber
-                }
+            if (!cal.sorting) {
+                cal = { ...cal, sorting: calendarNumber };
             }
-            let currentCalendarNumber = calendarNumber;
-            this._loading++;
-            this.hass.callApi(
-                'get',
-                'calendars/' + calendar.entity + '?start=' + encodeURIComponent(startDate.toISO()) + '&end=' + encodeURIComponent(endDate.toISO())
-            ).then(response => {
-                if (this._startDate.toISO() !== runStartdate) {
-                    this._loading--;
-                    return;
-                }
-
-                this._calendarErrors[currentCalendarNumber] = '';
-
-                response.forEach(event => {
-                    if (this._isFilterEvent(event, calendar.filter ?? '')) {
+            const currentCalendarNumber = calendarNumber;
+            fetches.push(
+                this.hass.callApi(
+                    'get',
+                    'calendars/' + cal.entity + '?start=' + encodeURIComponent(startDate.toISO()) + '&end=' + encodeURIComponent(endDate.toISO())
+                ).then(response => {
+                    if (this._startDate.toISO() !== runStartdate) {
                         return;
                     }
-
-                    let startDate = this._convertApiDate(event.start);
-                    let endDate = this._convertApiDate(event.end);
-                    if (this._hidePastEvents && endDate < now) {
-                        return;
-                    }
-                    let fullDay = this._isFullDay(startDate, endDate);
-
-                    if (!fullDay && !this._isSameDay(startDate, endDate)) {
-                        this._handleMultiDayEvent(event, startDate, endDate, calendar);
-                    } else {
-                        this._addEvent(event, startDate, endDate, fullDay, calendar);
-                    }
-                });
-
-                this._loading--;
-            }).catch(error => {
-                this._calendarErrors[currentCalendarNumber] = 'Error while fetching calendar "' + calendar.entity + '": ' + (error.error ?? 'Unknown error');
-                this._loading--;
-            });
+                    this._calendarErrors[currentCalendarNumber] = '';
+                    response.forEach(event => {
+                        if (this._isFilterEvent(event, cal.filter ?? '')) {
+                            return;
+                        }
+                        const evStart = this._convertApiDate(event.start);
+                        const evEnd = this._convertApiDate(event.end);
+                        if (this._hidePastEvents && evEnd < now) {
+                            return;
+                        }
+                        const fullDay = this._isFullDay(evStart, evEnd);
+                        if (!fullDay && !this._isSameDay(evStart, evEnd)) {
+                            this._handleMultiDayEvent(event, evStart, evEnd, cal);
+                        } else {
+                            this._addEvent(event, evStart, evEnd, fullDay, cal);
+                        }
+                    });
+                }).catch(error => {
+                    this._calendarErrors[currentCalendarNumber] = 'Error while fetching calendar "' + cal.entity + '": ' + (error.error ?? 'Unknown error');
+                })
+            );
             calendarNumber++;
         });
 
-        let checkLoading = window.setInterval(() => {
-            if (this._loading === 0) {
-                clearInterval(checkLoading);
-                this._updateCard();
-                this._updateLoader();
+        await Promise.allSettled(fetches);
 
-                if (this.isConnected) {
-                    this._updateEventsTimeouts.push(
-                        window.setTimeout(() => {
-                            this._updateEvents();
-                        }, this._updateInterval * 1000)
-                    );
-                }
-            }
-        }, 50);
+        // Skip painting if a newer run (navigation) has superseded this one.
+        if (this._startDate.toISO() === runStartdate) {
+            this._updateCard();
+        }
+        this._loading = Math.max(0, this._loading - 1);
+        this._updateLoader();
+        this._eventsLoading = false;
 
-        this._loading--;
+        if (this._refreshAgain) {
+            this._refreshAgain = false;
+            this._updateEvents(true);
+            return;
+        }
+
+        if (this.isConnected) {
+            this._updateEventsTimeouts.push(
+                window.setTimeout(() => this._updateEvents(false), this._updateInterval * 1000)
+            );
+        }
     }
 
     _clearUpdateEventsTimeouts() {
