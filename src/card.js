@@ -3480,23 +3480,53 @@ export class SkylightFamilyCalendarCard extends LitElement {
             dtend = end.toFormat("yyyy-MM-dd'T'HH:mm:ss");
         }
 
-        const entityId = calendar || event.calendars[0];
+        const originalEntity = event.calendars[0];
+        const targetEntity = calendar || originalEntity;
+        // HA's update can't move an event to a different calendar entity. If the
+        // calendar was changed, sending an update to the new calendar (which does
+        // not hold the event's UID) hangs until the WS call times out (~60s). So
+        // a calendar change is done as delete-from-original + create-in-target.
+        const movedCalendar = !!event.uid && targetEntity !== originalEntity;
+
+        const buildEventData = () => {
+            const data = { summary: summary, dtstart: dtstart, dtend: dtend };
+            if (location) data.location = location;
+            if (recurrence) data.rrule = recurrence;
+            return data;
+        };
+        const deleteOriginal = async () => {
+            const deleteData = {
+                type: 'calendar/event/delete',
+                entity_id: originalEntity,
+                uid: event.uid,
+            };
+            if (recurringMode === 'this') {
+                deleteData.recurrence_id = event.recurrence_id;
+            } else if (recurringMode === 'all') {
+                // No recurrence_id
+            } else if (event.recurrence_id) {
+                deleteData.recurrence_id = event.recurrence_id;
+                deleteData.recurrence_range = 'THISANDFUTURE';
+            }
+            await this.hass.callWS(deleteData);
+        };
 
         try {
-            // Try native update first
-            if (event.uid) {
-                const eventData = {
-                    summary: summary,
-                    dtstart: dtstart,
-                    dtend: dtend,
-                };
-                if (location) eventData.location = location;
-                if (recurrence) eventData.rrule = recurrence;
+            if (movedCalendar) {
+                // Move between calendars: delete here, recreate there.
+                await deleteOriginal();
+                await this.hass.callWS({
+                    type: 'calendar/event/create',
+                    entity_id: targetEntity,
+                    event: buildEventData(),
+                });
+            } else if (event.uid) {
+                // Same calendar: native update on the entity that holds the event.
                 const wsData = {
                     type: 'calendar/event/update',
-                    entity_id: entityId,
+                    entity_id: originalEntity,
                     uid: event.uid,
-                    event: eventData,
+                    event: buildEventData(),
                 };
                 if (recurringMode === 'this') {
                     // This event only: send recurrence_id without recurrence_range
@@ -3515,37 +3545,15 @@ export class SkylightFamilyCalendarCard extends LitElement {
             this._editFormData = null;
             this._updateEvents();
         } catch (e) {
-            // Fallback: delete + recreate if update not supported
-            if (e.code === 'not_supported' && event.uid) {
+            // Fallback: delete + recreate in the SAME calendar if update isn't supported.
+            if (e.code === 'not_supported' && event.uid && !movedCalendar) {
                 try {
-                    const deleteData = {
-                        type: 'calendar/event/delete',
-                        entity_id: entityId,
-                        uid: event.uid,
-                    };
-                    if (recurringMode === 'this') {
-                        deleteData.recurrence_id = event.recurrence_id;
-                    } else if (recurringMode === 'all') {
-                        // No recurrence_id
-                    } else if (event.recurrence_id) {
-                        deleteData.recurrence_id = event.recurrence_id;
-                        deleteData.recurrence_range = 'THISANDFUTURE';
-                    }
-                    await this.hass.callWS(deleteData);
-
-                    const fallbackEventData = {
-                        summary: summary,
-                        dtstart: dtstart,
-                        dtend: dtend,
-                    };
-                    if (location) fallbackEventData.location = location;
-                    if (recurrence) fallbackEventData.rrule = recurrence;
+                    await deleteOriginal();
                     await this.hass.callWS({
                         type: 'calendar/event/create',
-                        entity_id: entityId,
-                        event: fallbackEventData,
+                        entity_id: originalEntity,
+                        event: buildEventData(),
                     });
-
                     this._showEditEventDialog = null;
                     this._editFormData = null;
                     this._updateEvents();
