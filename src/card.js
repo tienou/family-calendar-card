@@ -99,21 +99,17 @@ export class SkylightFamilyCalendarCard extends LitElement {
     _calendarErrors = [];
 
     // Skylight-specific properties
-    _calendarVisibility = {};
-    _currentView = 'Week';
-    _createDuration = '60';
-    _createShowAdvanced = false;
+    // Non-reactive instance state (safe as class fields).
     _createEndTouched = false;
-    _createTitle = null;
-    _createStartTime = null;
-    _aiLoading = false;
-    _aiError = null;
-    _aiResult = null;
     _drawing = false;
     _hasDrawing = false;
     _canvasReady = false;
-    _eraserMode = false;
     _createCalendar = null;
+    // NOTE: reactive properties (_calendarVisibility, _currentView, _createDuration,
+    // _createShowAdvanced, _createTitle, _createStartTime, _aiLoading, _aiError,
+    // _aiResult, _eraserMode) are initialised in the constructor — declaring them
+    // as class fields here would shadow Lit's reactive accessors, so assigning to
+    // them would update the value but NOT trigger a re-render.
     _selectedDay = null;
     _clockInterval = null;
     _views;
@@ -124,6 +120,22 @@ export class SkylightFamilyCalendarCard extends LitElement {
      *
      * @returns {HTMLElement}
      */
+    constructor() {
+        super();
+        // Initialise reactive properties here (not as class fields) so Lit's
+        // reactive accessors aren't shadowed — assignments must trigger renders.
+        this._calendarVisibility = {};
+        this._currentView = 'Week';
+        this._createDuration = '60';
+        this._createShowAdvanced = false;
+        this._createTitle = null;
+        this._createStartTime = null;
+        this._aiLoading = false;
+        this._aiError = null;
+        this._aiResult = null;
+        this._eraserMode = false;
+    }
+
     static getConfigElement() {
         // Create and return an editor element
         return document.createElement("skylight-family-calendar-card-editor");
@@ -2823,14 +2835,15 @@ export class SkylightFamilyCalendarCard extends LitElement {
         }
     }
 
-    // Stable handler (not an inline arrow) for the create-form duration buttons,
-    // so the listener is never churned by re-renders. Logs for diagnosis.
+    // Create-form duration buttons. _createDuration is shadowed by its class-field
+    // initializer in this build, so assigning it stores the value but does NOT
+    // trigger a render — force one so the active button updates.
     _onCreateDurationClick(e) {
         const v = e.currentTarget?.dataset?.duration;
-        console.log('[skylight] duration click →', v, 'was', this._createDuration);
         if (!v) return;
         this._createDuration = v;
         this._createEndTouched = false;
+        this.requestUpdate();
     }
 
     _resolveAiProvider() {
