@@ -716,6 +716,29 @@ export class SkylightFamilyCalendarCard extends LitElement {
         return prefix ? prefix + ' ' + title : title;
     }
 
+    // For display: pull the leading "marker" emoji (the calendar's titleEmoji or
+    // a category emoji) out of the title so it can be shown in the icon slot
+    // instead of the calendar icon — avoiding a duplicate glyph. A 🔔 reminder,
+    // if present, stays in the title.
+    _eventMarker(event) {
+        const s = event.summary || '';
+        const cal = this._calendars.find((c) => c.entity === (event.calendars && event.calendars[0]));
+        const candidates = [];
+        if (cal && cal.titleEmoji) candidates.push(cal.titleEmoji);
+        candidates.push(...this._categoryEmojis());
+        const bell = '\u{1F514} ';
+        for (const emoji of candidates) {
+            if (!emoji) continue;
+            if (s.startsWith(emoji)) {
+                return { emoji, title: s.slice(emoji.length).replace(/^\s+/, '') };
+            }
+            if (s.startsWith(bell + emoji)) {
+                return { emoji, title: bell + s.slice((bell + emoji).length).replace(/^\s+/, '') };
+            }
+        }
+        return { emoji: '', title: s };
+    }
+
     _onCreateCategoryClick(e) {
         const cat = e.currentTarget?.dataset?.category ?? '';
         // Toggle off if the active category is tapped again.
@@ -1420,6 +1443,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
                     ? ' banner' + (leftJoin ? ' ljoin' : '') + (rightJoin ? ' rjoin' : '')
                     : '';
                 const showBannerText = !banner || pos === 'start' || isRowStart;
+                // A category/title emoji takes the icon slot (and is stripped from
+                // the shown title) so it doesn't duplicate the calendar icon.
+                const marker = this._eventMarker(event);
                 return html`
                     <div
                         class="event ${event.class}${bannerClasses}"
@@ -1450,7 +1476,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         })}
                         ${banner ? html`
                             <div class="inner">
-                                <div class="title">${showBannerText && this._showEventTitle ? event.summary : html` `}</div>
+                                <div class="title">${showBannerText && this._showEventTitle ? marker.title : html` `}</div>
                             </div>
                         ` : html`
                         <div class="inner">
@@ -1461,7 +1487,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                                 ''
                             }
                             ${this._showEventTitle ? html`<div class="title">
-                                ${event.summary}
+                                ${marker.title}
                             </div>` : ''}
                             ${this._showDescription ?
                                 html`
@@ -1482,13 +1508,19 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             }
                         </div>
                         `}
-                        ${event.icon && (!banner || showBannerText) ?
+                        ${(marker.emoji && (!banner || showBannerText)) ?
                             html`
                                 <div class="icon">
-                                    <ha-icon icon="${event.icon}"></ha-icon>
+                                    <span class="event-emoji">${marker.emoji}</span>
                                 </div>
                             ` :
-                            ''
+                            (event.icon && (!banner || showBannerText)) ?
+                                html`
+                                    <div class="icon">
+                                        <ha-icon icon="${event.icon}"></ha-icon>
+                                    </div>
+                                ` :
+                                ''
                         }
                     </div>
                 `

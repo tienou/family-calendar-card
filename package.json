@@ -1,6 +1,6 @@
 {
   "name": "ha-skylight-family-calendar-card",
-  "version": "1.0.122",
+  "version": "1.0.123",
   "description": "A Skylight-inspired family calendar card for Home Assistant with weather, event management, and touchscreen-friendly UI.",
   "source": "src/index.js",
   "module": "dist/skylight-family-calendar-card.js",

@@ -608,6 +608,13 @@ export default css`
         padding: var(--event-padding);
     }
 
+    .container .day .events .event .icon .event-emoji {
+        font-size: var(--event-icon-size, 18px);
+        line-height: 1;
+        display: flex;
+        align-items: center;
+    }
+
     .container .day .events .event .inner {
         flex-grow: 1;
         padding: var(--event-padding);
