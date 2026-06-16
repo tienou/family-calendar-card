@@ -80,4 +80,24 @@ export default css`
       align-items: center;
       justify-content: center;
     }
+    .sk-day-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .sk-day-btn {
+      min-width: 40px;
+      padding: 6px 8px;
+      border: 1px solid var(--divider-color, rgba(0, 0, 0, 0.2));
+      border-radius: 6px;
+      background: var(--card-background-color, #fff);
+      color: var(--primary-text-color, #333);
+      cursor: pointer;
+      font-size: 0.85em;
+    }
+    .sk-day-btn.selected {
+      background: var(--primary-color, #03a9f4);
+      color: var(--text-primary-color, #fff);
+      border-color: var(--primary-color, #03a9f4);
+    }
 `;

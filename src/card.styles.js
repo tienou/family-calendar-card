@@ -391,7 +391,7 @@ export default css`
     /* Weekend (Sat/Sun) tint — neutral translucent grey adapts to light and dark;
        override with the weekendColor config option (--weekend-color). */
     .container .day.weekend:not(.header) {
-        background-color: var(--weekend-color, rgba(128, 128, 128, 0.12));
+        background-color: var(--weekend-color, rgba(128, 128, 128, 0.28));
     }
 
     .container .day.today .date .number {

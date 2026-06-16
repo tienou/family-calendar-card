@@ -212,10 +212,12 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                         ${this.addBooleanField('showWeekDayText', 'Show week day text', true)}
                         ${this.addHint('Display day names (Mon, Tue...) above columns')}
                         ${this.addBooleanField('hideWeekend', 'Hide weekend')}
-                        ${this.addBooleanField('highlightWeekend', 'Highlight weekend (Sat/Sun)')}
-                        ${this.addHint('Tints the Saturday & Sunday cells')}
+                        ${this.addBooleanField('highlightWeekend', 'Highlight weekend')}
+                        ${this.addHint('Tints the weekend day cells')}
+                        ${this._renderWeekendDayPicker()}
+                        ${this.addHint('Which days count as weekend (default Sat + Sun)')}
                         ${this.addColorField('weekendColor', 'Weekend color')}
-                        ${this.addHint('Leave on "A" (Auto) for a subtle shade that adapts to light/dark')}
+                        ${this.addHint('Leave on "A" (Auto) for a shade that adapts to light/dark')}
                         ${this.addBooleanField('hideDaysWithoutEvents', 'Hide days without events except for today')}
                         ${this.addBooleanField('hideTodayWithoutEvents', 'Also hide today without events')}
                         ${this.addTextField('maxDayEvents', 'Maximum number of events per day (0 is no maximum)', 'number', 0)}
@@ -661,6 +663,41 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
         defaultValue = defaultValue ?? '';
 
         return key.split('.').reduce((o, i) => o[i] ?? defaultValue, this._config) ?? defaultValue;
+    }
+
+    // Day-of-week picker for `weekendDays` (Luxon weekday numbers Mon=1 … Sun=7).
+    _renderWeekendDayPicker() {
+        const locale = (this._config && this._config.locale) || 'en';
+        const cfg = this._config && this._config.weekendDays;
+        const selected = (Array.isArray(cfg) && cfg.length) ? cfg.map((d) => parseInt(d)) : [6, 7];
+        const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' });
+        // 2024-01-01 is a Monday → weekday wd maps to Jan (wd).
+        const days = [1, 2, 3, 4, 5, 6, 7].map((wd) => ({
+            wd,
+            label: fmt.format(new Date(Date.UTC(2024, 0, wd))),
+        }));
+        return html`
+            <div class="sk-field">
+                <label class="sk-label">Weekend days</label>
+                <div class="sk-day-picker">
+                    ${days.map((d) => html`
+                        <button type="button"
+                            class="sk-day-btn ${selected.includes(d.wd) ? 'selected' : ''}"
+                            @click="${() => this._toggleWeekendDay(d.wd)}">${d.label}</button>
+                    `)}
+                </div>
+            </div>
+        `;
+    }
+
+    _toggleWeekendDay(wd) {
+        const config = JSON.parse(JSON.stringify(this._config));
+        const cur = (Array.isArray(config.weekendDays) && config.weekendDays.length)
+            ? config.weekendDays.map((d) => parseInt(d))
+            : [6, 7];
+        config.weekendDays = (cur.includes(wd) ? cur.filter((d) => d !== wd) : [...cur, wd]).sort((a, b) => a - b);
+        this._config = config;
+        this.dispatchConfigChangedEvent();
     }
 
     // Swap a calendar with its neighbour to reorder the list (dir = -1 up / +1 down).

@@ -258,6 +258,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._hideWeekend = config.hideWeekend ?? false;
         this._highlightWeekend = config.highlightWeekend ?? false;
         this._weekendColor = config.weekendColor || null;
+        // Which weekdays count as "weekend" for the tint (Luxon: Mon=1 … Sun=7).
+        this._weekendDays = (Array.isArray(config.weekendDays) && config.weekendDays.length)
+            ? config.weekendDays.map((d) => parseInt(d)).filter((d) => d >= 1 && d <= 7)
+            : [6, 7];
         this._showNavigation = config.showNavigation ?? true;
         this._startingDay = config.startingDay ?? 'today';
         this._startingDayOffset = config.startingDayOffset ?? 0;
@@ -1344,7 +1348,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 }
                 const isSelected = this._selectedDay && this._selectedDay.date.day === day.date.day && this._selectedDay.date.month === day.date.month && this._selectedDay.date.year === day.date.year;
                 return html`
-                    <div class="day ${day.class}${isSelected ? ' selected' : ''}${this._highlightWeekend && day.date.weekday >= 6 ? ' weekend' : ''}" data-date="${day.date.day}" data-weekday="${day.date.weekday}" data-month="${day.date.month}" data-year="${day.date.year}" data-week="${day.date.weekNumber}" @click="${(e) => { if (this._numberOfDaysIsMonth) { e.stopPropagation(); this._selectDay(day); } }}">
+                    <div class="day ${day.class}${isSelected ? ' selected' : ''}${this._highlightWeekend && this._weekendDays.includes(day.date.weekday) ? ' weekend' : ''}" data-date="${day.date.day}" data-weekday="${day.date.weekday}" data-month="${day.date.month}" data-year="${day.date.year}" data-week="${day.date.weekNumber}" @click="${(e) => { if (this._numberOfDaysIsMonth) { e.stopPropagation(); this._selectDay(day); } }}">
                         <div class="day-header">
                             <div class="date">
                                 ${this._dayFormat ?

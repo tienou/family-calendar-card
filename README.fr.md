@@ -137,8 +137,9 @@ calendars:
 | `calendars` | list | requis | Entites calendrier a afficher |
 | `hidePastEvents` | boolean | `false` | Masquer les evenements passes |
 | `hideWeekend` | boolean | `false` | Masquer les week-ends |
-| `highlightWeekend` | boolean | `false` | Teinte les cases du samedi et dimanche avec un fond different |
-| `weekendColor` | string | - | Couleur de teinte du week-end (vide = teinte auto discrete qui s'adapte au mode clair/sombre) |
+| `highlightWeekend` | boolean | `false` | Teinte les cases des jours de week-end avec un fond different |
+| `weekendDays` | list | `[6, 7]` | Quels jours comptent comme week-end (Lun=1 … Dim=7), ex. `[5, 6, 7]` |
+| `weekendColor` | string | - | Couleur de teinte du week-end (vide = teinte auto qui s'adapte au mode clair/sombre) |
 | `combineSimilarEvents` | boolean | `false` | Combiner les evenements en double |
 | `updateInterval` | number | `60` | Intervalle de rafraichissement en secondes |
 | `multiDayMode` | string | `banner` | Multi-jours : `banner` (bande fusionnee), `default`, `multiple`, `single` |
