@@ -1936,4 +1936,168 @@ export default css`
             display: none;
         }
     }
+
+    /* ════════════════════════════════════════════════════════════════════
+       "familial" theme — design handoff. Light by default, dark via the
+       .dark class (driven by the active HA theme's dark mode). Calendar
+       colours are preserved (per-event --border-color / filter --cal-color).
+       ════════════════════════════════════════════════════════════════════ */
+    ha-card.theme-familial {
+        --fam-panel: #ffffff;
+        --fam-cell: #ffffff;
+        --fam-weekend: #f6f7f9;
+        --fam-trail: #f1f2f5;
+        --fam-border: #e4e7ec;
+        --fam-line: #ebedf1;
+        --fam-ink: #1d2230;
+        --fam-sub: #5b6470;
+        --fam-muted: #9aa2b1;
+        --fam-head: #7a828f;
+        --fam-accent: #EC6B4E;
+        --fam-event-mix: 12%;
+        background: var(--fam-panel) !important;
+        border: 1px solid var(--fam-border) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, .06) !important;
+        color: var(--fam-ink);
+        font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    ha-card.theme-familial.dark {
+        --fam-panel: #191c22;
+        --fam-cell: #191c22;
+        --fam-weekend: #15181d;
+        --fam-trail: #131519;
+        --fam-border: #2a2f38;
+        --fam-line: #23272f;
+        --fam-ink: #e9ecf1;
+        --fam-sub: #aab2bf;
+        --fam-muted: #6b7480;
+        --fam-head: #8b94a2;
+        --fam-event-mix: 22%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .4) !important;
+    }
+
+    /* Filters: two labelled groups (round dots = members, square = categories) */
+    ha-card.theme-familial .controls { padding: 18px 18px 14px; }
+    ha-card.theme-familial .buttons-row {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        gap: 24px; flex-wrap: wrap;
+    }
+    ha-card.theme-familial .filter-groups { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+    ha-card.theme-familial .filter-group-label {
+        font-size: 11px; font-weight: 700; letter-spacing: .06em;
+        text-transform: uppercase; color: var(--fam-head); margin: 0 0 8px 2px;
+    }
+    ha-card.theme-familial .calendar-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+    ha-card.theme-familial .filter-btn {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 6px 12px; border-radius: 999px;
+        border: 1px solid var(--fam-border); background: transparent;
+        color: var(--fam-muted); font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all .15s;
+    }
+    ha-card.theme-familial .filter-btn .cal-dot {
+        width: 9px; height: 9px; border-radius: 50%; box-sizing: border-box;
+        border: 2px solid var(--cal-color, #888); background: transparent; flex: 0 0 auto;
+    }
+    ha-card.theme-familial .filter-btn.category .cal-dot { border-radius: 3px; }
+    ha-card.theme-familial .filter-btn.active {
+        color: var(--fam-ink);
+        background: color-mix(in srgb, var(--fam-panel), var(--cal-color, #888) 12%);
+        border-color: color-mix(in srgb, var(--fam-panel), var(--cal-color, #888) 50%);
+    }
+    ha-card.theme-familial.dark .filter-btn.active {
+        background: color-mix(in srgb, var(--fam-panel), var(--cal-color, #888) 20%);
+        border-color: color-mix(in srgb, var(--fam-panel), var(--cal-color, #888) 42%);
+    }
+    ha-card.theme-familial .filter-btn.active .cal-dot { background: var(--cal-color, #888); }
+
+    /* Segmented control (view buttons) */
+    ha-card.theme-familial .view-selector {
+        display: inline-flex; gap: 2px; padding: 3px; align-self: flex-start;
+        background: var(--fam-trail); border: 1px solid var(--fam-border); border-radius: 10px;
+    }
+    ha-card.theme-familial .view-btn {
+        background: transparent; border: none; cursor: pointer;
+        padding: 6px 14px; border-radius: 7px;
+        color: var(--fam-muted); font-size: 13px; font-weight: 600;
+    }
+    ha-card.theme-familial .view-btn .view-icon { display: none; }
+    ha-card.theme-familial .view-btn .view-label { display: inline; }
+    ha-card.theme-familial .view-btn.active {
+        background: var(--fam-panel); color: var(--fam-ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+    }
+
+    /* Navigation month title */
+    ha-card.theme-familial .container .navigation .month {
+        font-size: 18px; font-weight: 800; color: var(--fam-ink); text-transform: capitalize;
+    }
+
+    /* Grid + day cells */
+    ha-card.theme-familial .container { --days-spacing: 0; gap: 0; }
+    ha-card.theme-familial .container .day {
+        background: var(--fam-cell);
+        border-right: 1px solid var(--fam-line);
+        border-bottom: 1px solid var(--fam-line);
+        border-left: none; border-top: none;
+        padding: 8px 9px 10px; min-height: 126px; margin: 0;
+        color: var(--fam-ink);
+    }
+    ha-card.theme-familial .container .day.weekend:not(.header) { background: var(--fam-weekend); }
+    ha-card.theme-familial .container .day.outside { background: var(--fam-trail); }
+    ha-card.theme-familial .container .day.today:not(.header) {
+        background: color-mix(in srgb, var(--fam-cell), var(--fam-accent) 8%);
+    }
+    ha-card.theme-familial.dark .container .day.today:not(.header) {
+        background: color-mix(in srgb, var(--fam-cell), var(--fam-accent) 16%);
+    }
+
+    /* Day header row (LUNDI … DIMANCHE) */
+    ha-card.theme-familial .container .day.header {
+        background: transparent; min-height: auto; padding: 10px 9px;
+        border-bottom: 1px solid var(--fam-line);
+    }
+    ha-card.theme-familial .container .day.header .date .text,
+    ha-card.theme-familial .container .day.header .date .text-short {
+        color: var(--fam-head); font-size: 11px; font-weight: 700;
+        letter-spacing: .06em; text-transform: uppercase;
+    }
+
+    /* Day number + today pill (accent, distinct from birthdays) */
+    ha-card.theme-familial .container .day .date .number {
+        font-size: 15px; font-weight: 700; line-height: 1; color: var(--fam-ink); background: none;
+    }
+    ha-card.theme-familial .container .day.today .date .number {
+        background-color: var(--fam-accent); color: #fff;
+        border-radius: 999px; min-width: 25px; height: 25px; padding: 0 7px;
+        display: inline-flex; align-items: center; justify-content: center; font-size: 13px;
+    }
+
+    /* Event cards: light tinted fill + coloured left bar + dark contrasted text */
+    ha-card.theme-familial .container .day .events .event {
+        background-color: color-mix(in srgb, var(--fam-cell), var(--border-color, #888) var(--fam-event-mix));
+        border-left: 3px solid var(--border-color, #888);
+        border-radius: 7px; padding: 5px 8px 6px; margin-bottom: 5px; color: var(--fam-ink);
+    }
+    ha-card.theme-familial .container .day .events .event.banner {
+        background-color: color-mix(in srgb, var(--fam-cell), var(--border-color, #888) var(--fam-event-mix));
+        color: var(--fam-ink);
+    }
+    ha-card.theme-familial .container .day .events .event .inner { padding: 0; }
+    ha-card.theme-familial .container .day .events .event .title {
+        font-size: 12.5px; font-weight: 600; color: var(--fam-ink);
+    }
+    ha-card.theme-familial .container .day .events .event .time {
+        font-size: 11px; font-weight: 700;
+        color: color-mix(in srgb, var(--border-color, #888), #000 32%);
+    }
+    ha-card.theme-familial.dark .container .day .events .event .time {
+        color: color-mix(in srgb, var(--border-color, #888), #fff 45%);
+    }
+    ha-card.theme-familial .container .day .events .event .location { font-size: 10.5px; color: var(--fam-muted); }
+    ha-card.theme-familial .container .day .events .event .icon { color: var(--fam-sub); --mdc-icon-size: 14px; }
+
+    /* Weather temps */
+    ha-card.theme-familial .container .day .weather .temperature .high { color: var(--fam-sub); font-weight: 700; }
+    ha-card.theme-familial .container .day .weather .temperature .low { color: var(--fam-muted); }
 `;

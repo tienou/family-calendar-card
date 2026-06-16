@@ -58,6 +58,7 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                         ${this.addSelectField('theme', 'Theme', [
                             { value: 'skylight', label: 'Skylight' },
                             { value: 'homeassistant', label: 'Home Assistant' },
+                            { value: 'familial', label: 'Familial' },
                         ], true, 'skylight')}
                         ${this.addHint('Visual style of the calendar card')}
                         ${this.addBooleanField('materialSymbols', 'Use Material Symbols icons')}

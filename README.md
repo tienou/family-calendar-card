@@ -33,10 +33,10 @@ A Skylight-inspired family calendar card for Home Assistant. Displays events fro
 - **Merged multi-day events**: vacations and trips display as a continuous colored banner across days (Google Calendar style), with `multiDayMode` to restore legacy rendering
 - **View persistence**: selected view is saved to localStorage and restored on reload
 
-### Dual Themes
+### Themes
 - **Skylight theme**: Original Skylight-inspired look with signature colors and style
 - **Home Assistant theme**: Native HA look that follows your HA theme (dark mode supported)
-- Theme selector with icon-based buttons in the card header
+- **Familial theme**: Clean redesign with explicit light/dark tokens — opaque panel, tinted event cards with a coloured left bar and contrasted text, accent "today" pill, weekend tint, and a filter legend split into **Members** (round dots) / **Categories** (square dots). Light/dark follows the active HA theme. Your calendar colours are preserved. Calendars are grouped automatically (writable person calendars → members; all-day/holiday calendars → categories); override per calendar with `group: member` or `group: category`.
 
 ### Mobile Month View
 - **Google Agenda-style** mobile month view on small screens (smartphones)
@@ -152,7 +152,7 @@ calendars:
 | `claudeApiKey` | string | - | Anthropic Claude API key → enables the handwriting canvas via Claude Vision |
 | `claudeModel` | string | `claude-opus-4-8` | Claude model used for handwriting recognition (e.g. `claude-haiku-4-5` for lower cost/latency) |
 | `aiProvider` | string | auto | Force the handwriting provider: `gemini` or `claude` (auto-selected if only one key is set; Claude preferred when both) |
-| `theme` | string | `skylight` | Theme: `skylight` or `homeassistant` |
+| `theme` | string | `skylight` | Theme: `skylight`, `homeassistant` or `familial` |
 
 ### Calendar options
 

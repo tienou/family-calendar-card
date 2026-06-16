@@ -723,6 +723,57 @@ export class SkylightFamilyCalendarCard extends LitElement {
         return (this._materialSymbols && cal.iconMaterial) ? cal.iconMaterial : (cal.icon || null);
     }
 
+    // "familial" theme splits the legend into Members (round dot) and Categories
+    // (square dot). A calendar is a category when explicitly grouped, when it is
+    // an info (all-day-only) calendar, or when it is read-only (holidays); the
+    // rest (writable person calendars) are members. Override with `group:`.
+    _calendarGroup(cal) {
+        if (cal.group === 'member' || cal.group === 'category') return cal.group;
+        if (cal.allDayOnly) return 'category';
+        if (!this._isWritable(cal.entity)) return 'category';
+        return 'member';
+    }
+
+    _filterGroupLabel(group) {
+        const fr = (this._locale || 'en').startsWith('fr');
+        if (group === 'category') return fr ? 'Catégories' : 'Categories';
+        return fr ? 'Membres' : 'Members';
+    }
+
+    // Calendar filter pills. The "familial" theme shows two labelled groups with
+    // coloured dots; every other theme keeps the flat icon+name list.
+    _renderCalendarFilters() {
+        const pill = (cal) => html`
+            <button
+                class="filter-btn ${this._calendarVisibility[cal.entity] !== false ? 'active' : ''} ${this._calendarGroup(cal)}"
+                style="--cal-color: ${cal.color || '#888'}"
+                @click="${() => this._toggleCalendarVisibility(cal.entity)}"
+            >
+                ${this._theme === 'familial'
+                    ? html`<span class="cal-dot"></span>`
+                    : (this._resolveCalendarIcon(cal) ? html`<ha-icon icon="${this._resolveCalendarIcon(cal)}"></ha-icon>` : '')}
+                <span>${this._getCalendarDisplayName(cal)}</span>
+            </button>`;
+        if (this._theme === 'familial') {
+            const members = this._calendars.filter((c) => this._calendarGroup(c) === 'member');
+            const categories = this._calendars.filter((c) => this._calendarGroup(c) === 'category');
+            return html`
+                <div class="filter-groups">
+                    ${members.length ? html`
+                        <div class="filter-group">
+                            <div class="filter-group-label">${this._filterGroupLabel('member')}</div>
+                            <div class="calendar-filters">${members.map(pill)}</div>
+                        </div>` : ''}
+                    ${categories.length ? html`
+                        <div class="filter-group">
+                            <div class="filter-group-label">${this._filterGroupLabel('category')}</div>
+                            <div class="calendar-filters">${categories.map(pill)}</div>
+                        </div>` : ''}
+                </div>`;
+        }
+        return html`<div class="calendar-filters">${this._calendars.map(pill)}</div>`;
+    }
+
     // All known category emojis, pre-sorted longest-first (cached in setConfig).
     // Used to detect and strip a leading category marker when editing an event.
     _categoryEmojis() {
@@ -1112,6 +1163,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
             cardClasses.push('fill-height');
         }
         cardClasses.push('theme-' + this._theme);
+        // The "familial" theme uses explicit light/dark tokens driven by the
+        // active HA theme's dark mode (not prefers-color-scheme).
+        if (this.hass?.themes?.darkMode) {
+            cardClasses.push('dark');
+        }
 
         const cardStyles = [
             '--event-background-color: ' + this._eventBackground + ';'
@@ -1166,18 +1222,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             </div>
                         ` : ''}
                         <div class="buttons-row">
-                            <div class="calendar-filters">
-                                ${this._calendars.map(cal => html`
-                                    <button
-                                        class="filter-btn ${this._calendarVisibility[cal.entity] !== false ? 'active' : ''}"
-                                        style="--cal-color: ${cal.color || '#888'}"
-                                        @click="${() => this._toggleCalendarVisibility(cal.entity)}"
-                                    >
-                                        ${this._resolveCalendarIcon(cal) ? html`<ha-icon icon="${this._resolveCalendarIcon(cal)}"></ha-icon>` : ''}
-                                        <span>${this._getCalendarDisplayName(cal)}</span>
-                                    </button>
-                                `)}
-                            </div>
+                            ${this._renderCalendarFilters()}
                             <div class="view-selector">
                                 ${this._views.map(view => html`
                                     <button
@@ -1552,7 +1597,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         data-start-minute="${event.start.toFormat('mm')}"
                         data-end-hour="${event.end.toFormat('H')}"
                         data-end-minute="${event.end.toFormat('mm')}"
-                        style="--border-color: ${event.colors[0]}${this._colorFullEvent ? '; background-color: ' + event.colors[0] + '; color: #fff; border-left-width: 0' : ''}"
+                        style="--border-color: ${event.colors[0]}${(this._colorFullEvent && this._theme !== 'familial') ? '; background-color: ' + event.colors[0] + '; color: #fff; border-left-width: 0' : ''}"
                         @click="${() => {
                             this._handleEventClick(event)
                         }}"
