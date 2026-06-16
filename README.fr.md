@@ -162,8 +162,7 @@ calendars:
 | `iconMaterial` | string | Icone Material Symbols utilisee a la place de `icon` quand `materialSymbols` est actif (ex. `m3rf:home`) |
 | `filter` | string | Regex pour filtrer les evenements |
 | `allDayOnly` | boolean | Calendrier "info" (ex. anniversaires) : le formulaire de creation n'affiche que le titre et enregistre un evenement d'une journee entiere, sans heure ni duree |
-| `titleEmoji` | string | Emoji affiche devant chaque titre d'evenement de ce calendrier (affichage seul, ex. `🎂` pour les anniversaires) |
-| `titleIcon` | string | Icone Material Symbols utilisee a la place de `titleEmoji` quand `materialSymbols` est actif (ex. `m3rf:cake`) |
+| `titleEmoji` | string | Emoji affiche devant chaque titre d'evenement de ce calendrier (affichage seul, ex. `🎂` pour les anniversaires). Quand `materialSymbols` est actif, c'est l'`iconMaterial` du calendrier qui est affichee a la place. |
 
 > **Calendriers en lecture seule** (vacances scolaires, jours feries — integrations qui ne permettent pas la creation d'evenements) : detectes automatiquement. Ils n'apparaissent jamais comme cible de creation, et leurs evenements s'ouvrent en consultation seule (pas de modification/suppression).
 

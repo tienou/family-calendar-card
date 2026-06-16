@@ -162,8 +162,7 @@ calendars:
 | `iconMaterial` | string | Material Symbols icon used instead of `icon` when `materialSymbols` is on (e.g. `m3rf:home`) |
 | `filter` | string | Regex to filter events |
 | `allDayOnly` | boolean | Treat as an "info" calendar (e.g. birthdays): the create form shows the title only and saves a single all-day event with no time or duration |
-| `titleEmoji` | string | Emoji shown before every event title of this calendar (display only, e.g. `🎂` for birthdays) |
-| `titleIcon` | string | Material Symbols icon used instead of `titleEmoji` when `materialSymbols` is on (e.g. `m3rf:cake`) |
+| `titleEmoji` | string | Emoji shown before every event title of this calendar (display only, e.g. `🎂` for birthdays). When `materialSymbols` is on, the calendar's `iconMaterial` is shown instead. |
 
 > **Read-only calendars** (holidays, school holidays — integrations that don't support event creation) are detected automatically: they never appear as a create target, and their events open in read-only detail view (no edit/delete).
 

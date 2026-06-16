@@ -765,7 +765,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
         // each category. Each carries its emoji (stored in the title) and an
         // optional Material Symbols icon shown instead when the option is on.
         const candidates = [];
-        if (cal && cal.titleEmoji) candidates.push({ emoji: cal.titleEmoji, icon: cal.titleIcon });
+        // For a title-emoji calendar (e.g. birthdays) the per-event glyph follows
+        // the calendar's own icon: its Material Symbols icon when the option is on,
+        // otherwise the title emoji. (One source of truth — no separate field.)
+        if (cal && cal.titleEmoji) candidates.push({ emoji: cal.titleEmoji, icon: cal.iconMaterial || cal.icon });
         candidates.push(...(this._categoryCandidates || []));
         for (const cand of candidates) {
             const emoji = cand.emoji;

@@ -133,9 +133,7 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                                         ${this.addBooleanField('calendars.' + index + '.allDayOnly', 'Info calendar (all-day only)')}
                                         ${this.addHint('Creates title-only all-day events (no time/duration), e.g. birthdays')}
                                         ${this.addEmojiField('calendars.' + index + '.titleEmoji', 'Title emoji')}
-                                        ${this.addHint('Shown before every event title of this calendar (display only), e.g. 🎂')}
-                                        ${this.addIconPickerField('calendars.' + index + '.titleIcon', 'Title icon (Material Symbols)')}
-                                        ${this.addHint('Used instead of the title emoji when "Use Material Symbols icons" is on, e.g. m3rf:cake')}
+                                        ${this.addHint('Shown before every event title of this calendar (display only), e.g. 🎂. With "Use Material Symbols icons" on, the calendar\'s Material Symbols icon above is shown instead.')}
                                         ${this.addButton('Remove calendar', 'mdi:trash-can', () => {
                                             const config = JSON.parse(JSON.stringify(this._config));
                                             if (config.calendars.length === 1) {
