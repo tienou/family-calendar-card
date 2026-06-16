@@ -60,6 +60,8 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                             { value: 'homeassistant', label: 'Home Assistant' },
                         ], true, 'skylight')}
                         ${this.addHint('Visual style of the calendar card')}
+                        ${this.addBooleanField('materialSymbols', 'Use Material Symbols icons')}
+                        ${this.addHint('Requires the "Material Symbols" integration. When on, calendars use their Material Symbols icon and categories show their icon instead of the emoji (the emoji is still saved in the event title).')}
                         ${this.addTextField('title', 'Title')}
                         ${this.addHint('Card title displayed above the calendar')}
                         ${this.addBooleanField('showTitle', 'Show title', true)}
@@ -118,6 +120,8 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                                         ${this.addColorField('calendars.' + index + '.color', 'Color')}
                                         ${this.addHint('Pick a colour, or "A" (Auto) to let the card assign one')}
                                         ${this.addIconPickerField('calendars.' + index + '.icon', 'Icon')}
+                                        ${this.addIconPickerField('calendars.' + index + '.iconMaterial', 'Material Symbols icon')}
+                                        ${this.addHint('Used instead of the icon above when "Use Material Symbols icons" is on (e.g. m3rf:home)')}
                                         ${this.addTextField('calendars.' + index + '.eventTitleField', 'Event title field', 'text', 'summary')}
                                         ${this.addHint('Event attribute to use as title (default: summary)')}
                                         ${this.addTextField('calendars.' + index + '.filter', 'Filter events (regex)')}
@@ -130,6 +134,8 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                                         ${this.addHint('Creates title-only all-day events (no time/duration), e.g. birthdays')}
                                         ${this.addEmojiField('calendars.' + index + '.titleEmoji', 'Title emoji')}
                                         ${this.addHint('Shown before every event title of this calendar (display only), e.g. 🎂')}
+                                        ${this.addIconPickerField('calendars.' + index + '.titleIcon', 'Title icon (Material Symbols)')}
+                                        ${this.addHint('Used instead of the title emoji when "Use Material Symbols icons" is on, e.g. m3rf:cake')}
                                         ${this.addButton('Remove calendar', 'mdi:trash-can', () => {
                                             const config = JSON.parse(JSON.stringify(this._config));
                                             if (config.calendars.length === 1) {
@@ -162,7 +168,7 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                                     ${this._renderEmojiPicker(cat && cat.emoji, (v) => this._writeCategories((arr) => {
                                         if (!arr[index]) arr[index] = { emoji: '', label: '' };
                                         arr[index].emoji = v;
-                                    }), 'Icon')}
+                                    }), 'Emoji (saved in the event title)')}
                                     <div class="sk-field">
                                         <label class="sk-label">Label</label>
                                         <input class="sk-input" type="text"
@@ -172,6 +178,16 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                                                 arr[index].label = e.target.value;
                                             })}" />
                                     </div>
+                                    <ha-icon-picker
+                                        .hass="${this.hass}"
+                                        label="Material Symbols icon"
+                                        .value="${(cat && cat.icon) || ''}"
+                                        @value-changed="${(e) => this._writeCategories((arr) => {
+                                            if (!arr[index]) arr[index] = { emoji: '', label: '' };
+                                            arr[index].icon = e.detail.value;
+                                        })}"
+                                    ></ha-icon-picker>
+                                    ${this.addHint('Shown instead of the emoji when "Use Material Symbols icons" is on, e.g. m3rf:directions-run')}
                                     ${this.addButton('Remove category', 'mdi:trash-can', () => this._writeCategories((arr) => {
                                         arr.splice(index, 1);
                                     }))}
@@ -547,14 +563,14 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
     // explicit `eventCategories` (must mirror the card's DEFAULT_CATEGORIES).
     _defaultCategories() {
         return [
-            { emoji: '🏃', label: 'Sport' },
-            { emoji: '🩺', label: 'Médical' },
-            { emoji: '🎓', label: 'École' },
-            { emoji: '💼', label: 'Travail' },
-            { emoji: '🍽️', label: 'Repas' },
-            { emoji: '🚐', label: 'Vacances' },
-            { emoji: '🎉', label: 'Fête' },
-            { emoji: '🛒', label: 'Courses' },
+            { emoji: '🏃', label: 'Sport', icon: 'm3rf:directions-run' },
+            { emoji: '🩺', label: 'Médical', icon: 'm3rf:stethoscope' },
+            { emoji: '🎓', label: 'École', icon: 'm3rf:school' },
+            { emoji: '💼', label: 'Travail', icon: 'm3rf:work' },
+            { emoji: '🍽️', label: 'Repas', icon: 'm3rf:restaurant' },
+            { emoji: '🚐', label: 'Vacances', icon: 'm3rf:luggage' },
+            { emoji: '🎉', label: 'Fête', icon: 'm3rf:celebration' },
+            { emoji: '🛒', label: 'Courses', icon: 'm3rf:shopping-cart' },
         ];
     }
 

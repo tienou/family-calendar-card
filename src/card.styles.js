@@ -1372,6 +1372,11 @@ export default css`
         font-size: 1.15em;
         line-height: 1;
     }
+    .category-btn .category-ms-icon {
+        --mdc-icon-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
     .category-btn.active {
         background-color: var(--primary-color, #03a9f4);
         color: var(--text-primary-color, #fff);

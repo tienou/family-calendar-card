@@ -129,6 +129,7 @@ calendars:
 | `colorFullEvent` | boolean | `true` | Color full event background with calendar color |
 | `compact` | boolean | `true` | Compact display mode |
 | `fillHeight` | boolean | `false` | Stretch the day rows so the calendar fills the screen height (best in a panel / full-height view, e.g. a wall-mounted tablet) |
+| `materialSymbols` | boolean | `false` | Use [Material Symbols](https://github.com/beecho01/material-symbols) icons. When on, calendars use their `iconMaterial` and categories show their `icon` instead of the emoji (requires the Material Symbols integration) |
 | `views` | list | all | Which view buttons to show (e.g. `Week,Month`) |
 | `defaultCalendar` | string | - | Default calendar entity for event creation |
 | `googleApiKey` | string | - | Google Places API key for location autocomplete |
@@ -158,9 +159,11 @@ calendars:
 | `name` | string | Display name (falls back to HA friendly_name) |
 | `color` | string | Color hex (auto-assigned pastel if not set) |
 | `icon` | string | MDI icon |
+| `iconMaterial` | string | Material Symbols icon used instead of `icon` when `materialSymbols` is on (e.g. `m3rf:home`) |
 | `filter` | string | Regex to filter events |
 | `allDayOnly` | boolean | Treat as an "info" calendar (e.g. birthdays): the create form shows the title only and saves a single all-day event with no time or duration |
 | `titleEmoji` | string | Emoji shown before every event title of this calendar (display only, e.g. `🎂` for birthdays) |
+| `titleIcon` | string | Material Symbols icon used instead of `titleEmoji` when `materialSymbols` is on (e.g. `m3rf:cake`) |
 
 > **Read-only calendars** (holidays, school holidays — integrations that don't support event creation) are detected automatically: they never appear as a create target, and their events open in read-only detail view (no edit/delete).
 
@@ -176,11 +179,13 @@ You can edit the list in the visual editor (**Event categories** panel — the b
 eventCategories:
   - emoji: "🏃"
     label: Sport
+    icon: m3rf:directions-run   # optional Material Symbols icon (needs materialSymbols: true)
   - emoji: "🩺"
     label: Medical
+    icon: m3rf:stethoscope
 ```
 
-> Google Calendar has no per-event "category"/tag field reachable through Home Assistant (only title, description, location, dates and recurrence are writable), so the emoji prefix is the portable way to tag events.
+> Google Calendar has no per-event "category"/tag field reachable through Home Assistant (only title, description, location, dates and recurrence are writable), so the emoji prefix is the portable way to tag events. With `materialSymbols: true` the card *displays* the category's `icon` instead of the emoji, while still saving the emoji in the title (so it stays visible in the Google Calendar app).
 
 ### Google Places Autocomplete
 

@@ -142,14 +142,14 @@ export class SkylightFamilyCalendarCard extends LitElement {
     // `eventCategories` config (a list of { emoji, label }).
     static get DEFAULT_CATEGORIES() {
         return [
-            { emoji: '\u{1F3C3}', fr: 'Sport', en: 'Sport' },
-            { emoji: '\u{1FA7A}', fr: 'Médical', en: 'Medical' },
-            { emoji: '\u{1F393}', fr: 'École', en: 'School' },
-            { emoji: '\u{1F4BC}', fr: 'Travail', en: 'Work' },
-            { emoji: '\u{1F37D}\u{FE0F}', fr: 'Repas', en: 'Meal' },
-            { emoji: '\u{1F690}', fr: 'Vacances', en: 'Holidays' },
-            { emoji: '\u{1F389}', fr: 'Fête', en: 'Party' },
-            { emoji: '\u{1F6D2}', fr: 'Courses', en: 'Shopping' },
+            { emoji: '\u{1F3C3}', fr: 'Sport', en: 'Sport', icon: 'm3rf:directions-run' },
+            { emoji: '\u{1FA7A}', fr: 'Médical', en: 'Medical', icon: 'm3rf:stethoscope' },
+            { emoji: '\u{1F393}', fr: 'École', en: 'School', icon: 'm3rf:school' },
+            { emoji: '\u{1F4BC}', fr: 'Travail', en: 'Work', icon: 'm3rf:work' },
+            { emoji: '\u{1F37D}\u{FE0F}', fr: 'Repas', en: 'Meal', icon: 'm3rf:restaurant' },
+            { emoji: '\u{1F690}', fr: 'Vacances', en: 'Holidays', icon: 'm3rf:luggage' },
+            { emoji: '\u{1F389}', fr: 'Fête', en: 'Party', icon: 'm3rf:celebration' },
+            { emoji: '\u{1F6D2}', fr: 'Courses', en: 'Shopping', icon: 'm3rf:shopping-cart' },
         ];
     }
 
@@ -240,10 +240,17 @@ export class SkylightFamilyCalendarCard extends LitElement {
         // Lookups built once per config (not per event/render): O(1) calendar
         // lookup by entity, and the category-emoji list pre-sorted longest-first
         // so a base emoji can't shadow a longer ZWJ/variation-selector variant.
+        this._materialSymbols = config.materialSymbols ?? false;
         this._calByEntity = {};
         for (const c of this._calendars) this._calByEntity[c.entity] = c;
         this._categoryEmojiList = [...this._categories.map((c) => c.emoji)]
             .sort((a, b) => b.length - a.length);
+        // Display candidates: each category's emoji + its optional Material Symbols
+        // icon, longest-emoji-first so a base emoji can't shadow a longer variant.
+        this._categoryCandidates = this._categories
+            .map((c) => ({ emoji: c.emoji, icon: c.icon }))
+            .filter((c) => c.emoji)
+            .sort((a, b) => b.emoji.length - a.emoji.length);
         this._regexCache = new Map();
         this._defaultCalendar = config.defaultCalendar ?? null;
         this._weather = this._getWeatherConfig(config.weather);
@@ -698,8 +705,16 @@ export class SkylightFamilyCalendarCard extends LitElement {
             .map((c) => ({
                 emoji: c.emoji,
                 label: c.label ?? c[locale] ?? c.en ?? c.fr ?? '',
+                icon: c.icon ?? '',
             }))
             .filter((c) => c.emoji);
+    }
+
+    // Which icon to render for a calendar: the Material Symbols variant when the
+    // option is on and one is configured, otherwise the regular (MDI) icon.
+    _resolveCalendarIcon(cal) {
+        if (!cal) return null;
+        return (this._materialSymbols && cal.iconMaterial) ? cal.iconMaterial : (cal.icon || null);
     }
 
     // All known category emojis, pre-sorted longest-first (cached in setConfig).
@@ -744,20 +759,28 @@ export class SkylightFamilyCalendarCard extends LitElement {
     _eventMarker(event) {
         const s = event.summary || '';
         const cal = this._calByEntity[event.calendars && event.calendars[0]];
-        const candidates = [];
-        if (cal && cal.titleEmoji) candidates.push(cal.titleEmoji);
-        candidates.push(...this._categoryEmojis());
+        const useMat = this._materialSymbols;
         const bell = '\u{1F514} ';
-        for (const emoji of candidates) {
+        // Candidates in priority order: the calendar's title marker first, then
+        // each category. Each carries its emoji (stored in the title) and an
+        // optional Material Symbols icon shown instead when the option is on.
+        const candidates = [];
+        if (cal && cal.titleEmoji) candidates.push({ emoji: cal.titleEmoji, icon: cal.titleIcon });
+        candidates.push(...(this._categoryCandidates || []));
+        for (const cand of candidates) {
+            const emoji = cand.emoji;
             if (!emoji) continue;
+            const icon = (useMat && cand.icon) ? cand.icon : '';
             if (s.startsWith(emoji)) {
-                return { emoji, title: s.slice(emoji.length).replace(/^\s+/, '') };
+                const title = s.slice(emoji.length).replace(/^\s+/, '');
+                return icon ? { icon, title } : { emoji, title };
             }
             if (s.startsWith(bell + emoji)) {
-                return { emoji, title: bell + s.slice((bell + emoji).length).replace(/^\s+/, '') };
+                const title = bell + s.slice((bell + emoji).length).replace(/^\s+/, '');
+                return icon ? { icon, title } : { emoji, title };
             }
         }
-        return { emoji: '', title: s };
+        return { emoji: '', icon: '', title: s };
     }
 
     _onCreateCategoryClick(e) {
@@ -789,7 +812,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
                                 class="category-btn ${selected === c.emoji ? 'active' : ''}"
                                 data-category="${c.emoji}" title="${c.label}"
                                 @click="${onClick}">
-                                <span class="category-emoji">${c.emoji}</span>
+                                ${(this._materialSymbols && c.icon)
+                                    ? html`<ha-icon class="category-ms-icon" icon="${c.icon}"></ha-icon>`
+                                    : html`<span class="category-emoji">${c.emoji}</span>`}
                                 <span class="category-label">${c.label}</span>
                             </button>
                         `)}
@@ -1111,7 +1136,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                                         style="--cal-color: ${cal.color || '#888'}"
                                         @click="${() => this._toggleCalendarVisibility(cal.entity)}"
                                     >
-                                        ${cal.icon ? html`<ha-icon icon="${cal.icon}"></ha-icon>` : ''}
+                                        ${this._resolveCalendarIcon(cal) ? html`<ha-icon icon="${this._resolveCalendarIcon(cal)}"></ha-icon>` : ''}
                                         <span>${this._getCalendarDisplayName(cal)}</span>
                                     </button>
                                 `)}
@@ -1199,11 +1224,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
                     ${this._calendars.map((calendar) => {
                         if (!calendar.hideInLegend) {
                             return html`
-                                <li class="${calendar.icon ? 'icon' : 'noIcon'}${this._legendToggle ? ' hasToggle' : ''}${this._hideCalendars.indexOf(calendar.entity) === -1 ? '' : ' hidden'}" style="--legend-calendar-color: ${calendar.color ?? 'inherit'}" @click="${() => {
+                                <li class="${this._resolveCalendarIcon(calendar) ? 'icon' : 'noIcon'}${this._legendToggle ? ' hasToggle' : ''}${this._hideCalendars.indexOf(calendar.entity) === -1 ? '' : ' hidden'}" style="--legend-calendar-color: ${calendar.color ?? 'inherit'}" @click="${() => {
                                     this._handleLegendClick(calendar)
                                 }}">
-                                    ${calendar.icon ?
-                                        html`<ha-icon icon="${calendar.icon}"></ha-icon>` :
+                                    ${this._resolveCalendarIcon(calendar) ?
+                                        html`<ha-icon icon="${this._resolveCalendarIcon(calendar)}"></ha-icon>` :
                                         ''
                                     }
                                     ${this._getCalendarDisplayName(calendar)}
@@ -1473,9 +1498,12 @@ export class SkylightFamilyCalendarCard extends LitElement {
                     ? ' banner' + (leftJoin ? ' ljoin' : '') + (rightJoin ? ' rjoin' : '')
                     : '';
                 const showBannerText = !banner || pos === 'start' || isRowStart;
-                // A category/title emoji takes the icon slot (and is stripped from
+                // A category/title marker takes the icon slot (and is stripped from
                 // the shown title) so it doesn't duplicate the calendar icon.
                 const marker = this._eventMarker(event);
+                // Fallback glyph when the event itself has no marker: the calendar
+                // icon (Material Symbols variant when the option is on).
+                const calIcon = this._resolveCalendarIcon(this._calByEntity[event.calendars && event.calendars[0]]);
                 return html`
                     <div
                         class="event ${event.class}${bannerClasses}"
@@ -1538,20 +1566,27 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             }
                         </div>
                         `}
-                        ${(marker.emoji && (!banner || showBannerText)) ?
-                            html`
-                                <div class="icon">
-                                    <span class="event-emoji">${marker.emoji}</span>
-                                </div>
-                            ` :
-                            (event.icon && (!banner || showBannerText)) ?
+                        ${(!banner || showBannerText) ? (
+                            marker.icon ?
                                 html`
                                     <div class="icon">
-                                        <ha-icon icon="${event.icon}"></ha-icon>
+                                        <ha-icon icon="${marker.icon}"></ha-icon>
+                                    </div>
+                                ` :
+                            marker.emoji ?
+                                html`
+                                    <div class="icon">
+                                        <span class="event-emoji">${marker.emoji}</span>
+                                    </div>
+                                ` :
+                            calIcon ?
+                                html`
+                                    <div class="icon">
+                                        <ha-icon icon="${calIcon}"></ha-icon>
                                     </div>
                                 ` :
                                 ''
-                        }
+                        ) : ''}
                     </div>
                 `
             })}

@@ -129,6 +129,7 @@ calendars:
 | `colorFullEvent` | boolean | `true` | Colorer tout le fond de l'evenement |
 | `compact` | boolean | `true` | Mode d'affichage compact |
 | `fillHeight` | boolean | `false` | Étire les rangées de jours pour occuper toute la hauteur de l'écran (idéal en vue panneau, ex. tablette murale) |
+| `materialSymbols` | boolean | `false` | Utilise les icônes [Material Symbols](https://github.com/beecho01/material-symbols). Activé : les calendriers utilisent leur `iconMaterial` et les catégories affichent leur `icon` au lieu de l'emoji (nécessite l'intégration Material Symbols) |
 | `views` | list | toutes | Vues a afficher (ex. `Week,Month`) |
 | `defaultCalendar` | string | - | Calendrier par defaut pour la creation d'evenements |
 | `googleApiKey` | string | - | Cle API Google Places pour l'autocompletion du lieu |
@@ -158,9 +159,11 @@ calendars:
 | `name` | string | Nom d'affichage (utilise le friendly_name HA par defaut) |
 | `color` | string | Couleur hex (pastel auto-assigne si non defini) |
 | `icon` | string | Icone MDI |
+| `iconMaterial` | string | Icone Material Symbols utilisee a la place de `icon` quand `materialSymbols` est actif (ex. `m3rf:home`) |
 | `filter` | string | Regex pour filtrer les evenements |
 | `allDayOnly` | boolean | Calendrier "info" (ex. anniversaires) : le formulaire de creation n'affiche que le titre et enregistre un evenement d'une journee entiere, sans heure ni duree |
 | `titleEmoji` | string | Emoji affiche devant chaque titre d'evenement de ce calendrier (affichage seul, ex. `🎂` pour les anniversaires) |
+| `titleIcon` | string | Icone Material Symbols utilisee a la place de `titleEmoji` quand `materialSymbols` est actif (ex. `m3rf:cake`) |
 
 > **Calendriers en lecture seule** (vacances scolaires, jours feries — integrations qui ne permettent pas la creation d'evenements) : detectes automatiquement. Ils n'apparaissent jamais comme cible de creation, et leurs evenements s'ouvrent en consultation seule (pas de modification/suppression).
 
@@ -176,9 +179,13 @@ Modifiable dans l'editeur visuel (panneau **Event categories** — les categorie
 eventCategories:
   - emoji: "🏃"
     label: Sport
+    icon: m3rf:directions-run   # icone Material Symbols optionnelle (avec materialSymbols: true)
   - emoji: "🩺"
     label: Medical
+    icon: m3rf:stethoscope
 ```
+
+> Avec `materialSymbols: true`, la carte **affiche** l'icone de la categorie a la place de l'emoji, tout en gardant l'emoji enregistre dans le titre (donc toujours visible dans l'appli Google Agenda).
 
 > Google Agenda n'a pas de champ "categorie"/tag par evenement accessible via Home Assistant (seuls le titre, la description, le lieu, les dates et la recurrence sont modifiables) : le prefixe emoji est donc la methode portable pour categoriser.
 
