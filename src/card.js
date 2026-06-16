@@ -1580,10 +1580,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             <div class="duration-picker">
                                 ${this.constructor.DURATION_PRESETS.map((minutes) => html`
                                     <button type="button" class="duration-btn ${String(minutes) === this._createDuration ? 'active' : ''}"
-                                        @click="${() => { this._createDuration = String(minutes); this._createEndTouched = false; }}">${this._formatDuration(minutes)}</button>
+                                        data-duration="${minutes}" @click="${this._onCreateDurationClick}">${this._formatDuration(minutes)}</button>
                                 `)}
                                 <button type="button" class="duration-btn ${isAllDay ? 'active' : ''}"
-                                    @click="${() => { this._createDuration = 'allday'; this._createEndTouched = false; }}">${this._language.fullDay}</button>
+                                    data-duration="allday" @click="${this._onCreateDurationClick}">${this._language.fullDay}</button>
                             </div>
                         </div>
                     </div>
@@ -2821,6 +2821,16 @@ export class SkylightFamilyCalendarCard extends LitElement {
         if (picker) {
             picker.querySelectorAll('.hw-cal-btn').forEach((b) => b.classList.toggle('active', b === btn));
         }
+    }
+
+    // Stable handler (not an inline arrow) for the create-form duration buttons,
+    // so the listener is never churned by re-renders. Logs for diagnosis.
+    _onCreateDurationClick(e) {
+        const v = e.currentTarget?.dataset?.duration;
+        console.log('[skylight] duration click →', v, 'was', this._createDuration);
+        if (!v) return;
+        this._createDuration = v;
+        this._createEndTouched = false;
     }
 
     _resolveAiProvider() {
