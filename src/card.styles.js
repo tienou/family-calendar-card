@@ -388,10 +388,12 @@ export default css`
         border-bottom: 1px solid var(--divider-color, rgba(0,0,0,0.08));
     }
 
-    /* Weekend (Sat/Sun) tint — neutral translucent grey adapts to light and dark;
-       override with the weekendColor config option (--weekend-color). */
+    /* Weekend (Sat/Sun) tint. The card background is semi-transparent (it can sit
+       over a dashboard photo), so a mid-grey blends in and washes out once the
+       image loads. A darkening overlay instead darkens the weekend column
+       consistently whatever is behind it. Override via the weekendColor option. */
     .container .day.weekend:not(.header) {
-        background-color: var(--weekend-color, rgba(128, 128, 128, 0.28));
+        background-color: var(--weekend-color, rgba(0, 0, 0, 0.18));
     }
 
     .container .day.today .date .number {
