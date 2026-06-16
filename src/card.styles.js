@@ -2025,7 +2025,12 @@ export default css`
     ha-card.theme-familial .view-btn .view-icon { display: none; }
     ha-card.theme-familial .view-btn .view-label { display: inline; }
     ha-card.theme-familial .view-btn.active {
-        background: var(--fam-panel); color: var(--fam-ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+        background: var(--fam-panel); color: var(--fam-ink); font-weight: 700;
+        border: 1px solid var(--fam-border); box-shadow: 0 1px 3px rgba(0, 0, 0, .22);
+    }
+    ha-card.theme-familial.dark .view-btn.active {
+        border-color: color-mix(in srgb, var(--fam-border), #fff 12%);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
     }
 
     /* Navigation month title */
