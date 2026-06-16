@@ -256,6 +256,8 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._weather = this._getWeatherConfig(config.weather);
         this._numberOfDays = this._getNumberOfDays(config.days ?? 7);
         this._hideWeekend = config.hideWeekend ?? false;
+        this._highlightWeekend = config.highlightWeekend ?? false;
+        this._weekendColor = config.weekendColor || null;
         this._showNavigation = config.showNavigation ?? true;
         this._startingDay = config.startingDay ?? 'today';
         this._startingDayOffset = config.startingDayOffset ?? 0;
@@ -1110,6 +1112,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
         const cardStyles = [
             '--event-background-color: ' + this._eventBackground + ';'
         ];
+        if (this._weekendColor) {
+            cardStyles.push('--weekend-color: ' + this._weekendColor + ';');
+        }
         if (this._columns.extraLarge) {
             cardStyles.push('--days-columns: ' + this._columns.extraLarge + ';');
         }
@@ -1339,7 +1344,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 }
                 const isSelected = this._selectedDay && this._selectedDay.date.day === day.date.day && this._selectedDay.date.month === day.date.month && this._selectedDay.date.year === day.date.year;
                 return html`
-                    <div class="day ${day.class}${isSelected ? ' selected' : ''}" data-date="${day.date.day}" data-weekday="${day.date.weekday}" data-month="${day.date.month}" data-year="${day.date.year}" data-week="${day.date.weekNumber}" @click="${(e) => { if (this._numberOfDaysIsMonth) { e.stopPropagation(); this._selectDay(day); } }}">
+                    <div class="day ${day.class}${isSelected ? ' selected' : ''}${this._highlightWeekend && day.date.weekday >= 6 ? ' weekend' : ''}" data-date="${day.date.day}" data-weekday="${day.date.weekday}" data-month="${day.date.month}" data-year="${day.date.year}" data-week="${day.date.weekNumber}" @click="${(e) => { if (this._numberOfDaysIsMonth) { e.stopPropagation(); this._selectDay(day); } }}">
                         <div class="day-header">
                             <div class="date">
                                 ${this._dayFormat ?

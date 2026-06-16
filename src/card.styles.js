@@ -388,6 +388,12 @@ export default css`
         border-bottom: 1px solid var(--divider-color, rgba(0,0,0,0.08));
     }
 
+    /* Weekend (Sat/Sun) tint — neutral translucent grey adapts to light and dark;
+       override with the weekendColor config option (--weekend-color). */
+    .container .day.weekend:not(.header) {
+        background-color: var(--weekend-color, rgba(128, 128, 128, 0.12));
+    }
+
     .container .day.today .date .number {
         background-color: #f0a030;
         color: #fff;

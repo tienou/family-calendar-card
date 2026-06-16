@@ -212,6 +212,10 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
                         ${this.addBooleanField('showWeekDayText', 'Show week day text', true)}
                         ${this.addHint('Display day names (Mon, Tue...) above columns')}
                         ${this.addBooleanField('hideWeekend', 'Hide weekend')}
+                        ${this.addBooleanField('highlightWeekend', 'Highlight weekend (Sat/Sun)')}
+                        ${this.addHint('Tints the Saturday & Sunday cells')}
+                        ${this.addColorField('weekendColor', 'Weekend color')}
+                        ${this.addHint('Leave on "A" (Auto) for a subtle shade that adapts to light/dark')}
                         ${this.addBooleanField('hideDaysWithoutEvents', 'Hide days without events except for today')}
                         ${this.addBooleanField('hideTodayWithoutEvents', 'Also hide today without events')}
                         ${this.addTextField('maxDayEvents', 'Maximum number of events per day (0 is no maximum)', 'number', 0)}

@@ -137,6 +137,8 @@ calendars:
 | `calendars` | list | required | Calendar entities to display |
 | `hidePastEvents` | boolean | `false` | Hide past events |
 | `hideWeekend` | boolean | `false` | Hide weekend days |
+| `highlightWeekend` | boolean | `false` | Tint the Saturday & Sunday cells with a different background |
+| `weekendColor` | string | - | Custom weekend tint color (leave empty for a subtle auto shade that adapts to light/dark) |
 | `combineSimilarEvents` | boolean | `false` | Combine duplicate events |
 | `updateInterval` | number | `60` | Auto-refresh interval in seconds |
 | `multiDayMode` | string | `banner` | Multi-day events: `banner` (merged strip), `default`, `multiple`, `single` |
