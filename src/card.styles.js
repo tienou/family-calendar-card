@@ -2258,6 +2258,34 @@ export default css`
         margin-bottom: 3px;
     }
     ha-card.theme-familial .container .day .events .event .inner { padding: 0; }
+    /* Compact the month-cell header (date + weather) so it steals less vertical
+       room from the events — a smaller weather glyph/temps frees ~one extra event
+       row per cell. Weather stays legible on a wall display. */
+    ha-card.theme-familial .container.month-view .day {
+        --weather-icon-size: 17px;
+        --weather-temperature-font-size: 0.68em;
+    }
+    ha-card.theme-familial .container.month-view .day .date .number {
+        font-size: 13px;
+    }
+    ha-card.theme-familial .container.month-view .day .weather { gap: 3px; }
+    /* "+N more" chip: a clear, tappable accent pill (not a vague grey box) so it
+       reads as "there are N more events here — tap to see them". */
+    ha-card.theme-familial .container .day .events .more {
+        background: color-mix(in srgb, var(--fam-cell), var(--fam-accent) 16%);
+        color: color-mix(in srgb, var(--fam-accent), #000 28%);
+        border: 1px solid color-mix(in srgb, var(--fam-cell), var(--fam-accent) 42%);
+        border-radius: 999px;
+        font-size: 0.72em;
+        font-weight: 700;
+        line-height: 1.6;
+        padding: 0 8px;
+        opacity: 1;
+    }
+    ha-card.theme-familial.dark .container .day .events .more {
+        color: color-mix(in srgb, var(--fam-accent), #fff 38%);
+        border-color: color-mix(in srgb, var(--fam-cell), var(--fam-accent) 50%);
+    }
     ha-card.theme-familial .container .day .events .event .title {
         font-size: 12.5px; font-weight: 600; color: var(--fam-ink);
     }
