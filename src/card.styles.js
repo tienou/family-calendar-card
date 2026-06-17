@@ -268,6 +268,10 @@ export default css`
            can't push the grid taller than the screen — the whole month stays on
            one page. Overflowing events are clipped inside the cell below. */
         height: var(--day-fill-height, auto);
+        /* Override any theme min-height (e.g. familial's 126px) so the cell can
+           actually shrink to the computed fill height — otherwise the month
+           overflows the screen and scrolls. */
+        min-height: 0;
         /* Clip VERTICALLY only: events that don't fit are clipped at the cell's
            top/bottom, but the horizontal axis is left UNclipped so a multi-day
            banner slice can bleed across the cell borders and form ONE seamless
