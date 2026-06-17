@@ -2060,14 +2060,14 @@ export default css`
            stretch the rows to fill the screen). Plain @media + !important so it
            does not depend on the .fill-height class, container queries, or JS. */
         ha-card.theme-familial .container.month-view .day:not(.header) {
-            height: 76px !important; min-height: 76px !important; max-height: 76px !important;
+            height: 50px !important; min-height: 50px !important; max-height: 50px !important;
         }
         ha-card.theme-familial .container.month-view .day:not(.header) .events { overflow: hidden; }
     }
     /* Belt-and-suspenders via the real card width too. */
     @container weekplanner (width <= 640px) {
         ha-card.theme-familial .container.month-view .day:not(.header) {
-            height: 76px !important; min-height: 76px !important; max-height: 76px !important;
+            height: 50px !important; min-height: 50px !important; max-height: 50px !important;
         }
     }
 
