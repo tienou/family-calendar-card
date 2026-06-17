@@ -268,12 +268,12 @@ export default css`
            can't push the grid taller than the screen — the whole month stays on
            one page. Overflowing events are clipped inside the cell below. */
         height: var(--day-fill-height, auto);
-        /* Clip overflow at the CELL edge, not on .events: this keeps the vertical
-           clipping (events that don't fit are hidden) while letting a multi-day
-           banner slice still bleed horizontally out of .events to reach the cell
-           edge and meet its neighbour (otherwise overflow:hidden on .events chops
-           the bleed and the band breaks into separate per-cell pills). */
-        overflow: hidden;
+        /* Clip VERTICALLY only: events that don't fit are clipped at the cell's
+           top/bottom, but the horizontal axis is left UNclipped so a multi-day
+           banner slice can bleed across the cell borders and form ONE seamless
+           band. overflow:hidden would clip both axes — then the grid lines cut
+           through the band (verified) / it breaks into per-cell pills. */
+        clip-path: inset(0 -9999px 0 -9999px);
     }
     ha-card.fill-height .container .day:not(.header) .events {
         flex: 1 1 auto;
