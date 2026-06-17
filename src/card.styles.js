@@ -1158,10 +1158,53 @@ export default css`
             flex-direction: column;
             gap: 9px;
         }
+        /* The day-panel reuses the same .event markup as the grid, but the grid's
+           card styling is scoped to ".container .day .events" — so it never reaches
+           ".selected-day-list .event" and the cards render bare. Restyle them here:
+           tinted fill + coloured left bar + flex layout (icon beside the text). */
         .selected-day-list .event {
+            display: flex;
+            cursor: pointer;
             padding: 12px 13px;
             border-radius: 12px;
-            border-left-width: 3px;
+            border-left: 3px solid var(--border-color, var(--divider-color, #888));
+            background-color: color-mix(in srgb, var(--card-background-color, #fff) 85%, var(--border-color, #888));
+            color: var(--primary-text-color);
+        }
+        .selected-day-list .event .inner { flex: 1 1 auto; min-width: 0; }
+        .selected-day-list .event .icon {
+            display: flex;
+            align-items: flex-start;
+            padding-left: 10px;
+            --mdc-icon-size: var(--event-icon-size, 18px);
+        }
+        .selected-day-list .event .icon .event-emoji { font-size: var(--event-icon-size, 18px); line-height: 1; }
+        .selected-day-list .event .time { font-weight: 700; font-size: 11px; margin: 0 0 2px; }
+        .selected-day-list .event .title { font-weight: 600; }
+        .selected-day-list .event .event-meta {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            margin-top: 2px;
+            color: var(--secondary-text-color);
+        }
+        .selected-day-list .event .event-meta .meta-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex: 0 0 auto;
+        }
+        .selected-day-list .event .location {
+            margin-top: 3px;
+            font-size: 11px;
+            color: var(--secondary-text-color);
+            --mdc-icon-size: 16px;
+        }
+        ha-card.theme-familial .selected-day-list .event {
+            background-color: color-mix(in srgb, var(--fam-cell), var(--border-color, #888) var(--fam-event-mix));
+            border-left-color: var(--border-color, #888);
+            color: var(--fam-ink);
         }
         .selected-day-list .none {
             color: var(--secondary-text-color, rgba(0, 0, 0, 0.5));
