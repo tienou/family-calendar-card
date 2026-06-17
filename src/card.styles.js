@@ -2250,6 +2250,13 @@ export default css`
         background-color: color-mix(in srgb, var(--fam-cell), var(--border-color, #888) var(--fam-event-mix));
         color: var(--fam-ink);
     }
+    /* Month view packs many days per screen — tighten the event chips so more
+       events fit per cell before the "+N" chip (does not affect the week/day
+       views or the mobile day panel). */
+    ha-card.theme-familial .container.month-view .day .events .event {
+        padding: 3px 8px;
+        margin-bottom: 3px;
+    }
     ha-card.theme-familial .container .day .events .event .inner { padding: 0; }
     ha-card.theme-familial .container .day .events .event .title {
         font-size: 12.5px; font-weight: 600; color: var(--fam-ink);

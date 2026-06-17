@@ -1156,8 +1156,13 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 // Compute how many events fit per cell → cap with a "+N" chip.
                 // Measure a sample cell's header + one event (CSS clip is the
                 // safety net if the estimate is slightly off).
-                const headerEl = dayCells[0].querySelector('.day-header');
-                const headerH = headerEl ? headerEl.offsetHeight : 36;
+                // Use the TALLEST day-header (a future day shows weather and is
+                // taller than a past/empty day's bare number) so weather days don't
+                // overflow; measuring only the first cell under-counts the header.
+                const headerEls = [...grid.querySelectorAll('.day:not(.header) .day-header')];
+                const headerH = headerEls.length
+                    ? Math.max(...headerEls.map((h) => h.offsetHeight))
+                    : 36;
                 // Row height = the SHORTEST event row (a 1-line event), not a single
                 // sample that might be a 2-line timed event (time + title). Using a
                 // tall sample made the cap collapse to ~1 even in roomy cells.
@@ -1168,8 +1173,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         e.offsetHeight + (parseFloat(getComputedStyle(e).marginBottom) || 0)));
                 }
                 eventH = Math.max(18, eventH);
-                // Reserve ~20px for the "+N" chip so it isn't clipped.
-                const cap = Math.max(1, Math.floor((per - headerH - 20) / eventH));
+                // How many event rows fit below the header. No fixed "+N" reserve:
+                // when a cell overflows, the render gives up its last slot for the
+                // chip, so non-overflowing cells aren't permanently short one row.
+                const cap = Math.max(1, Math.floor((per - headerH) / eventH));
                 if (cap !== this._fillEventCap) {
                     this._fillEventCap = cap;
                     this.requestUpdate();
@@ -1624,8 +1631,12 @@ export class SkylightFamilyCalendarCard extends LitElement {
         const eventLimit = plain ? 0
             : (this._fillHeight && this._fillEventCap ? this._fillEventCap : (this._maxDayEvents || 0));
         if (eventLimit > 0 && dayEvents.length > eventLimit) {
-            moreCount = dayEvents.length - eventLimit;
-            dayEvents.splice(eventLimit);
+            // Overflow: give up the last fitting slot to the "+N" chip so it isn't
+            // clipped (show one fewer event, like Google Calendar's "+N more").
+            // _fillEventCap is "how many event rows fit"; the chip takes one row.
+            const shown = Math.max(1, eventLimit - 1);
+            moreCount = dayEvents.length - shown;
+            dayEvents.splice(shown);
         }
 
         // Row boundaries of the grid: a banner band is "joined" to a neighbour
