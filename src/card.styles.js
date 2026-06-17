@@ -2054,15 +2054,21 @@ export default css`
         /* Compact day cells on phones for a denser, Samsung-calendar-like month.
            (The fillHeight row-stretch is disabled on narrow cards in JS, so cells
            keep this natural height and the grid scrolls.) */
-        ha-card.theme-familial .container .day { min-height: 84px; padding: 5px 6px 7px; }
-        ha-card.theme-familial.fill-height .container .day:not(.header) { height: auto !important; }
-        ha-card.theme-familial.fill-height .container .day:not(.header) .events { overflow: visible !important; }
+        ha-card.theme-familial .container .day { padding: 5px 6px 7px; }
+        /* Bulletproof: force a FIXED compact cell height in month view on mobile,
+           regardless of fillHeight (its computed --day-fill-height would otherwise
+           stretch the rows to fill the screen). Plain @media + !important so it
+           does not depend on the .fill-height class, container queries, or JS. */
+        ha-card.theme-familial .container.month-view .day:not(.header) {
+            height: 76px !important; min-height: 76px !important; max-height: 76px !important;
+        }
+        ha-card.theme-familial .container.month-view .day:not(.header) .events { overflow: hidden; }
     }
-    /* Same fill-height disable keyed on the real card width (container query),
-       in case a phone misreports its viewport width to the @media query above. */
+    /* Belt-and-suspenders via the real card width too. */
     @container weekplanner (width <= 640px) {
-        ha-card.theme-familial.fill-height .container .day:not(.header) { height: auto !important; }
-        ha-card.theme-familial.fill-height .container .day:not(.header) .events { overflow: visible !important; }
+        ha-card.theme-familial .container.month-view .day:not(.header) {
+            height: 76px !important; min-height: 76px !important; max-height: 76px !important;
+        }
     }
 
     /* Navigation month title */
