@@ -667,9 +667,12 @@ export default css`
 
     .container .day .events .event .icon {
         padding: var(--event-padding);
-        /* Icon renders first (before the time); top-align it so it sits by the
-           first line of a multi-line (detailed) event rather than centring. */
-        align-self: flex-start;
+        /* Icon renders first (before the time); keep it vertically CENTRED on the
+           whole event, including multi-line (detailed) events. (The 🔔 reminder is
+           part of the title text, not this icon, so it's unaffected.) */
+        align-self: center;
+        display: flex;
+        align-items: center;
     }
 
     .container .day .events .event .icon .event-emoji {
