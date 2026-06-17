@@ -2191,8 +2191,12 @@ export default css`
         font-size: 18px; font-weight: 800; color: var(--fam-ink); text-transform: capitalize;
     }
 
-    /* Grid + day cells */
-    ha-card.theme-familial .container { --days-spacing: 0; gap: 0; }
+    /* Grid + day cells.
+       NOTE: --days-spacing MUST keep a unit (0px, not 0). The banner bleed margin
+       is calc(-1 * var(--days-spacing) - 12px); a UNITLESS 0 makes that
+       calc(<number> - <length>) which is INVALID CSS → the whole margin is
+       dropped → multi-day banners stop bleeding (the band breaks into pills). */
+    ha-card.theme-familial .container { --days-spacing: 0px; gap: 0; }
     /* A month is always a 7-column grid — keep 7 columns even on narrow phones.
        The base responsive rules collapse columns (~3) on small widths, which
        turned the month into a tall multi-row list ("étiré"). Forcing 7 keeps a
