@@ -667,6 +667,9 @@ export default css`
 
     .container .day .events .event .icon {
         padding: var(--event-padding);
+        /* Icon renders first (before the time); top-align it so it sits by the
+           first line of a multi-line (detailed) event rather than centring. */
+        align-self: flex-start;
     }
 
     .container .day .events .event .icon .event-emoji {
@@ -707,10 +710,11 @@ export default css`
         text-overflow: ellipsis;
     }
     .container .day .events .event.compact-line .icon {
-        padding: 0 0 0 4px;
+        padding: 0 5px 0 0;
         --mdc-icon-size: 15px;
         display: flex;
         align-items: center;
+        align-self: center;
         flex: 0 0 auto;
     }
 
@@ -2283,13 +2287,18 @@ export default css`
         background-color: color-mix(in srgb, var(--fam-cell), var(--border-color, #888) var(--fam-event-mix));
         color: var(--fam-ink);
     }
-    /* Month view packs many days per screen — tighten the event chips so more
-       events fit per cell before the "+N" chip (does not affect the week/day
-       views or the mobile day panel). */
-    ha-card.theme-familial .container.month-view .day .events .event {
+    /* Month view, TIGHT cells only (single-line ".compact-line" chips): squeeze
+       padding + bar so more events fit before the "+N". Roomy cells keep the full
+       comfortable card (base familial .event padding). */
+    ha-card.theme-familial .container.month-view .day .events .event.compact-line {
         padding: 2px 7px;
         margin-bottom: 2px;
         border-left-width: 2.5px;
+    }
+    /* Detailed (roomy) month event: icon top-left, small right gap before the text. */
+    ha-card.theme-familial .container.month-view .day .events .event:not(.compact-line) .icon {
+        padding: 0 6px 0 0;
+        --mdc-icon-size: 16px;
     }
     ha-card.theme-familial .container .day .events .event .inner { padding: 0; }
     /* Compact the month-cell header (date + weather) so it steals less vertical

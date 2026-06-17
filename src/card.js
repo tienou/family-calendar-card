@@ -1182,13 +1182,22 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 // when a cell overflows, the render gives up its last slot for the
                 // chip, so non-overflowing cells aren't permanently short one row.
                 const cap = Math.max(1, Math.floor((per - headerH) / eventH));
-                if (cap !== this._fillEventCap) {
+                // Usable height per cell (below the header). The month view uses
+                // this to decide PER CELL between detailed (roomy) and single-line
+                // compact (tight) event rendering — see _renderEvents.
+                const usable = Math.max(0, per - headerH);
+                if (cap !== this._fillEventCap || usable !== this._fillUsable) {
                     this._fillEventCap = cap;
+                    this._fillUsable = usable;
                     this.requestUpdate();
                 }
             } else {
                 grid.style.removeProperty('--day-fill-height');
-                this._fillEventCap = 0;
+                if (this._fillEventCap !== 0 || this._fillUsable !== 0) {
+                    this._fillEventCap = 0;
+                    this._fillUsable = 0;
+                    this.requestUpdate();
+                }
             }
         });
     }
@@ -1628,17 +1637,31 @@ export class SkylightFamilyCalendarCard extends LitElement {
             return this._numberOfDays > 1 ? html`` : this._renderNoEvents();
         }
 
-        // Cap the events shown in a grid cell so the cell can't overflow: the
-        // fill-height cap (how many fit, computed from the cell height) takes
-        // precedence, else the configured maxDayEvents. Never cap the plain list
-        // (the day-events popup / single-day view shows everything).
+        // Month view decides PER CELL: render events DETAILED (time range + title +
+        // location) while they fit, and switch to single-line COMPACT only when the
+        // cell is too tight — then cap with a "+N" chip. Other grid views (week /
+        // biweek) keep the measured fill cap. The plain list is never capped.
         let moreCount = 0;
-        const eventLimit = plain ? 0
-            : (this._fillHeight && this._fillEventCap ? this._fillEventCap : (this._maxDayEvents || 0));
+        const isMonthGrid = !plain && this._numberOfDaysIsMonth;
+        let cellCompact = false;
+        let eventLimit = 0;
+        if (!plain) {
+            if (isMonthGrid && this._fillHeight && this._fillUsable > 0) {
+                const COMPACT_H = 22; // a single-line chip
+                const DETAILED_H = 46; // time + title (+ room for a location line)
+                const detailedCap = Math.max(1, Math.floor(this._fillUsable / DETAILED_H));
+                const compactCap = Math.max(1, Math.floor(this._fillUsable / COMPACT_H));
+                if (dayEvents.length > detailedCap) {
+                    cellCompact = true;
+                    eventLimit = compactCap;
+                }
+            } else {
+                eventLimit = (this._fillHeight && this._fillEventCap) ? this._fillEventCap : (this._maxDayEvents || 0);
+            }
+        }
         if (eventLimit > 0 && dayEvents.length > eventLimit) {
-            // Overflow: give up the last fitting slot to the "+N" chip so it isn't
-            // clipped (show one fewer event, like Google Calendar's "+N more").
-            // _fillEventCap is "how many event rows fit"; the chip takes one row.
+            // Overflow: give up the last fitting slot to the "+N" chip (Google-
+            // Calendar style "+N more") so it isn't clipped.
             const shown = Math.max(1, eventLimit - 1);
             moreCount = dayEvents.length - shown;
             dayEvents.splice(shown);
@@ -1674,12 +1697,22 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 // SINGLE line — start time + truncated title — and move the full
                 // time range + location into the hover tooltip (title attr). On
                 // touch (no hover) tapping the event still opens the full details.
-                const compactMonth = !plain && !banner && this._numberOfDaysIsMonth;
+                // Per-cell decision (computed above): a tight month cell renders
+                // compact single-line; a roomy one renders detailed (with location).
+                const compactMonth = cellCompact && !banner;
+                const detailedMonth = isMonthGrid && !cellCompact && !banner;
                 const tf = this._timeFormat;
                 const startText = (!event.fullDay && event.start) ? event.start.toFormat(tf) : '';
                 const rangeText = event.fullDay ? ''
                     : (event.start.toFormat(tf) + (event.end ? ' - ' + event.end.toFormat(tf) : ''));
                 const hoverTitle = compactMonth ? [rangeText, event.location].filter(Boolean).join(' · ') : '';
+                // The event icon, rendered FIRST (before the time) in the row.
+                const iconTpl = (!banner || showBannerText) ? (
+                    marker.icon ? html`<div class="icon"><ha-icon icon="${marker.icon}"></ha-icon></div>`
+                    : marker.emoji ? html`<div class="icon"><span class="event-emoji">${marker.emoji}</span></div>`
+                    : calIcon ? html`<div class="icon"><ha-icon icon="${calIcon}"></ha-icon></div>`
+                    : ''
+                ) : '';
                 return html`
                     <div
                         class="event ${event.class}${bannerClasses}${compactMonth ? ' compact-line' : ''}"
@@ -1709,6 +1742,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                                 ></div>
                             `
                         })}
+                        ${iconTpl}
                         ${banner ? html`
                             <div class="inner">
                                 <div class="title">${showBannerText && this._showEventTitle ? marker.title : html` `}</div>
@@ -1739,7 +1773,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                                 ` :
                                 ''
                             }
-                            ${this._showLocation && event.location ?
+                            ${(this._showLocation || detailedMonth) && event.location ?
                                 html`
                                     <div class="location">
                                         <ha-icon icon="mdi:map-marker"></ha-icon>
@@ -1750,27 +1784,6 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             }
                         </div>
                         `}
-                        ${(!banner || showBannerText) ? (
-                            marker.icon ?
-                                html`
-                                    <div class="icon">
-                                        <ha-icon icon="${marker.icon}"></ha-icon>
-                                    </div>
-                                ` :
-                            marker.emoji ?
-                                html`
-                                    <div class="icon">
-                                        <span class="event-emoji">${marker.emoji}</span>
-                                    </div>
-                                ` :
-                            calIcon ?
-                                html`
-                                    <div class="icon">
-                                        <ha-icon icon="${calIcon}"></ha-icon>
-                                    </div>
-                                ` :
-                                ''
-                        ) : ''}
                     </div>
                 `
             })}
