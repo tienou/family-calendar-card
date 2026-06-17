@@ -6,6 +6,16 @@
 
 Une carte calendrier familial pour Home Assistant, inspiree de Skylight. Affiche les evenements de plusieurs calendriers avec une interface tactile, deux themes, integration meteo et gestion complete des evenements (creation, modification, suppression).
 
+## Aperçu — thème « familial »
+
+Vue mois sur ordinateur / tablette murale :
+
+![Vue mois — bureau](examples/screenshots/familial_desktop.png)
+
+Vue mois sur mobile (style Samsung Calendar — pastilles colorées + panneau du jour au tap) :
+
+<img src="examples/screenshots/familial_mobile.png" width="320" alt="Vue mois — mobile">
+
 ## Fonctionnalites
 
 ### Gestion des evenements
