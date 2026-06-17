@@ -2078,10 +2078,10 @@ export default css`
         }
     }
 
-    /* ── Small touch screens (phones): hide navigation arrows, swipe
-       replaces them. Larger touch devices (Windows tablets, wall-mounted
-       displays) keep the arrows alongside swipe/pen navigation. ── */
-    @media (any-pointer: coarse) and (max-width: 768px) {
+    /* ── Touch devices (phones AND wall-mounted tablets): hide the prev/next
+       navigation arrows — swipe (finger or pen) replaces them. The "•" jump-to-
+       today button stays. Mouse-only desktops keep the arrows (no swipe there). ── */
+    @media (any-pointer: coarse) {
         .container .navigation ul li:first-child,
         .container .navigation ul li:last-child {
             display: none;
@@ -2134,7 +2134,11 @@ export default css`
         display: flex; align-items: flex-start; justify-content: space-between;
         gap: 24px; flex-wrap: wrap;
     }
-    ha-card.theme-familial .filter-groups { display: flex; flex-direction: row; flex-wrap: wrap; gap: 12px 28px; flex: 1; align-items: flex-start; }
+    /* Keep "Membres" and "Catégories" side by side on ONE line (don't let the
+       Categories group drop below the Members group on a narrower tablet). The
+       pills still wrap WITHIN each group, and the view selector wraps to its own
+       row (buttons-row flex-wrap) when the width is tight. */
+    ha-card.theme-familial .filter-groups { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 12px 28px; flex: 1; align-items: flex-start; }
     ha-card.theme-familial .filter-group-label {
         font-size: 11px; font-weight: 700; letter-spacing: .06em;
         text-transform: uppercase; color: var(--fam-head); margin: 0 0 8px 2px;
