@@ -1515,10 +1515,16 @@ export class SkylightFamilyCalendarCard extends LitElement {
 
     _renderSelectedDayEvents() {
         if (!this._selectedDay) return html``;
+        const n = this._selectedDay.events?.length || 0;
+        const fr = (this._locale || 'en').startsWith('fr');
+        const countWord = fr ? (n > 1 ? 'événements' : 'événement') : (n > 1 ? 'events' : 'event');
         return html`
             <div class="selected-day-events">
                 <div class="selected-day-header">
-                    <span class="selected-day-date">${this._selectedDay.date.toFormat('cccc d MMMM')}</span>
+                    <div class="selected-day-heading">
+                        <span class="selected-day-date">${this._selectedDay.date.toFormat('cccc d MMMM')}</span>
+                        ${n ? html`<span class="selected-day-count">${n} ${countWord}</span>` : ''}
+                    </div>
                     <div class="add-event" @click="${(e) => this._handleAddEventClick(e, this._selectedDay)}">
                         <ha-icon icon="mdi:plus"></ha-icon>
                     </div>
@@ -1682,7 +1688,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             ${this._showEventTitle ? html`<div class="title">
                                 ${marker.title}
                             </div>` : ''}
-                            ${plain && this._eventMeta(event) ? html`<div class="event-meta" style="${this._theme === 'familial' ? 'color: ' + this._metaColor(event) : ''}">${this._eventMeta(event)}</div>` : ''}
+                            ${plain && this._eventMeta(event) ? html`<div class="event-meta" style="${this._theme === 'familial' ? 'color: ' + this._metaColor(event) : ''}"><span class="meta-dot" style="background: ${event.colors[0]}"></span>${this._eventMeta(event)}</div>` : ''}
                             ${this._showDescription ?
                                 html`
                                     <div class="description">

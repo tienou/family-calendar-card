@@ -1130,15 +1130,25 @@ export default css`
         }
         .selected-day-header {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
             margin-bottom: 8px;
+        }
+        .selected-day-heading {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
         }
         .selected-day-date {
             font-size: 1.1em;
             font-weight: bold;
             color: var(--primary-text-color);
             text-transform: capitalize;
+        }
+        .selected-day-count {
+            font-size: 0.8em;
+            color: var(--secondary-text-color);
+            font-weight: 500;
         }
         .selected-day-events .add-event {
             opacity: 0.5;
@@ -2192,6 +2202,16 @@ export default css`
         font-size: 11px;
         color: var(--secondary-text-color, #888);
         margin-top: 1px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    /* Coloured marker (member/calendar colour) before the "Member · Category". */
+    .container .day .events .event .event-meta .meta-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex: 0 0 auto;
     }
     /* In the familial theme the colour is set inline (computed in JS from the
        calendar colour) — no color-mix() here, since some kiosk WebViews drop
