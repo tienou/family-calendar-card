@@ -863,15 +863,15 @@ export class SkylightFamilyCalendarCard extends LitElement {
             if (!emoji) continue;
             const icon = (useMat && cand.icon) ? cand.icon : '';
             if (s.startsWith(emoji)) {
-                const title = s.slice(emoji.length).replace(/^\s+/, '');
+                const title = this._applyTitleStrip(s.slice(emoji.length).replace(/^\s+/, ''));
                 return icon ? { icon, title } : { emoji, title };
             }
             if (s.startsWith(bell + emoji)) {
-                const title = bell + s.slice((bell + emoji).length).replace(/^\s+/, '');
+                const title = this._applyTitleStrip(bell + s.slice((bell + emoji).length).replace(/^\s+/, ''));
                 return icon ? { icon, title } : { emoji, title };
             }
         }
-        return { emoji: '', icon: '', title: s };
+        return { emoji: '', icon: '', title: this._applyTitleStrip(s) };
     }
 
     // "Member · Category" line for an event (shown in the day-events panel / popup
@@ -2848,6 +2848,26 @@ export class SkylightFamilyCalendarCard extends LitElement {
         return out;
     }
 
+    // Strip a configured filler prefix ("Rendez-vous chez", "RDV", …) from a
+    // DISPLAY title (after the leading category emoji has already been moved to the
+    // icon, so the prefix is now at the start). A leading 🔔 reminder is preserved.
+    // Never blanks the title (a bare "Rendez-vous" with nothing after is kept).
+    _applyTitleStrip(title) {
+        if (!this._stripTitleRegexes || !this._stripTitleRegexes.length || !title) return title;
+        const bell = '\u{1F514} ';
+        let lead = '';
+        let rest = title;
+        if (rest.startsWith(bell)) { lead = bell; rest = rest.slice(bell.length); }
+        const trimmed = rest.trimStart();
+        for (const re of this._stripTitleRegexes) {
+            const s = trimmed.replace(re, '');
+            if (s && s !== trimmed) {
+                return lead + s.charAt(0).toUpperCase() + s.slice(1);
+            }
+        }
+        return title;
+    }
+
     _filterEventSummary(event, calendar) {
         let summary = calendar.eventTitleField ? event[calendar.eventTitleField] : event.summary;
 
@@ -2876,20 +2896,6 @@ export class SkylightFamilyCalendarCard extends LitElement {
             for (const search in this._replaceTitleText) {
                 const replace = this._replaceTitleText[search];
                 summary = summary.replace(search, replace);
-            }
-        }
-
-        // Strip a configured filler prefix ("Rendez-vous chez", "RDV", …) from the
-        // start, with its connector/separator, then re-capitalise. Never blanks the
-        // title: a bare "Rendez-vous" (nothing meaningful after) is left untouched.
-        if (this._stripTitleRegexes && this._stripTitleRegexes.length) {
-            const trimmed = summary.trimStart();
-            for (const re of this._stripTitleRegexes) {
-                const s = trimmed.replace(re, '');
-                if (s && s !== trimmed) {
-                    summary = s.charAt(0).toUpperCase() + s.slice(1);
-                    break;
-                }
             }
         }
 
