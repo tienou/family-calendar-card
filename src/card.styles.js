@@ -681,6 +681,39 @@ export default css`
         padding: var(--event-padding);
     }
 
+    /* Single-line month event (".compact-line"): start time + truncated title on
+       ONE row, category icon at the right, vertically centred (~21px tall). The
+       full range + location live in the event's hover tooltip (title attr). */
+    .container .day .events .event.compact-line {
+        align-items: center;
+    }
+    .container .day .events .event.compact-line .inner.inner-compact {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 5px;
+        min-width: 0;
+    }
+    .container .day .events .event.compact-line .time {
+        flex: 0 0 auto;
+        margin: 0;
+        font-size: 0.92em;
+    }
+    .container .day .events .event.compact-line .title {
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .container .day .events .event.compact-line .icon {
+        padding: 0 0 0 4px;
+        --mdc-icon-size: 15px;
+        display: flex;
+        align-items: center;
+        flex: 0 0 auto;
+    }
+
     .container .day .events .event .time {
         color: var(--primary-text-color, #333);
         margin: 0 0 3px 0;
@@ -2254,8 +2287,9 @@ export default css`
        events fit per cell before the "+N" chip (does not affect the week/day
        views or the mobile day panel). */
     ha-card.theme-familial .container.month-view .day .events .event {
-        padding: 3px 8px;
-        margin-bottom: 3px;
+        padding: 2px 7px;
+        margin-bottom: 2px;
+        border-left-width: 2.5px;
     }
     ha-card.theme-familial .container .day .events .event .inner { padding: 0; }
     /* Compact the month-cell header (date + weather) so it steals less vertical

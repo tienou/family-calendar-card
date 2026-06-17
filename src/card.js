@@ -1665,9 +1665,20 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 // Fallback glyph when the event itself has no marker: the calendar
                 // icon (Material Symbols variant when the option is on).
                 const calIcon = this._resolveCalendarIcon(this._calByEntity[event.calendars && event.calendars[0]]);
+                // Month grid cells are dense: render each (non-banner) event on a
+                // SINGLE line — start time + truncated title — and move the full
+                // time range + location into the hover tooltip (title attr). On
+                // touch (no hover) tapping the event still opens the full details.
+                const compactMonth = !plain && !banner && this._numberOfDaysIsMonth;
+                const tf = this._timeFormat;
+                const startText = (!event.fullDay && event.start) ? event.start.toFormat(tf) : '';
+                const rangeText = event.fullDay ? ''
+                    : (event.start.toFormat(tf) + (event.end ? ' - ' + event.end.toFormat(tf) : ''));
+                const hoverTitle = compactMonth ? [rangeText, event.location].filter(Boolean).join(' · ') : '';
                 return html`
                     <div
-                        class="event ${event.class}${bannerClasses}"
+                        class="event ${event.class}${bannerClasses}${compactMonth ? ' compact-line' : ''}"
+                        title="${hoverTitle}"
                         data-entity="${event.calendars[0]}"
                         data-additional-entities="${event.calendars.join(',')}"
                         data-summary="${event.summary}"
@@ -1697,6 +1708,12 @@ export class SkylightFamilyCalendarCard extends LitElement {
                             <div class="inner">
                                 <div class="title">${showBannerText && this._showEventTitle ? marker.title : html` `}</div>
                             </div>
+                        ` : compactMonth ? html`
+                        <div class="inner inner-compact">
+                            ${this._showTime && !event.fullDay && startText ?
+                                html`<span class="time">${startText}</span>` : ''}
+                            ${this._showEventTitle ? html`<span class="title">${marker.title}</span>` : ''}
+                        </div>
                         ` : html`
                         <div class="inner">
                             ${this._showTime && !event.fullDay ?
