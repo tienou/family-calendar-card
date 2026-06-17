@@ -2036,6 +2036,10 @@ export default css`
        last view button (e.g. "Mois"). Fall back to compact icon buttons (and let
        it wrap as a safety net) so every view stays reachable. */
     @media (max-width: 640px) {
+        /* Samsung-style compact month on mobile: hide the Members/Categories
+           filter groups from the header (the calendar colour identifies the
+           member/category in the grid, and the event details name it). */
+        ha-card.theme-familial .filter-groups { display: none; }
         /* Stack the controls so the view selector gets a full-width row of its
            own — otherwise it is squeezed to the right and the last button (Month)
            overflows the card (which has overflow:hidden) and gets clipped. */
