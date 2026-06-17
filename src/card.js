@@ -1210,6 +1210,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         return html`
             <ha-card class="${cardClasses.join(' ')}" style="${cardStyles.join(' ')}">
                 <div class="card-content skylight">
+                    ${this._theme === 'familial' ? html`<div style="padding:4px 8px;font-size:12px;font-weight:700;color:#fff;background:#EC6B4E;border-radius:6px;margin:4px;text-align:center;">DEBUG — viewport ${window.innerWidth}×${window.innerHeight} · carte ${this.shadowRoot?.querySelector('.calendar-container')?.offsetWidth ?? '?'}px (dis-moi ces chiffres)</div>` : ''}
                     ${this._error ?
                         html`<div class="errors"><ha-alert alert-type="error">${this._error}</ha-alert></div>` :
                         ''
