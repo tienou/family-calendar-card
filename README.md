@@ -36,7 +36,7 @@ A Skylight-inspired family calendar card for Home Assistant. Displays events fro
 ### Themes
 - **Skylight theme**: Original Skylight-inspired look with signature colors and style
 - **Home Assistant theme**: Native HA look that follows your HA theme (dark mode supported)
-- **Familial theme**: Clean redesign with explicit light/dark tokens — opaque panel, tinted event cards with a coloured left bar and contrasted text, accent "today" pill, weekend tint, and a filter legend split into **Members** (round dots) / **Categories** (square dots). Light/dark follows the active HA theme. Your calendar colours are preserved. Calendars are grouped automatically (writable person calendars → members; all-day/holiday calendars → categories); override per calendar with `group: member` or `group: category`.
+- **Familial theme**: Clean redesign with explicit light/dark tokens — opaque panel, tinted event cards with a coloured left bar and contrasted text, accent "today" pill, weekend tint, and a filter legend split into **Members** (round dots) / **Categories** (square dots). Light/dark follows the active HA theme. Your calendar colours are preserved. Calendars are grouped automatically (writable person calendars → members; all-day/holiday calendars → categories); override per calendar with `group: member` or `group: category`. With `fillHeight`, the month grid adapts **per cell**: a roomy day shows a **detailed** card (time range + title + location, category icon first), a tight day collapses to a **single line** (start time + truncated title; full range + location in the hover tooltip) and overflow becomes a `+N` chip — so the whole month fits one page.
 
 ### Mobile Month View
 - **Google Agenda-style** mobile month view on small screens (smartphones)
@@ -127,6 +127,7 @@ calendars:
 | `showLocationInForm` | boolean | `true` | Show location field in create/edit forms |
 | `showDescription` | boolean | `false` | Show event description |
 | `colorFullEvent` | boolean | `true` | Color full event background with calendar color |
+| `stripTitlePrefixes` | list | `[]` | Filler prefixes removed from the **start** of event titles to save space, e.g. `["Rendez-vous", "RDV", "Visite", "Appel", "Anniversaire de"]`. A following connector (chez / au / avec / à / pour …) and a `:`/`-` separator are dropped too, then the title is re-capitalised. Case-insensitive; `"Rendez-vous"` also matches `"Rendez vous"`. Works even when a category emoji leads the title (the emoji is moved to the icon); a leading 🔔 reminder is preserved. Never blanks a title (`"Rendez-vous"` alone is kept). |
 | `compact` | boolean | `true` | Compact display mode |
 | `fillHeight` | boolean | `false` | Stretch the day rows so the calendar fills the screen height (best in a panel / full-height view, e.g. a wall-mounted tablet) |
 | `materialSymbols` | boolean | `false` | Use [Material Symbols](https://github.com/beecho01/material-symbols) icons. When on, calendars use their `iconMaterial` and categories show their `icon` instead of the emoji (requires the Material Symbols integration) |

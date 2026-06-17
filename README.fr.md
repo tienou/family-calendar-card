@@ -127,6 +127,7 @@ calendars:
 | `showLocationInForm` | boolean | `true` | Afficher le champ lieu dans les formulaires |
 | `showDescription` | boolean | `false` | Afficher la description des evenements |
 | `colorFullEvent` | boolean | `true` | Colorer tout le fond de l'evenement |
+| `stripTitlePrefixes` | list | `[]` | Préfixes superflus retirés du **début** des titres pour gagner de la place, ex. `["Rendez-vous", "RDV", "Visite", "Appel", "Anniversaire de"]`. Le petit mot de liaison qui suit (chez / au / avec / à / pour …) et un séparateur `:`/`-` sont aussi retirés, puis le titre est re-capitalisé. Insensible à la casse ; `"Rendez-vous"` correspond aussi à `"Rendez vous"`. Fonctionne même si un emoji de catégorie est en tête (l'emoji passe dans l'icône) ; un 🔔 (rappel) en tête est conservé. Ne vide jamais un titre. |
 | `compact` | boolean | `true` | Mode d'affichage compact |
 | `fillHeight` | boolean | `false` | Étire les rangées de jours pour occuper toute la hauteur de l'écran (idéal en vue panneau, ex. tablette murale) |
 | `materialSymbols` | boolean | `false` | Utilise les icônes [Material Symbols](https://github.com/beecho01/material-symbols). Activé : les calendriers utilisent leur `iconMaterial` et les catégories affichent leur `icon` au lieu de l'emoji (nécessite l'intégration Material Symbols) |

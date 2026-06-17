@@ -1062,7 +1062,12 @@ export class SkylightFamilyCalendarCard extends LitElement {
         super.connectedCallback();
         this._startClock();
         if (!this._onResize) {
-            this._onResize = () => this._applyFillHeight();
+            // Debounce: on a phone, resize fires in bursts (rotate, address-bar
+            // show/hide on scroll); coalesce so we measure once, not per event.
+            this._onResize = () => {
+                clearTimeout(this._resizeTimer);
+                this._resizeTimer = setTimeout(() => this._applyFillHeight(), 150);
+            };
         }
         window.addEventListener('resize', this._onResize);
         if (this._initialized) {
@@ -1075,6 +1080,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._stopClock();
         this._clearUpdateEventsTimeouts();
         clearTimeout(this._locationSearchTimeout);
+        clearTimeout(this._resizeTimer);
         if (this._onResize) {
             window.removeEventListener('resize', this._onResize);
         }
@@ -1545,7 +1551,12 @@ export class SkylightFamilyCalendarCard extends LitElement {
 
     _renderSelectedDayEvents() {
         if (!this._selectedDay) return html``;
-        const n = this._selectedDay.events?.length || 0;
+        // Count only events that will actually render (exclude calendars hidden by
+        // the filter), matching _renderEvents — otherwise the header count can
+        // exceed the visible rows when a filter is toggled off.
+        const n = (this._selectedDay.events || [])
+            .map((k) => this._calendarEvents?.[k])
+            .filter((ev) => ev && !ev.calendars.every((c) => this._hideCalendars.indexOf(c) > -1)).length;
         const fr = (this._locale || 'en').startsWith('fr');
         const countWord = fr ? (n > 1 ? 'événements' : 'événement') : (n > 1 ? 'events' : 'event');
         return html`
@@ -2635,6 +2646,11 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 this._loading--;
                 loadingWeather = false;
             }
+            // Per-cell weather is baked into _days by _updateCard; rebuild so a
+            // forecast that lands after the calendar data actually paints (else the
+            // day-cell weather stays empty until the next refresh). Only once the
+            // grid exists — the initial calendar fetch will include it otherwise.
+            if (this._days) this._updateCard();
         }, {
             type: 'weather/subscribe_forecast',
             forecast_type: this._weather.useTwiceDaily ? 'twice_daily' : 'daily',
@@ -2862,7 +2878,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
         for (const re of this._stripTitleRegexes) {
             const s = trimmed.replace(re, '');
             if (s && s !== trimmed) {
-                return lead + s.charAt(0).toUpperCase() + s.slice(1);
+                // Code-point-aware capitalisation so a leading astral char (emoji)
+                // isn't split across its surrogate pair.
+                const [first, ...rest] = [...s];
+                return lead + (first ? first.toUpperCase() : '') + rest.join('');
             }
         }
         return title;
@@ -4550,7 +4569,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
     }
 
     _selectDay(day) {
-        if (this._selectedDay?.date?.day === day.date.day && this._selectedDay?.date?.month === day.date.month) return;
+        if (this._selectedDay?.date?.day === day.date.day && this._selectedDay?.date?.month === day.date.month && this._selectedDay?.date?.year === day.date.year) return;
         this._selectedDay = day;
         this.requestUpdate();
     }
@@ -4592,7 +4611,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         // Tap in month view: select the tapped day
         if (this._numberOfDaysIsMonth && pointerType !== 'mouse') {
             const target = e.target.closest?.('.day');
-            if (target && !target.classList.contains('header') && !target.classList.contains('outside')) {
+            if (target && !target.classList.contains('header') && !target.classList.contains('outside-month')) {
                 const dayNum = parseInt(target.dataset.date);
                 const month = parseInt(target.dataset.month);
                 const year = parseInt(target.dataset.year);
