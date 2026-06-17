@@ -2,3 +2,7 @@
 .parcel-cache/
 node_modules/
 dist/skylight-family-calendar-card.js.map
+
+# Design reference / handoff material — not part of the published card.
+# Contains a calendrier.yml with live API keys; must never be committed.
+design_handoff_calendrier_familial/

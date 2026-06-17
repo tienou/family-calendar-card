@@ -30,9 +30,9 @@ export default css`
         --day-date-text-font-size: 1.25em;
         --events-margin-top: 10px;
         --event-spacing: 5px;
-        --event-padding: 10px;
-        --event-border-width: 5px;
-        --event-border-radius: 5px;
+        --event-padding: 6px 8px;
+        --event-border-width: 3px;
+        --event-border-radius: 7px;
         --event-font-size: 1em;
         --event-line-height: 1.2em;
         --event-icon-size: 18px;
@@ -60,7 +60,8 @@ export default css`
         --events-margin-top: 5px;
         --event-spacing: 2px;
         --event-padding: 2px 5px;
-        --event-border-width: 2px;
+        --event-border-width: 3px;
+        --event-border-radius: 7px;
         --event-font-size: .9em;
         --event-line-height: 1.1em;
         --weather-icon-size: 20px;
@@ -146,6 +147,27 @@ export default css`
         flex-wrap: wrap;
     }
 
+    /* Two labelled filter groups (Members / Categories) — base layout for every
+       theme; the familial theme refines these below. */
+    .filter-groups {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 22px;
+        align-items: flex-start;
+    }
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .filter-group-label {
+        font-size: .7em;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        opacity: .55;
+    }
+
     .view-selector {
         display: flex;
         gap: 4px;
@@ -155,17 +177,35 @@ export default css`
     .filter-btn {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 7px;
         padding: 6px 14px;
-        border: 2px solid var(--cal-color, #888);
+        border: 1px solid var(--divider-color, rgba(0, 0, 0, 0.15));
         border-radius: var(--skylight-btn-radius);
         background: transparent;
-        color: var(--primary-text-color, #333);
+        color: var(--secondary-text-color, #666);
         cursor: pointer;
         font-family: var(--skylight-font);
         font-size: 0.9em;
-        transition: background 0.2s, color 0.2s;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
         white-space: nowrap;
+    }
+
+    /* Colour marker: outline when off, filled when on. Round = member,
+       square = category (the .member/.category class comes from _calendarGroup). */
+    .filter-btn .cal-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        box-sizing: border-box;
+        border: 2px solid var(--cal-color, #888);
+        background: transparent;
+        flex: 0 0 auto;
+    }
+    .filter-btn.category .cal-dot {
+        border-radius: 3px;
+    }
+    .filter-btn.active .cal-dot {
+        background: var(--cal-color, #888);
     }
 
     .filter-btn:hover {
@@ -173,8 +213,9 @@ export default css`
     }
 
     .filter-btn.active {
-        background: var(--cal-color, #888);
-        color: white;
+        background: color-mix(in srgb, var(--cal-color, #888) 14%, var(--card-background-color));
+        color: var(--primary-text-color);
+        border-color: color-mix(in srgb, var(--cal-color, #888) 45%, transparent);
     }
 
     .filter-btn ha-icon {
@@ -397,7 +438,7 @@ export default css`
     }
 
     .container .day.today .date .number {
-        background-color: #f0a030;
+        background-color: var(--today-accent, #EC6B4E);
         color: #fff;
         font-weight: bold;
         border-radius: 8px;
@@ -436,8 +477,10 @@ export default css`
     .container .day.header .date .text {
         font-size: var(--day-header-font-size, var(--day-date-text-font-size));
         color: var(--day-header-color, var(--primary-text-color));
-        font-weight: bold;
-        text-transform: capitalize;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        font-weight: 700;
+        opacity: .72;
     }
 
     .container .day.header .date .text-short {
@@ -1103,7 +1146,12 @@ export default css`
         .selected-day-list {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 9px;
+        }
+        .selected-day-list .event {
+            padding: 12px 13px;
+            border-radius: 12px;
+            border-left-width: 3px;
         }
         .selected-day-list .none {
             color: var(--secondary-text-color, rgba(0, 0, 0, 0.5));

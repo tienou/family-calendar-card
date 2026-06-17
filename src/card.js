@@ -740,8 +740,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
         return fr ? 'Membres' : 'Members';
     }
 
-    // Calendar filter pills. The "familial" theme shows two labelled groups with
-    // coloured dots; every other theme keeps the flat icon+name list.
+    // Calendar filter pills, split into two labelled groups (Members / Categories)
+    // for every theme. The "familial" theme shows a coloured dot; the others keep
+    // the calendar icon. Grouping uses _calendarGroup (explicit `group:`, else
+    // all-day-only / read-only calendars are categories, the rest members).
     _renderCalendarFilters() {
         const pill = (cal) => html`
             <button
@@ -749,29 +751,28 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 style="--cal-color: ${cal.color || '#888'}"
                 @click="${() => this._toggleCalendarVisibility(cal.entity)}"
             >
-                ${this._theme === 'familial'
-                    ? html`<span class="cal-dot"></span>`
-                    : (this._resolveCalendarIcon(cal) ? html`<ha-icon icon="${this._resolveCalendarIcon(cal)}"></ha-icon>` : '')}
+                <span class="cal-dot"></span>
                 <span>${this._getCalendarDisplayName(cal)}</span>
             </button>`;
-        if (this._theme === 'familial') {
-            const members = this._calendars.filter((c) => this._calendarGroup(c) === 'member');
-            const categories = this._calendars.filter((c) => this._calendarGroup(c) === 'category');
-            return html`
-                <div class="filter-groups">
-                    ${members.length ? html`
-                        <div class="filter-group">
-                            <div class="filter-group-label">${this._filterGroupLabel('member')}</div>
-                            <div class="calendar-filters">${members.map(pill)}</div>
-                        </div>` : ''}
-                    ${categories.length ? html`
-                        <div class="filter-group">
-                            <div class="filter-group-label">${this._filterGroupLabel('category')}</div>
-                            <div class="calendar-filters">${categories.map(pill)}</div>
-                        </div>` : ''}
-                </div>`;
+        const members = this._calendars.filter((c) => this._calendarGroup(c) === 'member');
+        const categories = this._calendars.filter((c) => this._calendarGroup(c) === 'category');
+        // No categories at all → keep a single flat list (no lone "Members" label).
+        if (!categories.length) {
+            return html`<div class="calendar-filters">${members.map(pill)}</div>`;
         }
-        return html`<div class="calendar-filters">${this._calendars.map(pill)}</div>`;
+        return html`
+            <div class="filter-groups">
+                ${members.length ? html`
+                    <div class="filter-group">
+                        <div class="filter-group-label">${this._filterGroupLabel('member')}</div>
+                        <div class="calendar-filters">${members.map(pill)}</div>
+                    </div>` : ''}
+                ${categories.length ? html`
+                    <div class="filter-group">
+                        <div class="filter-group-label">${this._filterGroupLabel('category')}</div>
+                        <div class="calendar-filters">${categories.map(pill)}</div>
+                    </div>` : ''}
+            </div>`;
     }
 
     // All known category emojis, pre-sorted longest-first (cached in setConfig).
@@ -1517,7 +1518,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
         return html`
             <div class="selected-day-events">
                 <div class="selected-day-header">
-                    <span class="selected-day-date">${this._selectedDay.date.toFormat('d MMMM')}</span>
+                    <span class="selected-day-date">${this._selectedDay.date.toFormat('cccc d MMMM')}</span>
                     <div class="add-event" @click="${(e) => this._handleAddEventClick(e, this._selectedDay)}">
                         <ha-icon icon="mdi:plus"></ha-icon>
                     </div>
@@ -1649,7 +1650,7 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         data-start-minute="${event.start.toFormat('mm')}"
                         data-end-hour="${event.end.toFormat('H')}"
                         data-end-minute="${event.end.toFormat('mm')}"
-                        style="--border-color: ${event.colors[0]}${(this._colorFullEvent && this._theme !== 'familial') ? '; background-color: ' + event.colors[0] + '; color: #fff; border-left-width: 0' : ''}"
+                        style="--border-color: ${event.colors[0]}${(this._colorFullEvent && this._theme !== 'familial') ? '; background-color: color-mix(in srgb, ' + event.colors[0] + ' 15%, var(--card-background-color))' : ''}"
                         @click="${() => {
                             this._handleEventClick(event)
                         }}"
