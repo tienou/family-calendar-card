@@ -2055,7 +2055,14 @@ export default css`
            (The fillHeight row-stretch is disabled on narrow cards in JS, so cells
            keep this natural height and the grid scrolls.) */
         ha-card.theme-familial .container .day { min-height: 84px; padding: 5px 6px 7px; }
-        ha-card.theme-familial.fill-height .container .day:not(.header) .events { overflow: visible; }
+        ha-card.theme-familial.fill-height .container .day:not(.header) { height: auto !important; }
+        ha-card.theme-familial.fill-height .container .day:not(.header) .events { overflow: visible !important; }
+    }
+    /* Same fill-height disable keyed on the real card width (container query),
+       in case a phone misreports its viewport width to the @media query above. */
+    @container weekplanner (width <= 640px) {
+        ha-card.theme-familial.fill-height .container .day:not(.header) { height: auto !important; }
+        ha-card.theme-familial.fill-height .container .day:not(.header) .events { overflow: visible !important; }
     }
 
     /* Navigation month title */
