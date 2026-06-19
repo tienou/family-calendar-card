@@ -36,8 +36,10 @@ export class SkylightFamilyCalendarCardEditor extends LitElement {
 
     static get properties() {
         return {
+            // `hass` is a public property set by Home Assistant.
             hass: {},
-            _config: {},
+            // Internal editor state — never an attribute (Lit docs: use state).
+            _config: { state: true },
         };
     }
 

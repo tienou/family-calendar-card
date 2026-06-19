@@ -136,6 +136,36 @@ export class SkylightFamilyCalendarCard extends LitElement {
         this._createCategory = '';
     }
 
+    // `hass` is set by Home Assistant on every state change (can fire many times
+    // a second on a busy instance). We deliberately keep it NON-reactive — the
+    // card drives its own updates (event refresh interval, weather subscription,
+    // user actions) instead of re-rendering the whole grid on every state change.
+    // The getter always returns the latest object, so any render reads fresh data.
+    // The setter only forces a re-render when a value the template actually reads
+    // from `hass` changed: the theme dark mode, the weather entity's state, or the
+    // sun state (day/night weather icon). This restores prompt reaction to a
+    // dark-mode toggle (HA best practice: react to hass) without the per-tick cost.
+    set hass(hass) {
+        const prev = this._hass;
+        this._hass = hass;
+        if (!prev) {
+            this.requestUpdate();
+            return;
+        }
+        const wEnt = this._weather && this._weather.entity;
+        const darkChanged = (hass.themes && hass.themes.darkMode)
+            !== (prev.themes && prev.themes.darkMode);
+        const weatherChanged = wEnt && hass.states[wEnt] !== prev.states[wEnt];
+        const sunChanged = hass.states['sun.sun'] !== prev.states['sun.sun'];
+        if (darkChanged || weatherChanged || sunChanged) {
+            this.requestUpdate();
+        }
+    }
+
+    get hass() {
+        return this._hass;
+    }
+
     // Built-in event categories. Each prepends its emoji to the event title on
     // save (the same mechanism as the 🔔 reminder), so it persists and shows
     // everywhere — including the Google Calendar app. Override per-card with the
@@ -189,31 +219,36 @@ export class SkylightFamilyCalendarCard extends LitElement {
      * @return {Object}
      */
     static get properties() {
+        // All of these are INTERNAL reactive state — set only by the component,
+        // never part of the public API and never reflected to/from attributes. Per
+        // the Lit docs they use `state: true` (not `type:`), which keeps them
+        // reactive (assignment triggers a re-render) without creating a spurious
+        // observed attribute on the element.
         return {
-            _days: { type: Array },
-            _config: { type: Object },
-            _error: { type: String },
-            _currentEventDetails: { type: Object },
-            _hideCalendars: { type: Array },
-            _showCreateEventDialog: { type: Object },
-            _showEditEventDialog: { type: Object },
-            _editFormData: { type: Object },
-            _currentView: { type: String },
-            _calendarVisibility: { type: Object },
-            _showRecurringConfirmDialog: { type: Object },
-            _showDeleteRecurringDialog: { type: Object },
-            _createRecurrenceType: { type: String },
-            _createRecurrenceEndType: { type: String },
-            _createDuration: { type: String },
-            _createShowAdvanced: { type: Boolean },
-            _createTitle: { type: String },
-            _createStartTime: { type: String },
-            _aiLoading: { type: Boolean },
-            _aiError: { type: String },
-            _aiResult: { type: String },
-            _eraserMode: { type: Boolean },
-            _createCategory: { type: String },
-            _dayEventsPopup: { type: Object }
+            _days: { state: true },
+            _config: { state: true },
+            _error: { state: true },
+            _currentEventDetails: { state: true },
+            _hideCalendars: { state: true },
+            _showCreateEventDialog: { state: true },
+            _showEditEventDialog: { state: true },
+            _editFormData: { state: true },
+            _currentView: { state: true },
+            _calendarVisibility: { state: true },
+            _showRecurringConfirmDialog: { state: true },
+            _showDeleteRecurringDialog: { state: true },
+            _createRecurrenceType: { state: true },
+            _createRecurrenceEndType: { state: true },
+            _createDuration: { state: true },
+            _createShowAdvanced: { state: true },
+            _createTitle: { state: true },
+            _createStartTime: { state: true },
+            _aiLoading: { state: true },
+            _aiError: { state: true },
+            _aiResult: { state: true },
+            _eraserMode: { state: true },
+            _createCategory: { state: true },
+            _dayEventsPopup: { state: true }
             // _createCalendar is intentionally NOT reactive: selecting a calendar
             // in the handwriting overlay updates the active button via direct DOM
             // so it never triggers a (costly) re-render of the overlay/canvas.
@@ -231,6 +266,13 @@ export class SkylightFamilyCalendarCard extends LitElement {
         if (!config.calendars) {
             throw new Error('No calendars are configured');
         }
+
+        // Bumped on every config change. Per-event memoised values (event marker,
+        // formatted times — see _eventMarker / _renderEvents) are keyed on this so
+        // a live config edit (e.g. toggling materialSymbols or changing the time
+        // format in the editor) invalidates them immediately rather than waiting
+        // for the next event refresh to rebuild the cache.
+        this._configRev = (this._configRev || 0) + 1;
 
         this._numberOfDaysIsMonth = this._isNumberOfDaysMonth(config.days ?? 7);
         this._locale = config.locale ?? 'en';
@@ -426,6 +468,41 @@ export class SkylightFamilyCalendarCard extends LitElement {
 
         // Apply current view settings
         this._applyViewSettings();
+
+        // Re-evaluate the periodic clock tick against the (possibly changed)
+        // header flags. Guarded on isConnected so reconfiguring a live card
+        // starts/stops the timer correctly without leaking one on an element that
+        // was never attached (initial setConfig runs before connectedCallback,
+        // which starts the clock itself).
+        if (this.isConnected) {
+            this._startClock();
+        }
+    }
+
+    // Masonry view: approximate card height in ~50px row units so HA can
+    // distribute cards across columns. Scales with the active view — a month grid
+    // is much taller than a single-day list. (Falls back to 1 in HA if absent,
+    // which mis-sizes a large calendar.)
+    getCardSize() {
+        if (this._numberOfDaysIsMonth) return 10;
+        const n = this._numberOfDays || 7;
+        if (n >= 14) return 9;
+        if (n >= 7) return 7;
+        if (n > 1) return 5;
+        return 4;
+    }
+
+    // Sections view: a calendar wants the full section width; height scales with
+    // the view. These are starting defaults — the user can still drag-resize the
+    // card in the layout editor, which overrides them per-card.
+    getGridOptions() {
+        const base = { columns: 12, min_columns: 6 };
+        if (this._numberOfDaysIsMonth) return { ...base, rows: 8, min_rows: 4 };
+        const n = this._numberOfDays || 7;
+        if (n >= 14) return { ...base, rows: 7, min_rows: 4 };
+        if (n >= 7) return { ...base, rows: 6, min_rows: 3 };
+        if (n > 1) return { ...base, rows: 5, min_rows: 3 };
+        return { ...base, rows: 4, min_rows: 2 };
     }
 
     _isNumberOfDaysMonth(numberOfDays) {
@@ -845,6 +922,27 @@ export class SkylightFamilyCalendarCard extends LitElement {
     // instead of the calendar icon — avoiding a duplicate glyph. A 🔔 reminder,
     // if present, stays in the title.
     _eventMarker(event) {
+        // Memoised on the event object: the marker (regex build + emoji scan +
+        // title strip) is otherwise recomputed for every event on every render.
+        // The cache key includes calendars[0] — a filter clone can drop the first
+        // calendar and change which titleEmoji applies — and _configRev so a live
+        // config change invalidates it. The event object lives only for the
+        // current data build (_calendarEvents is reset on each _updateEvents), so
+        // the cache can never persist past a refresh.
+        const calKey = (event.calendars && event.calendars[0]) || '';
+        if (event._markerCache
+            && event._markerCacheKey === calKey
+            && event._markerCacheRev === this._configRev) {
+            return event._markerCache;
+        }
+        const result = this._computeEventMarker(event);
+        event._markerCache = result;
+        event._markerCacheKey = calKey;
+        event._markerCacheRev = this._configRev;
+        return result;
+    }
+
+    _computeEventMarker(event) {
         const s = event.summary || '';
         const cal = this._calByEntity[event.calendars && event.calendars[0]];
         const useMat = this._materialSymbols;
@@ -872,6 +970,32 @@ export class SkylightFamilyCalendarCard extends LitElement {
             }
         }
         return { emoji: '', icon: '', title: this._applyTitleStrip(s) };
+    }
+
+    // Memoised per-event formatted time strings. Luxon's toFormat is comparatively
+    // expensive and these run for every event on every render (the data-* hour/min
+    // attrs unconditionally, the start/range texts for the compact path). The
+    // format depends only on the config time format (keyed on _configRev) and the
+    // event's own start/end, which never change for a given event object — and the
+    // object is rebuilt on every data refresh — so the cache can never go stale.
+    _eventFmt(event) {
+        if (event._fmtCache && event._fmtCacheRev === this._configRev) {
+            return event._fmtCache;
+        }
+        const tf = this._timeFormat;
+        const s = event.start;
+        const e = event.end;
+        const fmt = {
+            sh: s ? s.toFormat('H') : '',
+            sm: s ? s.toFormat('mm') : '',
+            eh: e ? e.toFormat('H') : '',
+            em: e ? e.toFormat('mm') : '',
+            startText: (!event.fullDay && s) ? s.toFormat(tf) : '',
+            rangeText: event.fullDay ? '' : ((s ? s.toFormat(tf) : '') + (e ? ' - ' + e.toFormat(tf) : '')),
+        };
+        event._fmtCache = fmt;
+        event._fmtCacheRev = this._configRev;
+        return fmt;
     }
 
     // "Member · Category" line for an event (shown in the day-events panel / popup
@@ -1210,14 +1334,46 @@ export class SkylightFamilyCalendarCard extends LitElement {
 
     _startClock() {
         this._stopClock();
-        // The header clock only shows HH:MM, so a 60s tick is enough — halves the
-        // periodic full re-render churn on an always-on wall tablet.
-        this._clockInterval = setInterval(() => this.requestUpdate(), 60000);
+        // The ONLY time-derived part of a periodic re-render is the header
+        // clock/date: the grid's past/ongoing/future event classes are baked at
+        // data-build time (see _addEvent → event.class), so a tick that only
+        // re-runs render() never refreshes them anyway. Match the cadence to what
+        // is actually shown:
+        //   • nothing time-derived in the header → no periodic re-render at all;
+        //   • header clock (HH:MM) → a 60s tick;
+        //   • header date only → re-render once at midnight (the date can't change
+        //     before then), not every minute.
+        // On an always-on wall tablet this removes ~1440 needless full re-renders
+        // per day whenever the HH:MM clock isn't displayed.
+        if (!this._showHeader) {
+            return;
+        }
+        if (this._showHeaderClock) {
+            this._clockInterval = setInterval(() => this.requestUpdate(), 60000);
+        } else if (this._showHeaderDate) {
+            this._scheduleMidnightTick();
+        }
+    }
+
+    // Re-render once at the next local midnight (then reschedule). Used when only
+    // the header date is shown — far cheaper than a minute tick that re-renders
+    // the whole grid 1440× a day just to catch a date that changes once.
+    _scheduleMidnightTick() {
+        const now = DateTime.now();
+        const msToMidnight = now.plus({ days: 1 }).startOf('day').diff(now).toMillis();
+        // +1s margin so we're safely past the boundary when the timer fires.
+        this._clockInterval = setTimeout(() => {
+            this.requestUpdate();
+            this._scheduleMidnightTick();
+        }, msToMidnight + 1000);
     }
 
     _stopClock() {
         if (this._clockInterval) {
+            // _clockInterval may hold either a setInterval id (clock shown) or a
+            // setTimeout id (midnight tick); clearing both covers either case.
             clearInterval(this._clockInterval);
+            clearTimeout(this._clockInterval);
             this._clockInterval = null;
         }
     }
@@ -1712,10 +1868,9 @@ export class SkylightFamilyCalendarCard extends LitElement {
                 // compact single-line; a roomy one renders detailed (with location).
                 const compactMonth = cellCompact && !banner;
                 const detailedMonth = isMonthGrid && !cellCompact && !banner;
-                const tf = this._timeFormat;
-                const startText = (!event.fullDay && event.start) ? event.start.toFormat(tf) : '';
-                const rangeText = event.fullDay ? ''
-                    : (event.start.toFormat(tf) + (event.end ? ' - ' + event.end.toFormat(tf) : ''));
+                const fmt = this._eventFmt(event);
+                const startText = fmt.startText;
+                const rangeText = fmt.rangeText;
                 const hoverTitle = compactMonth ? [rangeText, event.location].filter(Boolean).join(' · ') : '';
                 // The event icon, rendered FIRST (before the time) in the row.
                 const iconTpl = (!banner || showBannerText) ? (
@@ -1732,10 +1887,10 @@ export class SkylightFamilyCalendarCard extends LitElement {
                         data-additional-entities="${event.calendars.join(',')}"
                         data-summary="${event.summary}"
                         data-location="${event.location ?? ''}"
-                        data-start-hour="${event.start.toFormat('H')}"
-                        data-start-minute="${event.start.toFormat('mm')}"
-                        data-end-hour="${event.end.toFormat('H')}"
-                        data-end-minute="${event.end.toFormat('mm')}"
+                        data-start-hour="${fmt.sh}"
+                        data-start-minute="${fmt.sm}"
+                        data-end-hour="${fmt.eh}"
+                        data-end-minute="${fmt.em}"
                         style="--border-color: ${event.colors[0]}${(this._colorFullEvent && this._theme !== 'familial') ? '; background-color: color-mix(in srgb, ' + event.colors[0] + ' 15%, var(--card-background-color))' : ''}"
                         @click="${() => {
                             this._handleEventClick(event)

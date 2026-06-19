@@ -11,7 +11,21 @@ window.customCards = window.customCards || [];
 window.customCards.push({
     type: 'skylight-family-calendar-card',
     name: 'Skylight Family Calendar Card',
-    description: 'A Skylight-inspired family calendar card with weather, event management, and touchscreen-friendly UI.'
+    description: 'A Skylight-inspired family calendar card with weather, event management, and touchscreen-friendly UI.',
+    // Adds a help link in the frontend card editor.
+    documentationURL: 'https://github.com/tienou/ha-skylight-family-calendar-card',
+    // Suggest this card when the user picks a calendar.* entity in the card picker.
+    getEntitySuggestion: (hass, entityId) => {
+        if (entityId.split('.')[0] !== 'calendar') {
+            return null;
+        }
+        return {
+            config: {
+                type: 'custom:skylight-family-calendar-card',
+                calendars: [{ entity: entityId }],
+            },
+        };
+    },
 });
 
 customElements.define(
