@@ -2138,11 +2138,11 @@ export default css`
         display: flex; align-items: flex-start; justify-content: space-between;
         gap: 24px; flex-wrap: wrap;
     }
-    /* Keep "Membres" and "Catégories" side by side on ONE line each. flex-shrink:0
-       stops the groups being squeezed by the view selector — instead the view
-       selector wraps to its own row (buttons-row flex-wrap), so the filters get
-       the full width and each group fits on a single line (no 2-line wrap). */
-    ha-card.theme-familial .filter-groups { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 10px 24px; flex: 1 0 auto; align-items: flex-start; }
+    /* Keep "Membres" and "Catégories" side by side on ONE line each, AND on the
+       SAME row as the (icon-only) view selector. flex:0 1 auto = the groups take
+       their natural width without growing to push the view selector onto its own
+       row, so filters (left) and view icons (right) share one line. */
+    ha-card.theme-familial .filter-groups { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 10px 24px; flex: 0 1 auto; align-items: flex-start; }
     ha-card.theme-familial .filter-group-label {
         font-size: 11px; font-weight: 700; letter-spacing: .06em;
         text-transform: uppercase; color: var(--fam-head); margin: 0 0 8px 2px;
@@ -2178,11 +2178,12 @@ export default css`
     }
     ha-card.theme-familial .view-btn {
         background: transparent; border: none; cursor: pointer;
-        padding: 6px 14px; border-radius: 7px;
+        padding: 6px 10px; border-radius: 7px;
         color: var(--fam-muted); font-size: 13px; font-weight: 600;
+        display: inline-flex; align-items: center;
     }
-    ha-card.theme-familial .view-btn .view-icon { display: none; }
-    ha-card.theme-familial .view-btn .view-label { display: inline; }
+    ha-card.theme-familial .view-btn .view-icon { display: inline-flex; --mdc-icon-size: 20px; color: inherit; }
+    ha-card.theme-familial .view-btn .view-label { display: none; }
     ha-card.theme-familial .view-btn.active {
         background: var(--fam-panel); color: var(--fam-ink); font-weight: 700;
         border: 1px solid var(--fam-border); box-shadow: 0 1px 3px rgba(0, 0, 0, .22);
