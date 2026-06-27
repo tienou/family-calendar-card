@@ -2142,7 +2142,7 @@ export default css`
     }
 
     /* Filters: two labelled groups (round dots = members, square = categories) */
-    ha-card.theme-familial .controls { padding: 18px 18px 14px; }
+    ha-card.theme-familial .controls { padding: 4px 18px 14px; }
     /* Everything on ONE line: month/nav + filters (left) and the view-selector
        (right). nowrap keeps the view icons from dropping to a second row; the
        left cluster shrinks (and its filter pills wrap internally) under pressure
