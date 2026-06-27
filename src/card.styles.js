@@ -2108,7 +2108,7 @@ export default css`
        ════════════════════════════════════════════════════════════════════ */
     ha-card.theme-familial {
         --fam-panel: #ffffff;
-        --fam-cell: #eef0f4;
+        --fam-cell: #f4f5f7;
         --fam-weekend: #e9ebf0;
         --fam-trail: #e3e6ec;
         --fam-border: #d5dae1;
