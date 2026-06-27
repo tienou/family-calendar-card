@@ -323,6 +323,13 @@ export class FamilyCalendarCard extends LitElement {
         this._eventBackground = config.eventBackground ?? 'var(--card-background-color, inherit)';
         this._compact = config.compact ?? true;
         this._theme = config.theme ?? 'skylight';
+        // Optional floating action button (FAB) overlaid at the bottom-right of
+        // the card — opt-in, takes no layout space. Shape:
+        //   floatingButton: { icon, navigationPath, entity, service, serviceData, label }
+        // Action priority on tap: service > navigationPath (internal "/..." only) > entity.
+        this._floatingButton = (config.floatingButton && typeof config.floatingButton === 'object')
+            ? config.floatingButton
+            : null;
         this._dayFormat = config.dayFormat ?? null;
         this._dateFormat = config.dateFormat ?? 'cccc d LLLL yyyy';
         this._timeFormat = config.timeFormat ?? 'HH:mm';
@@ -1508,9 +1515,46 @@ export class FamilyCalendarCard extends LitElement {
                     ${this._renderDeleteRecurringDialog()}
                     ${this._dayEventsPopup ? this._renderDayEventsPopup() : ''}
                     ${this._loader}
+                    ${this._floatingButton ? html`
+                        <button
+                            class="fab-button"
+                            title="${this._floatingButton.label ?? ''}"
+                            aria-label="${this._floatingButton.label ?? 'action'}"
+                            @click="${this._handleFloatingButtonClick}"
+                        >
+                            <ha-icon icon="${this._floatingButton.icon ?? 'mdi:music'}"></ha-icon>
+                        </button>
+                    ` : ''}
                 </div>
             </ha-card>
         `;
+    }
+
+    _handleFloatingButtonClick(e) {
+        e?.stopPropagation();
+        const cfg = this._floatingButton;
+        if (!cfg) return;
+        // 1) Service call (e.g. "media_player.media_play")
+        if (cfg.service && typeof cfg.service === 'string' && cfg.service.includes('.') && this.hass) {
+            const [domain, service] = cfg.service.split('.');
+            this.hass.callService(domain, service, cfg.serviceData ?? {});
+            return;
+        }
+        // 2) Internal navigation — only same-origin paths ("/...") to avoid a
+        //    javascript:/data: URL from the config executing.
+        if (typeof cfg.navigationPath === 'string' && cfg.navigationPath.startsWith('/')) {
+            history.pushState(null, '', cfg.navigationPath);
+            window.dispatchEvent(new CustomEvent('location-changed', { detail: { replace: false } }));
+            return;
+        }
+        // 3) More-info dialog for an entity
+        if (cfg.entity) {
+            this.dispatchEvent(new CustomEvent('hass-more-info', {
+                detail: { entityId: cfg.entity },
+                bubbles: true,
+                composed: true,
+            }));
+        }
     }
 
     _renderHeaderWeather() {

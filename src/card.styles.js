@@ -150,6 +150,25 @@ export default css`
         display: contents;
     }
 
+    /* Optional floating action button (opt-in via the `floatingButton` config).
+       Overlaid at the bottom-right of the card — anchored to .card-content so it
+       takes no layout space and, on a full-screen card, sits at the corner of
+       the screen. */
+    .card-content.skylight { position: relative; }
+    .fab-button {
+        position: absolute; right: 16px; bottom: 16px; z-index: 6;
+        width: 44px; height: 44px; padding: 0;
+        border: none; border-radius: 50%; cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--primary-color, #4A90E2); color: #fff;
+        --mdc-icon-size: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+        opacity: .9; transition: opacity .15s, transform .1s;
+    }
+    .fab-button:hover { opacity: 1; }
+    .fab-button:active { transform: scale(.92); }
+    .fab-button ha-icon { display: inline-flex; }
+
     .calendar-filters {
         display: flex;
         gap: 6px;
