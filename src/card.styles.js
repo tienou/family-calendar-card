@@ -2108,11 +2108,11 @@ export default css`
        ════════════════════════════════════════════════════════════════════ */
     ha-card.theme-familial {
         --fam-panel: #ffffff;
-        --fam-cell: #ffffff;
-        --fam-weekend: #f6f7f9;
-        --fam-trail: #f1f2f5;
-        --fam-border: #e4e7ec;
-        --fam-line: #ebedf1;
+        --fam-cell: #eef0f4;
+        --fam-weekend: #e9ebf0;
+        --fam-trail: #e3e6ec;
+        --fam-border: #d5dae1;
+        --fam-line: #d8dce4;
         --fam-ink: #1d2230;
         --fam-sub: #5b6470;
         --fam-muted: #9aa2b1;
