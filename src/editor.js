@@ -221,6 +221,8 @@ export class FamilyCalendarCardEditor extends LitElement {
                         ${this.addHint('Limit events per day, extra shown as "+X more"')}
                         ${this.addBooleanField('showNavigation', 'Show navigation')}
                         ${this.addHint('Show arrows to navigate between weeks/months')}
+                        ${this.addBooleanField('swipeNavigation', 'Swipe to navigate (touch)', true)}
+                        ${this.addHint('On a touchscreen, swipe left/right to change period. Turn off to disable swiping.')}
                         ${this.addBooleanField('showLegend', 'Show calendar legend')}
                         ${this.addHint('Show the list of calendars with their colors')}
                         ${this.addBooleanField('legendToggle', 'Legend toggles calendar visibility')}
@@ -300,6 +302,8 @@ export class FamilyCalendarCardEditor extends LitElement {
                     'AI & Handwriting',
                     html`
                         <p style="margin: 0 0 8px 0; font-weight: 500;">✍️ Handwriting recognition</p>
+                        ${this.addBooleanField('handwriting', 'Enable handwriting input', true)}
+                        ${this.addHint('On a tablet, the create/edit dialog uses a handwriting canvas. Turn off to always use the typed (keyboard) dialog instead — useful without a stylus or to type entries.')}
                         ${this.addTextField('geminiApiKey', 'Google Gemini API key', 'password')}
                         ${this.addHint('Paste your key here to enable stylus handwriting in the quick-add area. Free key at aistudio.google.com/apikey')}
                         ${this.addTextField('geminiModel', 'Gemini model', 'text', 'gemini-2.5-flash')}

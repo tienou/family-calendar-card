@@ -305,6 +305,8 @@ export class FamilyCalendarCard extends LitElement {
             ? config.weekendDays.map((d) => parseInt(d)).filter((d) => d >= 1 && d <= 7)
             : [6, 7];
         this._showNavigation = config.showNavigation ?? true;
+        // Swipe left/right (touch) to change period. Opt-out via swipeNavigation: false.
+        this._swipeNavigation = config.swipeNavigation ?? true;
         this._startingDay = config.startingDay ?? 'today';
         this._startingDayOffset = config.startingDayOffset ?? 0;
         this._showWeekDayText = config.showWeekDayText ?? true;
@@ -314,6 +316,10 @@ export class FamilyCalendarCard extends LitElement {
         this._slotEndHour = parseInt(config.slotEndHour) || 22;
         this._aiTaskEntity = config.aiTaskEntity ?? null;
         this._aiQuickAdd = config.aiQuickAdd ?? null; // null = auto-detect an ai_task entity
+        // Handwriting input on the tablet create/edit overlay. Opt-out via
+        // handwriting: false -> the keyboard (typed) dialog is used everywhere,
+        // even on a tablet (lets users type the entry instead of writing it).
+        this._handwriting = config.handwriting ?? true;
         this._geminiApiKey = config.geminiApiKey ?? '';
         this._geminiModel = config.geminiModel ?? 'gemini-2.5-flash';
         this._claudeApiKey = config.claudeApiKey ?? '';
@@ -3538,7 +3544,7 @@ export class FamilyCalendarCard extends LitElement {
     }
 
     _handwritingEnabled() {
-        return !!(this._geminiApiKey || this._claudeApiKey);
+        return this._handwriting && !!(this._geminiApiKey || this._claudeApiKey);
     }
 
     // Handwriting canvas only on a touch device with a large screen (tablet).
@@ -4808,7 +4814,7 @@ export class FamilyCalendarCard extends LitElement {
 
         // Swipe: horizontal movement > 50px and more horizontal than vertical.
         // Mouse drags are excluded so desktop text selection keeps working.
-        if (pointerType !== 'mouse' && Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (this._swipeNavigation && pointerType !== 'mouse' && Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
             if (deltaX < 0) {
                 this._navigationOffset++;
             } else {
