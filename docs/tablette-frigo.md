@@ -53,17 +53,34 @@ X-GNOME-Autostart-enabled=true
 
 **`~/kiosk.sh`** (appartient à `tab`, éditable sans sudo)
 ```bash
-#!/bin/bash
-# Petite pause pour laisser le réseau/le WM se lever
-sleep 5
-exec chromium \
-  --kiosk \
-  --noerrdialogs \
-  --disable-infobars \
-  --disable-session-crashed-bubble \
-  --check-for-update-interval=31536000 \
-  "https://ha.jeegaillard.ovh/calendrier-familiale/Calendrier_Familiale?wp_enabled=true&wp_hide_toolbar=true&wp_hide_sidebar=true"
+#!/usr/bin/env bash
+sleep 3
+# Jamais de blank / veille / dim pendant la journée
+gsettings set org.gnome.desktop.session idle-delay 0
+gsettings set org.gnome.desktop.screensaver lock-enabled false
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
+gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
+# Clavier tactile GNOME (OSK) activé
+gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled true
+sudo /usr/local/bin/screen-power on
+# Évite la bulle "Chromium ne s'est pas fermé correctement" après coupure de courant
+PREF="$HOME/snap/chromium/common/chromium/Default/Preferences"
+[ -f "$PREF" ] && sed -i 's/"exit_type":"[^"]*"/"exit_type":"Normal"/' "$PREF"
+exec chromium --kiosk --ozone-platform=wayland --enable-wayland-ime --wayland-text-input-version=3 \
+  --noerrdialogs --disable-session-crashed-bubble \
+  --disable-features=Translate --no-first-run --password-store=basic \
+  --overscroll-history-navigation=0 \
+  "https://ha.jeegaillard.ovh/calendrier-familiale/Calendrier_Familiale?wp_enabled=true&wp_hide_toolbar=true&wp_hide_sidebar=true&wp_idle_time=0"
 ```
+
+> ⚠️ **`--ozone-platform=wayland` est indispensable** : en session GNOME, le snap
+> Chromium tourne par défaut en **X11/XWayland** (son launcher n'active Wayland
+> que sous Ubuntu Frame). Sans ce flag, tout ce qui touche au clavier tactile
+> (`--enable-wayland-ime`, `--wayland-text-input-version=3`) est **ignoré
+> silencieusement**. Et c'est bien le commutateur runtime
+> `--wayland-text-input-version=3` qu'il faut — `--enable-features=WaylandTextInputV3`
+> ne fait rien.
 
 > 🖥️ **Vue tablette** : utiliser **Chromium**, pas Firefox. Sous Linux, Firefox
 > déclare mal le tactile (`matchMedia('(pointer: coarse)')` → `false`), donc la
@@ -88,6 +105,45 @@ fiable (elle atterrit dans la vue, pas à la racine). La méthode qui **fonction
 > de la barre et de la sidebar.
 
 C'est persistant aux reboots et n'exige aucune modif côté HA.
+
+### Clavier tactile (OSK GNOME)
+
+Le clavier virtuel de GNOME fonctionne dans le kiosque, mais **pas en
+apparition automatique** : aucun navigateur ne la déclenche pour les champs des
+pages web (bug documenté — Firefox ne la fait que pour sa barre d'adresse :
+[Bugzilla 1231067](https://bugzilla.mozilla.org/show_bug.cgi?id=1231067) ;
+Chromium n'y arrive pas non plus, quels que soient les flags).
+
+**Le mode d'emploi qui marche** (validé, y compris par-dessus le plein écran
+`--kiosk`) :
+
+1. Toucher le champ de saisie (il prend le focus) ;
+2. **Glisser du bord bas de l'écran vers le haut** → l'OSK GNOME apparaît ;
+3. Taper — la frappe arrive bien dans le champ (grâce aux flags Wayland du
+   `kiosk.sh` ci-dessus).
+
+Prérequis : `gsettings set org.gnome.desktop.a11y.applications
+screen-keyboard-enabled true` (posé par `kiosk.sh`) + les 3 flags Wayland.
+
+> 🔍 **Tester au doigt sur l'écran, jamais via RDP** : au clic souris (dont
+> l'entrée émulée du RDP), les champs web ne convoquent jamais l'OSK — seuls
+> les champs natifs GNOME le font. Un test RDP « négatif » ne prouve rien.
+
+> 🛠️ **DevTools** : en mode `--kiosk`, Chromium désactive F12 avec un message
+> trompeur (« Votre organisation a bloqué… ») alors qu'aucune policy n'existe.
+> Pour déboguer : remplacer temporairement `--kiosk` par `--start-maximized`
+> dans `kiosk.sh` et relancer le kiosque.
+
+### Vue Musique (bouton flottant)
+
+La carte calendrier affiche un bouton flottant 🎵 (option `floatingButton`,
+`navigationPath` vers une vue `musique` du même dashboard). Cette vue contient
+une carte **[mediocre-hass-media-player-cards](https://github.com/antontanderup/mediocre-hass-media-player-cards)**
+(`custom:mediocre-multi-media-player-card`, size `large`) : choix de
+l'enceinte, navigateur de bibliothèque **Music Assistant**, recherche (avec
+l'OSK ci-dessus) et file d'attente (via l'intégration
+[mass_queue](https://github.com/droans/mass_queue)). Un bouton « ‹ Calendrier »
+(Bubble Card) ramène au calendrier.
 
 ---
 
@@ -151,7 +207,7 @@ lumière ambiante.
 
 ```
 SI  (07h ≤ heure < 23h)  ET  (zone.home > 0 personne)
-    → publier sur …/ecran/brightness  =  clamp( lux × 0,3 + 20 , 20 , 100 )
+    → publier sur …/ecran/brightness  =  clamp( (lux − 1) × 0,25 + 1 , 1 , 3 )
 SINON (nuit OU maison vide)
     → publier "0"  (écran éteint)
 ```
@@ -162,15 +218,25 @@ SINON (nuit OU maison vide)
 - **Capteur de lumière** : `sensor.awtrix_0c0984_illuminance` (horloge
   **AWTRIX / Ulanzi** posée près du frigo). La tablette **n'a pas** de capteur
   de luminosité ambiante interne (son IIO n'expose qu'accéléromètre/gyro).
-- **Courbe** : `lux × 0,3 + 20`, bornée **20–100 %**.
-  - ambiance sombre (lux ~0) → **20 %**
-  - pièce bien éclairée (lux ~270+) → **100 %**
-  - Ajustable via le **facteur** (0,3) et le **plancher** (20).
+- **Courbe** : `(lux − 1) × 0,25 + 1`, bornée **1–3 %**. Oui, si peu : d'une
+  part le capteur AWTRIX a une **plage minuscule** (≈1 la nuit → ≈9 en plein
+  jour, jamais plus — calibrer la courbe sur la plage *réelle*, sinon l'écran
+  semble « ne pas réagir »), d'autre part une dalle à 2-3 % suffit largement
+  dans une cuisine. Ajustez pente et bornes à votre goût.
 
-Template du payload luminosité (côté automatisation) :
-```jinja
-{{ [[ ((states('sensor.awtrix_0c0984_illuminance')|float(80))*0.3+20)|round|int, 20]|max, 100]|min }}
-```
+### Réveil / boost au toucher : service `screen-touch`
+
+Un second service systemd (root, Python stdlib) lit les événements bruts du
+digitizer (résolu par **nom** dans `/proc/bus/input/devices`, robuste aux
+reboots) et réagit aux **vrais appuis** (pas au contact continu — une trace de
+condensation sur la dalle ne doit pas compter) :
+
+- écran **éteint** + appui → réveil à `WAKE_PCT` (30 %) — un invité peut lancer
+  de la musique même quand tout le monde est « absent » ;
+- écran **allumé** + appui → boost à `+BOOST_PCT` (+10 %) pour la lisibilité ;
+- après `IDLE` (12 s) sans nouvel appui → retour à la luminosité de repos (0 si
+  l'écran était éteint → il se ré-éteint tout seul) ;
+- garde-fou `MAX_AWAKE` (600 s) contre un contact fantôme permanent.
 
 ---
 
@@ -201,6 +267,32 @@ grdctl rdp set-tls-key  <key.pem>
 grdctl rdp set-credentials             # interactif uniquement (getpass → pty requis)
 ```
 
+#### ⚠️ Autologin = RDP qui recasse à chaque reboot (fix durable)
+
+`gnome-remote-desktop` stocke les identifiants RDP dans le trousseau GNOME.
+Avec l'**autologin**, PAM n'a pas de mot de passe à passer au trousseau →
+`login.keyring` reste **verrouillé** à chaque boot → `grdctl status` affiche
+`Username/Password: (empty)` et toute connexion RDP est refusée. Le
+déverrouillage headless (`gnome-keyring-daemon --unlock`) **ne marche pas**
+sur une session déjà ouverte.
+
+**Fix durable (100 % SSH, sans écran)** : créer un trousseau par défaut **sans
+mot de passe** (fichier en clair — compromis assumé pour un kiosque sur LAN) :
+
+```bash
+cd ~/.local/share/keyrings
+printf '[keyring]\ndisplay-name=Default keyring\nctime=0\nmtime=0\nlock-on-idle=false\nlock-after=false\n' > Default_keyring.keyring
+printf 'Default_keyring' > default
+chmod 600 Default_keyring.keyring default
+# Redémarrer le daemon (socket-activated, il revient tout seul)
+pkill -f gnome-keyring-daemon
+systemctl --user restart gnome-remote-desktop
+grdctl rdp set-credentials        # re-poser les identifiants (interactif)
+```
+
+Ce trousseau se déverrouille **sans mot de passe à chaque boot** → le RDP
+survit aux redémarrages. L'ancien `login.keyring` reste intact (chiffré).
+
 ---
 
 ## 7. Pièges rencontrés (et résolus)
@@ -214,8 +306,12 @@ grdctl rdp set-credentials             # interactif uniquement (getpass → pty 
 | **`wallpanel:` dans le dashboard sans effet** | Config atterrit dans la vue, pas à la racine | **Override par URL** dans `kiosk.sh` |
 | **Pas de rotation d'écran** | `xrandr` n'existe pas sous Wayland | Réglages → Affichage, ou `monitors.xml` (+ copie `/var/lib/gdm3/.config/` pour l'écran de login) ; désactiver `iio-sensor-proxy` pour figer |
 | **`grdctl` « Cannot autolaunch D-Bus »** | lancé en **sudo** → perd le bus de session | Sans sudo + exporter `XDG_RUNTIME_DIR` et `DBUS_SESSION_BUS_ADDRESS` |
-| **RDP refuse d'enregistrer le mot de passe** | **Autologin** → trousseau `login` **verrouillé** | Trousseau `login` **sans mot de passe** (Seahorse : supprimer + recréer vide + par défaut) → auto-déverrouillage au boot |
+| **RDP recasse à chaque reboot** | **Autologin** → trousseau `login` re-**verrouillé** au boot | Trousseau par défaut **en clair** (voir §6) → auto-déverrouillage, creds persistants |
 | **`pkill -f chromium` tue la session SSH** | Le motif `chromium` matche aussi le shell SSH | `pkill -x chrome` / `pkill -x chromium` |
+| **Clavier tactile jamais auto-affiché dans le navigateur** | Bug navigateurs (champs web ≠ focus GTK) ; et flags IME ignorés si Chromium tourne en XWayland | `--ozone-platform=wayland` + flags IME, puis **geste glisser-du-bas** (voir §3) |
+| **F12 « bloqué par votre organisation »** | Effet du mode `--kiosk` (aucune policy réelle) | Basculer temporairement en `--start-maximized` |
+| **Install snap interminable via l'App Center** | Téléchargement App Center peu fiable | `snap download <paquet>` (sans root) puis `sudo snap ack *.assert && sudo snap install *.snap` |
+| **Luminosité « qui ne réagit pas »** | Courbe calibrée sur 0-100 alors que le capteur ne sort que 1-9 | Calibrer sur la **plage réelle** du capteur (historique HA) |
 
 ### Éditer un script sur la tablette : ne **jamais** faire coller un heredoc
 
@@ -245,5 +341,6 @@ Le service utilise `ExecStart=/bin/bash /usr/local/bin/screen-mqtt` (lancé via
 
 ---
 
-*Installation documentée en juin 2026. Adaptez les IP, chemins et noms d'entités à
-votre environnement.*
+*Installation documentée en juin 2026, mise à jour juillet 2026 (Wayland natif,
+clavier tactile, RDP durable, vue Musique). Adaptez les IP, chemins et noms
+d'entités à votre environnement.*
