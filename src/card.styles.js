@@ -2429,18 +2429,27 @@ export default css`
        d'events du JS (fillHeight) mesure la hauteur réelle des chips, donc il
        profite automatiquement de la compression. ── */
     ha-card.theme-familial.fill-height .container.month-view .day:not(.header) {
-        padding: 3px 6px 4px;
+        padding: 1px 5px 3px;
     }
     ha-card.theme-familial.fill-height .container.month-view .day {
-        --events-margin-top: 2px;
-        --weather-icon-size: 14px;
-        --weather-temperature-font-size: 0.58em;
+        --events-margin-top: 1px;
+    }
+    /* Pas de météo par jour en vue mois tablette : le picto + températures
+       mangeaient la ligne d'en-tête. (La météo reste sur les autres vues.) */
+    ha-card.theme-familial.fill-height .container.month-view .day .weather {
+        display: none;
+    }
+    /* Le bouton "+" (28×28) imposait la hauteur de l'en-tête alors que le
+       chiffre ne fait que 12px — réduit à 16px pour que le numéro remonte
+       tout en haut et rende ~12px aux événements. */
+    ha-card.theme-familial.fill-height .container.month-view .day .add-event {
+        width: 16px; height: 16px; --mdc-icon-size: 13px;
     }
     ha-card.theme-familial.fill-height .container.month-view .day .date .number {
         font-size: 12px;
     }
     ha-card.theme-familial.fill-height .container.month-view .day.today .date .number {
-        min-width: 20px; height: 20px; font-size: 11.5px; padding: 0 6px;
+        min-width: 17px; height: 17px; font-size: 11px; padding: 0 5px;
     }
     ha-card.theme-familial.fill-height .container.month-view .day .events .event {
         padding: 2px 7px 3px;
