@@ -2131,8 +2131,8 @@ export default css`
         --fam-cell: #f4f5f7;
         --fam-weekend: #e9ebf0;
         --fam-trail: #e3e6ec;
-        --fam-border: #aab3bf;
-        --fam-line: #bfc6d0;
+        --fam-border: #8b96a6;
+        --fam-line: #a3acba;
         --fam-ink: #1d2230;
         --fam-sub: #5b6470;
         --fam-muted: #9aa2b1;
@@ -2151,8 +2151,8 @@ export default css`
         --fam-cell: #191c22;
         --fam-weekend: #15181d;
         --fam-trail: #131519;
-        --fam-border: #4a5160;
-        --fam-line: #3b414c;
+        --fam-border: #5c6474;
+        --fam-line: #4b525f;
         --fam-ink: #e9ecf1;
         --fam-sub: #aab2bf;
         --fam-muted: #6b7480;
