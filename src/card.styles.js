@@ -2421,6 +2421,47 @@ export default css`
         font-size: 13px;
     }
     ha-card.theme-familial .container.month-view .day .weather { gap: 3px; }
+    /* ── Densité tablette/frigo (fillHeight) : les cases du mois sont bornées à
+       la hauteur d'écran, chaque pixel vertical compte. Compression douce de
+       tout ce qui s'empile (padding de case, en-tête, chips, bannières, "+N")
+       pour afficher 1 à 2 events de plus par case, en restant lisible à 2 m.
+       Scopé .fill-height : le rendu téléphone/ordinateur est inchangé. Le cap
+       d'events du JS (fillHeight) mesure la hauteur réelle des chips, donc il
+       profite automatiquement de la compression. ── */
+    ha-card.theme-familial.fill-height .container.month-view .day:not(.header) {
+        padding: 3px 6px 4px;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day {
+        --events-margin-top: 2px;
+        --weather-icon-size: 14px;
+        --weather-temperature-font-size: 0.58em;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day .date .number {
+        font-size: 12px;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day.today .date .number {
+        min-width: 20px; height: 20px; font-size: 11.5px; padding: 0 6px;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day .events .event {
+        padding: 2px 7px 3px;
+        margin-bottom: 2px;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day .events .event.compact-line {
+        padding: 1px 6px;
+        margin-bottom: 1px;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day .events .event .title {
+        font-size: 11.5px;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day .events .event .time {
+        font-size: 10px;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day .events .event.banner {
+        padding-top: 1px; padding-bottom: 1px;
+    }
+    ha-card.theme-familial.fill-height .container.month-view .day .events .more {
+        font-size: 0.66em; line-height: 1.5; padding: 0 7px;
+    }
     /* "+N more" chip: a clear, tappable accent pill (not a vague grey box) so it
        reads as "there are N more events here — tap to see them". */
     ha-card.theme-familial .container .day .events .more {
