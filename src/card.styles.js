@@ -2326,27 +2326,32 @@ export default css`
         padding: 8px 9px 10px; min-height: 126px; margin: 0;
         color: var(--fam-ink);
     }
-    /* Grille visible PAR-DESSUS les bannières multi-jours (cellules fusionnées).
-       En vue mois, chaque cellule redessine son séparateur vertical droit via
-       ::after (z-index:4 > bannières z-index:1). ATTENTION : en fillHeight chaque
-       .day porte un clip-path → devient un contexte d'empilement isolé, donc ce
-       ::after ne domine que la bannière de SA cellule ; le débordement d'une
-       cellule voisine (contexte empilé au-dessus par ordre DOM) recouvrirait la
-       ligne. C'est pourquoi le bleed des bannières est ramené à -9px plus bas
-       (les tranches s'arrêtent au bord, sans mordre sur le voisin) : combiné à ce
-       ::after, la ligne reste nette sur toute la bande. Calé pile sur le
-       border-right 1px (containing block = padding box → right:-1px). */
-    ha-card.theme-familial .container.month-view .day:not(.header)::after {
+    /* Grille verticale PAR-DESSUS les bannières multi-jours, version overlay.
+       Un ::after PAR CELLULE ne marche pas : en fillHeight chaque .day porte un
+       clip-path → contexte d'empilement isolé, et la tranche de bannière de la
+       cellule SUIVANTE (peinte après dans l'ordre DOM) recouvre le trait de la
+       précédente (vérifié au pixel). À l'inverse, un overlay UNIQUE posé sur le
+       conteneur de grille peint au-dessus de TOUS les contextes de cellules :
+       il redessine les séparateurs verticaux sur toute la hauteur, bandes
+       comprises. Les border-right des cellules sont retirés en vue mois (c'est
+       l'overlay qui EST la grille verticale — évite les doubles traits, les
+       bordures horizontales restent portées par les cellules). */
+    ha-card.theme-familial .container.month-view { position: relative; }
+    ha-card.theme-familial .container.month-view::after {
         content: "";
         position: absolute;
-        top: 0;
-        bottom: -1px;
-        right: -1px;
-        width: 1px;
-        background: var(--fam-line);
-        z-index: 4;
+        inset: 0;
         pointer-events: none;
+        z-index: 5;
+        --gcols: 7;
+        background-image: repeating-linear-gradient(to right,
+            transparent 0,
+            transparent calc(100% / var(--gcols) - 1px),
+            var(--fam-line) calc(100% / var(--gcols) - 1px),
+            var(--fam-line) calc(100% / var(--gcols)));
     }
+    ha-card.theme-familial .container.month-view.hide-weekend::after { --gcols: 5; }
+    ha-card.theme-familial .container.month-view .day { border-right: none; }
     ha-card.theme-familial .container .day.weekend:not(.header) { background: var(--fam-weekend); }
     ha-card.theme-familial .container .day.outside { background: var(--fam-trail); }
     ha-card.theme-familial .container .day.today:not(.header) {
@@ -2387,15 +2392,12 @@ export default css`
         background-color: color-mix(in srgb, var(--fam-cell), var(--border-color, #888) var(--fam-event-mix));
         color: var(--fam-ink);
     }
-    /* Bleed ramené de -12px à -9px (= padding horizontal de la cellule) : les
-       tranches de bannière s'arrêtent PILE au bord de la cellule au lieu de
-       déborder sur le voisin. Indispensable pour que la grille (border-right +
-       ::after ci-dessus) reste visible à travers une bande multi-jours : à -12px
-       le débordement du voisin recouvrait la ligne (cf. contextes d'empilement
-       par clip-path en fillHeight). La bande reste continue (même couleur,
-       tranches jointives), juste traversée par les lignes de grille. */
-    ha-card.theme-familial .container .day .events .event.banner.ljoin { margin-left: -9px; }
-    ha-card.theme-familial .container .day .events .event.banner.rjoin { margin-right: -9px; }
+    /* Chevauchement des tranches de bannière : on garde le bleed de BASE
+       (-12px, cf. .ljoin/.rjoin plus haut) — large recouvrement = bande
+       continue même avec l'arrondi de l'échelle fractionnaire GNOME de la
+       tablette (un bleed réduit à -9px y créait des interstices). La grille
+       qui traverse la bande est assurée par l'overlay ::after du conteneur
+       ci-dessus, PAS en amincissant les tranches. */
     /* Month view, TIGHT cells only (single-line ".compact-line" chips): squeeze
        padding + bar so more events fit before the "+N". Roomy cells keep the full
        comfortable card (base familial .event padding). */
