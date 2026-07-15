@@ -2131,8 +2131,8 @@ export default css`
         --fam-cell: #f4f5f7;
         --fam-weekend: #e9ebf0;
         --fam-trail: #e3e6ec;
-        --fam-border: #d5dae1;
-        --fam-line: #d8dce4;
+        --fam-border: #aab3bf;
+        --fam-line: #bfc6d0;
         --fam-ink: #1d2230;
         --fam-sub: #5b6470;
         --fam-muted: #9aa2b1;
@@ -2151,8 +2151,8 @@ export default css`
         --fam-cell: #191c22;
         --fam-weekend: #15181d;
         --fam-trail: #131519;
-        --fam-border: #2a2f38;
-        --fam-line: #23272f;
+        --fam-border: #4a5160;
+        --fam-line: #3b414c;
         --fam-ink: #e9ecf1;
         --fam-sub: #aab2bf;
         --fam-muted: #6b7480;
@@ -2326,6 +2326,27 @@ export default css`
         padding: 8px 9px 10px; min-height: 126px; margin: 0;
         color: var(--fam-ink);
     }
+    /* Grille visible PAR-DESSUS les bannières multi-jours (cellules fusionnées).
+       En vue mois, chaque cellule redessine son séparateur vertical droit via
+       ::after (z-index:4 > bannières z-index:1). ATTENTION : en fillHeight chaque
+       .day porte un clip-path → devient un contexte d'empilement isolé, donc ce
+       ::after ne domine que la bannière de SA cellule ; le débordement d'une
+       cellule voisine (contexte empilé au-dessus par ordre DOM) recouvrirait la
+       ligne. C'est pourquoi le bleed des bannières est ramené à -9px plus bas
+       (les tranches s'arrêtent au bord, sans mordre sur le voisin) : combiné à ce
+       ::after, la ligne reste nette sur toute la bande. Calé pile sur le
+       border-right 1px (containing block = padding box → right:-1px). */
+    ha-card.theme-familial .container.month-view .day:not(.header)::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: -1px;
+        right: -1px;
+        width: 1px;
+        background: var(--fam-line);
+        z-index: 4;
+        pointer-events: none;
+    }
     ha-card.theme-familial .container .day.weekend:not(.header) { background: var(--fam-weekend); }
     ha-card.theme-familial .container .day.outside { background: var(--fam-trail); }
     ha-card.theme-familial .container .day.today:not(.header) {
@@ -2366,6 +2387,15 @@ export default css`
         background-color: color-mix(in srgb, var(--fam-cell), var(--border-color, #888) var(--fam-event-mix));
         color: var(--fam-ink);
     }
+    /* Bleed ramené de -12px à -9px (= padding horizontal de la cellule) : les
+       tranches de bannière s'arrêtent PILE au bord de la cellule au lieu de
+       déborder sur le voisin. Indispensable pour que la grille (border-right +
+       ::after ci-dessus) reste visible à travers une bande multi-jours : à -12px
+       le débordement du voisin recouvrait la ligne (cf. contextes d'empilement
+       par clip-path en fillHeight). La bande reste continue (même couleur,
+       tranches jointives), juste traversée par les lignes de grille. */
+    ha-card.theme-familial .container .day .events .event.banner.ljoin { margin-left: -9px; }
+    ha-card.theme-familial .container .day .events .event.banner.rjoin { margin-right: -9px; }
     /* Month view, TIGHT cells only (single-line ".compact-line" chips): squeeze
        padding + bar so more events fit before the "+N". Roomy cells keep the full
        comfortable card (base familial .event padding). */
