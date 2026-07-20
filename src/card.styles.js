@@ -2341,7 +2341,14 @@ export default css`
        comprises. Les border-right des cellules sont retirés en vue mois (c'est
        l'overlay qui EST la grille verticale — évite les doubles traits, les
        bordures horizontales restent portées par les cellules). */
-    ha-card.theme-familial .container.month-view { position: relative; }
+    /* Bord GAUCHE de la grille : les cellules ne portent que des bordures
+       droite/bas et l'overlay ferme le bord droit (ligne à 100%) — sans ceci la
+       colonne LUNDI n'a aucun trait à sa gauche (asymétrique, remonté par
+       l'user). Porté par le conteneur = pleine hauteur de la grille. */
+    ha-card.theme-familial .container.month-view {
+        position: relative;
+        border-left: 2px solid var(--fam-line);
+    }
     ha-card.theme-familial .container.month-view::after {
         content: "";
         position: absolute;
