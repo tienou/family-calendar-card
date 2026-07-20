@@ -2140,7 +2140,12 @@ export default css`
         --fam-accent: #EC6B4E;
         --fam-event-mix: 12%;
         background: var(--fam-panel) !important;
-        border: 1px solid var(--fam-border) !important;
+        /* 2px partout (cadre, lignes, colonnes) : à l'échelle fractionnaire de la
+           tablette (1.667), un trait de 1px CSS = 1.67px physiques rendu tantôt 1
+           tantôt 2 px selon sa position → largeurs visiblement inégales. À 2px
+           CSS (3.33 physiques → 3-4), la variation devient imperceptible et
+           toutes les lignes ont le même poids. */
+        border: 2px solid var(--fam-border) !important;
         border-radius: 14px !important;
         box-shadow: 0 1px 2px rgba(16, 24, 40, .06) !important;
         color: var(--fam-ink);
@@ -2320,8 +2325,8 @@ export default css`
     ha-card.theme-familial .container.month-view.hide-weekend .day { --days-columns: 5 !important; }
     ha-card.theme-familial .container .day {
         background: var(--fam-cell);
-        border-right: 1px solid var(--fam-line);
-        border-bottom: 1px solid var(--fam-line);
+        border-right: 2px solid var(--fam-line);
+        border-bottom: 2px solid var(--fam-line);
         border-left: none; border-top: none;
         padding: 8px 9px 10px; min-height: 126px; margin: 0;
         color: var(--fam-ink);
@@ -2346,8 +2351,8 @@ export default css`
         --gcols: 7;
         background-image: repeating-linear-gradient(to right,
             transparent 0,
-            transparent calc(100% / var(--gcols) - 1px),
-            var(--fam-line) calc(100% / var(--gcols) - 1px),
+            transparent calc(100% / var(--gcols) - 2px),
+            var(--fam-line) calc(100% / var(--gcols) - 2px),
             var(--fam-line) calc(100% / var(--gcols)));
     }
     ha-card.theme-familial .container.month-view.hide-weekend::after { --gcols: 5; }
@@ -2364,7 +2369,7 @@ export default css`
     /* Day header row (LUNDI … DIMANCHE) */
     ha-card.theme-familial .container .day.header {
         background: transparent; min-height: auto; padding: 10px 9px;
-        border-bottom: 1px solid var(--fam-line);
+        border-bottom: 2px solid var(--fam-line);
     }
     ha-card.theme-familial .container .day.header .date .text,
     ha-card.theme-familial .container .day.header .date .text-short {
