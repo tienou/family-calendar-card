@@ -4139,7 +4139,25 @@ export class FamilyCalendarCard extends LitElement {
         }
     }
 
+    // Re-entrancy guard: on touch screens a double-tap on "Create"/"Save" fires
+    // the handler twice before the first WS create resolves → the event is
+    // created in DOUBLE (two identical series, seen in the wild with "Aile
+    // Froide"). The guard is set synchronously on entry so the second tap is a
+    // no-op, and always released (finally) so a validation early-return or a
+    // failed WS call never leaves the button dead.
     async _handleCreateEvent() {
+        if (this._savingEvent) {
+            return;
+        }
+        this._savingEvent = true;
+        try {
+            await this._doCreateEvent();
+        } finally {
+            this._savingEvent = false;
+        }
+    }
+
+    async _doCreateEvent() {
         const title = (this._createTitle ?? this.shadowRoot.querySelector('#event-title')?.value ?? '').trim();
         const calendar = this._createCalendar || this.shadowRoot.querySelector('#event-calendar')?.value;
         const startDate = this.shadowRoot.querySelector('#event-start-date')?.value;
@@ -4442,7 +4460,21 @@ export class FamilyCalendarCard extends LitElement {
         }
     }
 
+    // Same double-tap guard as _handleCreateEvent (a double-tap on Save would
+    // fire two concurrent updates — or two creates when moving calendars).
     async _handleUpdateEvent() {
+        if (this._savingEvent) {
+            return;
+        }
+        this._savingEvent = true;
+        try {
+            await this._doUpdateEvent();
+        } finally {
+            this._savingEvent = false;
+        }
+    }
+
+    async _doUpdateEvent() {
         const event = this._showEditEventDialog;
         const form = this._editFormData;
 
