@@ -2298,12 +2298,24 @@ export default css`
             height: 50px !important; min-height: 50px !important; max-height: 50px !important;
         }
         ha-card.theme-familial .container.month-view .day:not(.header) .events { overflow: hidden; }
+        /* Mobile : PAS d'overlay de grille. Sur téléphone, le conteneur de la vue
+           mois contient AUSSI le panneau « jour sélectionné » (sous la grille) →
+           l'overlay inset:0 dessinait ses traits verticaux à travers les cartes
+           d'événements du panneau. Et il n'y sert à rien : les cellules 50px
+           affichent des points, pas de bandes fusionnées à traverser. Retour aux
+           bordures portées par les cellules. */
+        ha-card.theme-familial .container.month-view::after { display: none; }
+        ha-card.theme-familial .container.month-view { border-left: none; }
+        ha-card.theme-familial .container.month-view .day { border-right: 2px solid var(--fam-line); }
     }
     /* Belt-and-suspenders via the real card width too. */
     @container weekplanner (width <= 640px) {
         ha-card.theme-familial .container.month-view .day:not(.header) {
             height: 50px !important; min-height: 50px !important; max-height: 50px !important;
         }
+        ha-card.theme-familial .container.month-view::after { display: none; }
+        ha-card.theme-familial .container.month-view { border-left: none; }
+        ha-card.theme-familial .container.month-view .day { border-right: 2px solid var(--fam-line); }
     }
 
     /* Navigation month title */
