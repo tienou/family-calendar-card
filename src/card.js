@@ -323,6 +323,14 @@ export class FamilyCalendarCard extends LitElement {
         this._slotEndHour = parseInt(config.slotEndHour) || 22;
         this._aiTaskEntity = config.aiTaskEntity ?? null;
         this._aiQuickAdd = config.aiQuickAdd ?? null; // null = auto-detect an ai_task entity
+        // Reference calendars for the "skip school holidays" ([hv]) / "skip public
+        // holidays" ([hf]) recurrence options. When set, the create/edit dialogs
+        // show the corresponding checkbox and the card hides occurrences of tagged
+        // recurring events that overlap a period from these calendars. Display-side
+        // only: the underlying recurring event is unchanged (HA cannot create
+        // Google recurrences with EXDATE exceptions).
+        this._vacationCalendar = config.vacationCalendar ?? null;
+        this._holidayCalendar = config.holidayCalendar ?? null;
         // Handwriting input on the tablet create/edit overlay. Opt-out via
         // handwriting: false -> the keyboard (typed) dialog is used everywhere,
         // even on a tablet (lets users type the entry instead of writing it).
@@ -456,6 +464,8 @@ export class FamilyCalendarCard extends LitElement {
                 eventDuration: 'Duration',
                 eventDate: 'Date',
                 advancedOptions: 'Advanced options',
+                eventSkipVacation: 'Skip school holidays',
+                eventSkipHoliday: 'Skip public holidays',
                 quickAdd: 'e.g. 9am dentist',
                 aiAnalyze: 'Analyze with AI',
                 handwriteHint: 'Write the event here (e.g. 9am dentist)',
@@ -573,6 +583,8 @@ export class FamilyCalendarCard extends LitElement {
             eventDuration: 'Durée',
             eventDate: 'Date',
             advancedOptions: 'Options avancées',
+            eventSkipVacation: 'Hors vacances scolaires',
+            eventSkipHoliday: 'Hors jours fériés',
             quickAdd: 'ex : 9h dentiste',
             aiAnalyze: 'Analyser avec l’IA',
             handwriteHint: 'Écrivez l’événement ici (ex : 9h dentiste)',
@@ -608,6 +620,8 @@ export class FamilyCalendarCard extends LitElement {
             eventDuration: 'Dauer',
             eventDate: 'Datum',
             advancedOptions: 'Erweiterte Optionen',
+            eventSkipVacation: 'Außerhalb der Schulferien',
+            eventSkipHoliday: 'Außerhalb der Feiertage',
             quickAdd: 'z. B. 9 Uhr Zahnarzt',
             aiAnalyze: 'Mit KI analysieren',
             handwriteHint: 'Termin hier schreiben (z. B. 9 Uhr Zahnarzt)',
@@ -643,6 +657,8 @@ export class FamilyCalendarCard extends LitElement {
             eventDuration: 'Duración',
             eventDate: 'Fecha',
             advancedOptions: 'Opciones avanzadas',
+            eventSkipVacation: 'Fuera de vacaciones escolares',
+            eventSkipHoliday: 'Fuera de festivos',
             quickAdd: 'ej.: 9h dentista',
             aiAnalyze: 'Analizar con IA',
             handwriteHint: 'Escribe el evento aquí (ej.: 9h dentista)',
@@ -678,6 +694,8 @@ export class FamilyCalendarCard extends LitElement {
             eventDuration: 'Durata',
             eventDate: 'Data',
             advancedOptions: 'Opzioni avanzate',
+            eventSkipVacation: 'Escludi vacanze scolastiche',
+            eventSkipHoliday: 'Escludi giorni festivi',
             quickAdd: 'es.: 9 dentista',
             aiAnalyze: 'Analizza con IA',
             handwriteHint: 'Scrivi qui l’evento (es.: 9 dentista)',
@@ -713,6 +731,8 @@ export class FamilyCalendarCard extends LitElement {
             eventDuration: 'Duur',
             eventDate: 'Datum',
             advancedOptions: 'Geavanceerde opties',
+            eventSkipVacation: 'Buiten schoolvakanties',
+            eventSkipHoliday: 'Buiten feestdagen',
             quickAdd: 'bijv.: 9u tandarts',
             aiAnalyze: 'Analyseren met AI',
             handwriteHint: 'Schrijf hier het evenement (bijv.: 9u tandarts)',
@@ -748,6 +768,8 @@ export class FamilyCalendarCard extends LitElement {
             eventDuration: 'Dura\u00e7\u00e3o',
             eventDate: 'Data',
             advancedOptions: 'Op\u00e7\u00f5es avan\u00e7adas',
+            eventSkipVacation: 'Fora das f\u00e9rias escolares',
+            eventSkipHoliday: 'Fora dos feriados',
             quickAdd: 'ex.: 9h dentista',
             aiAnalyze: 'Analisar com IA',
             handwriteHint: 'Escreva o evento aqui (ex.: 9h dentista)',
@@ -932,9 +954,11 @@ export class FamilyCalendarCard extends LitElement {
         ];
     }
 
-    // Strip the hidden reminder tag from a description for display/editing.
+    // Strip the hidden tags from a description for display/editing: reminder
+    // delay [r:…] + recurrence "skip school holidays" [hv] / "skip public
+    // holidays" [hf] markers.
     _cleanDescription(desc) {
-        return (desc || '').replace(/\s*\[r:(?:20m|1h|1d)\]\s*/g, ' ').trim();
+        return (desc || '').replace(/\s*\[(?:r:(?:20m|1h|1d)|hv|hf)\]\s*/g, ' ').trim();
     }
 
     // Detect the reminder delay encoded in a description (default 20m).
@@ -2375,6 +2399,22 @@ export class FamilyCalendarCard extends LitElement {
                             <span class="recurrence-unit">${this._language.recurrenceOccurrences}</span>
                         </div>
                         ` : ''}
+                        ${this._vacationCalendar ? html`
+                        <div class="form-row notify-row">
+                            <label class="notify-label" for="event-skip-vacation">
+                                <input type="checkbox" id="event-skip-vacation" />
+                                <span>\u{1F3D6}️ ${this._language.eventSkipVacation}</span>
+                            </label>
+                        </div>
+                        ` : ''}
+                        ${this._holidayCalendar ? html`
+                        <div class="form-row notify-row">
+                            <label class="notify-label" for="event-skip-holiday">
+                                <input type="checkbox" id="event-skip-holiday" />
+                                <span>\u{1F1EB}\u{1F1F7} ${this._language.eventSkipHoliday}</span>
+                            </label>
+                        </div>
+                        ` : ''}
                     ` : ''}
                     <div class="form-row notify-row">
                         <label class="notify-label" for="event-notify">
@@ -2669,6 +2709,24 @@ export class FamilyCalendarCard extends LitElement {
                         <span class="recurrence-unit">${this._language.recurrenceOccurrences}</span>
                     </div>
                     ` : ''}
+                    ${this._vacationCalendar ? html`
+                    <div class="form-row notify-row">
+                        <label class="notify-label" for="edit-event-skip-vacation">
+                            <input type="checkbox" id="edit-event-skip-vacation" .checked="${form.skipVacation ?? false}"
+                                @change="${(e) => { this._editFormData = { ...this._editFormData, skipVacation: e.target.checked }; }}" />
+                            <span>\u{1F3D6}️ ${this._language.eventSkipVacation}</span>
+                        </label>
+                    </div>
+                    ` : ''}
+                    ${this._holidayCalendar ? html`
+                    <div class="form-row notify-row">
+                        <label class="notify-label" for="edit-event-skip-holiday">
+                            <input type="checkbox" id="edit-event-skip-holiday" .checked="${form.skipHoliday ?? false}"
+                                @change="${(e) => { this._editFormData = { ...this._editFormData, skipHoliday: e.target.checked }; }}" />
+                            <span>\u{1F1EB}\u{1F1F7} ${this._language.eventSkipHoliday}</span>
+                        </label>
+                    </div>
+                    ` : ''}
                 ` : ''}
                 <div class="form-row notify-row">
                     <label class="notify-label" for="edit-event-notify">
@@ -2947,6 +3005,13 @@ export class FamilyCalendarCard extends LitElement {
             this._subscribeToWeatherForecast();
         }
 
+        // Périodes de référence pour les récurrences taguées [hv]/[hf] : elles
+        // doivent être connues AVANT le traitement des événements (les fetches
+        // calendriers ci-dessous sont parallèles et filtrent en synchrone).
+        if (this._vacationCalendar || this._holidayCalendar) {
+            await this._fetchSkipRanges(startDate, endDate);
+        }
+
         const fetches = [];
         let calendarNumber = 0;
         this._calendars.forEach(calendar => {
@@ -2977,6 +3042,11 @@ export class FamilyCalendarCard extends LitElement {
                         const evStart = this._convertApiDate(event.start);
                         const evEnd = this._convertApiDate(event.end);
                         if (this._hidePastEvents && evEnd < now) {
+                            return;
+                        }
+                        // Récurrence « hors vacances scolaires » / « hors fériés » :
+                        // masque l'occurrence qui chevauche une période de référence.
+                        if (this._skipOccurrence(event, evStart, evEnd)) {
                             return;
                         }
                         const fullDay = this._isFullDay(evStart, evEnd);
@@ -3026,6 +3096,43 @@ export class FamilyCalendarCard extends LitElement {
             clearTimeout(timeout);
         });
         this._updateEventsTimeouts = [];
+    }
+
+    // Fetch the school-holiday ([hv]) / public-holiday ([hf]) reference periods
+    // for the visible range. Failure (entity absent, API error) leaves the
+    // ranges empty → tagged events simply show everywhere (fail open, never
+    // hide events on a fetch error).
+    async _fetchSkipRanges(startDate, endDate) {
+        this._skipRanges = { hv: [], hf: [] };
+        const refs = [['hv', this._vacationCalendar], ['hf', this._holidayCalendar]];
+        await Promise.all(refs.map(async ([key, entity]) => {
+            if (!entity || !this.hass.states[entity]) {
+                return;
+            }
+            try {
+                const response = await this.hass.callApi(
+                    'get',
+                    'calendars/' + entity + '?start=' + encodeURIComponent(startDate.toISO()) + '&end=' + encodeURIComponent(endDate.toISO())
+                );
+                this._skipRanges[key] = response.map(ev => [this._convertApiDate(ev.start), this._convertApiDate(ev.end)]);
+            } catch (e) {
+                // fail open
+            }
+        }));
+    }
+
+    // True when the event carries a [hv]/[hf] tag AND its occurrence overlaps a
+    // corresponding reference period → the occurrence is hidden.
+    _skipOccurrence(event, evStart, evEnd) {
+        const desc = event.description || '';
+        const wantHv = desc.includes('[hv]');
+        const wantHf = desc.includes('[hf]');
+        if (!wantHv && !wantHf) {
+            return false;
+        }
+        const overlaps = (ranges) => ranges.some(([s, e]) => evStart < e && evEnd > s);
+        return (wantHv && overlaps(this._skipRanges?.hv ?? []))
+            || (wantHf && overlaps(this._skipRanges?.hf ?? []));
     }
 
     _isFilterEvent(event, calendarFilter) {
@@ -4115,7 +4222,12 @@ export class FamilyCalendarCard extends LitElement {
         // Reminder lead time: a non-default delay is stored as a hidden tag the HA
         // reminder automation reads. 20 min is the automation default → no tag.
         const reminderDelay = this.shadowRoot.querySelector('#event-reminder-delay')?.value || '20m';
-        if (notify && reminderDelay !== '20m') eventData.description = `[r:${reminderDelay}]`;
+        const hiddenTags = [];
+        if (notify && reminderDelay !== '20m') hiddenTags.push(`[r:${reminderDelay}]`);
+        // Recurrence outside school/public holidays: hidden display-filter tags.
+        if (rrule && this._vacationCalendar && this.shadowRoot.querySelector('#event-skip-vacation')?.checked) hiddenTags.push('[hv]');
+        if (rrule && this._holidayCalendar && this.shadowRoot.querySelector('#event-skip-holiday')?.checked) hiddenTags.push('[hf]');
+        if (hiddenTags.length) eventData.description = hiddenTags.join(' ');
 
         try {
             await this.hass.callWS({
@@ -4231,6 +4343,8 @@ export class FamilyCalendarCard extends LitElement {
             recurrenceEndType: parsed.endType,
             recurrenceEndDate: parsed.endDate,
             recurrenceEndCount: parsed.endCount,
+            skipVacation: (event.description || '').includes('[hv]'),
+            skipHoliday: (event.description || '').includes('[hf]'),
         };
         this._showEditEventDialog = event;
     }
@@ -4422,7 +4536,11 @@ export class FamilyCalendarCard extends LitElement {
         // description entirely.
         const reminderTag = (form.notify && form.reminderDelay && form.reminderDelay !== '20m')
             ? `[r:${form.reminderDelay}]` : '';
-        const descriptionFinal = [(form.description || '').trim(), reminderTag].filter(Boolean).join('\n');
+        // Recurrence outside school/public holidays: hidden display-filter tags.
+        const skipTags = [];
+        if (recurrence && this._vacationCalendar && form.skipVacation) skipTags.push('[hv]');
+        if (recurrence && this._holidayCalendar && form.skipHoliday) skipTags.push('[hf]');
+        const descriptionFinal = [(form.description || '').trim(), reminderTag, ...skipTags].filter(Boolean).join('\n');
         const buildEventData = () => {
             const data = { summary: summary, dtstart: dtstart, dtend: dtend };
             if (location) data.location = location;

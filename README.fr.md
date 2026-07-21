@@ -144,6 +144,8 @@ calendars:
 | `showTitle` | boolean | `true` | Afficher le titre de la carte |
 | `showNavigation` | boolean | `true` | Afficher les fleches de navigation |
 | `swipeNavigation` | boolean | `true` | Sur ecran tactile, balayer gauche/droite pour changer de periode (`false` pour desactiver) |
+| `vacationCalendar` | string | – | Entite calendrier des vacances scolaires. Ajoute une case « Hors vacances scolaires » sur les evenements recurrents : les occurrences tombant pendant une periode de vacances sont masquees sur la carte (filtre d'affichage) |
+| `holidayCalendar` | string | – | Entite calendrier des jours feries. Idem, ajoute une case « Hors jours feries » sur les evenements recurrents |
 | `showWeekDayText` | boolean | `true` | Afficher les en-tetes des jours (Lun, Mar...) |
 | `showCurrentWeather` | boolean | `false` | Afficher la meteo actuelle dans l'en-tete |
 | `showWeather` | boolean | `true` | Afficher les previsions meteo par jour |

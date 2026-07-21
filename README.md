@@ -141,6 +141,8 @@ calendars:
 | `showTitle` | boolean | `true` | Show card title |
 | `showNavigation` | boolean | `true` | Show month/week navigation arrows |
 | `swipeNavigation` | boolean | `true` | On touch screens, swipe left/right to change period (set `false` to disable) |
+| `vacationCalendar` | string | – | School-holidays calendar entity. Enables a "skip school holidays" checkbox on recurring events: occurrences overlapping a holiday period are hidden on the card (display-side filter) |
+| `holidayCalendar` | string | – | Public-holidays calendar entity. Same, adds a "skip public holidays" checkbox on recurring events |
 | `showWeekDayText` | boolean | `true` | Show day headers (Mon, Tue...) |
 | `showCurrentWeather` | boolean | `false` | Show current weather in header |
 | `showWeather` | boolean | `true` | Show weather forecast per day |

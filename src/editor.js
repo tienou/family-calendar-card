@@ -258,6 +258,10 @@ export class FamilyCalendarCardEditor extends LitElement {
                         ${this.addTextField('slotStartHour', 'Time picker — first hour', 'number', 7)}
                         ${this.addTextField('slotEndHour', 'Time picker — last hour', 'number', 22)}
                         ${this.addHint('Range of hours offered in the event time-slot picker (create/edit forms)')}
+                        ${this.addTextField('vacationCalendar', 'School holidays calendar (entity)')}
+                        ${this.addHint('Enables a "skip school holidays" option on recurring events: occurrences overlapping a period from this calendar are hidden on the card (e.g. calendar.school_holidays)')}
+                        ${this.addTextField('holidayCalendar', 'Public holidays calendar (entity)')}
+                        ${this.addHint('Same for public holidays (e.g. calendar.france): adds a "skip public holidays" option on recurring events')}
                     `
                 )}
                 ${this.addExpansionPanel(
