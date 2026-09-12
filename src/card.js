@@ -438,6 +438,7 @@ export class FamilyCalendarCard extends LitElement {
                 week: 'Week',
                 biweek: 'Biweek',
                 month: 'Month',
+                fit: 'Fit',
                 eventRecurrence: 'Repeat',
                 recurrenceNone: 'No repeat',
                 recurrenceDaily: 'Daily',
@@ -482,9 +483,12 @@ export class FamilyCalendarCard extends LitElement {
         const defaultViews = ['Today', 'Tomorrow', 'Week', 'Biweek', 'Month'];
         this._views = typeof config.views === 'string'
             ? config.views.split(',').map(v => v.trim()).filter(Boolean)
-            : (config.views ?? defaultViews);
+            : [...(config.views ?? defaultViews)];
         const savedView = (() => { try { return localStorage.getItem('skylight-calendar-view'); } catch(e) { return null; } })();
         const configDefault = config.defaultView ?? 'Week';
+        if (config.defaultView && !this._views.includes(config.defaultView)) {
+            this._views.push(config.defaultView);
+        }
         this._currentView = savedView && this._views.includes(savedView) ? savedView : configDefault;
 
         // Initialize calendar visibility
@@ -562,7 +566,7 @@ export class FamilyCalendarCard extends LitElement {
             cancel: 'Annuler', create: 'Cr\u00e9er', newEvent: 'Nouvel \u00e9v\u00e9nement',
             save: 'Enregistrer', editEventTitle: 'Modifier l\'\u00e9v\u00e9nement',
             titleRequired: 'Le titre est requis',
-            week: 'Semaine', biweek: '2 Semaines', month: 'Mois',
+            week: 'Semaine', biweek: '2 Semaines', month: 'Mois', fit: 'Ajusté',
             eventRecurrence: 'R\u00e9p\u00e9tition', recurrenceNone: 'Pas de r\u00e9p\u00e9tition', recurrenceDaily: 'Journalier',
             recurrenceWeekly: 'Hebdomadaire', recurrenceMonthly: 'Mensuelle', recurrenceYearly: 'Annuelle',
             editThisEvent: 'Cet \u00e9v\u00e9nement uniquement', editAllEvents: 'Tous les \u00e9v\u00e9nements',
@@ -599,7 +603,7 @@ export class FamilyCalendarCard extends LitElement {
             cancel: 'Abbrechen', create: 'Erstellen', newEvent: 'Neuer Termin',
             save: 'Speichern', editEventTitle: 'Termin bearbeiten',
             titleRequired: 'Titel ist erforderlich',
-            week: 'Woche', biweek: '2 Wochen', month: 'Monat',
+            week: 'Woche', biweek: '2 Wochen', month: 'Monat', fit: 'Passend',
             eventRecurrence: 'Wiederholung', recurrenceNone: 'Keine Wiederholung', recurrenceDaily: 'T\u00e4glich',
             recurrenceWeekly: 'W\u00f6chentlich', recurrenceMonthly: 'Monatlich', recurrenceYearly: 'J\u00e4hrlich',
             editThisEvent: 'Nur dieses Ereignis', editAllEvents: 'Alle Ereignisse',
@@ -636,7 +640,7 @@ export class FamilyCalendarCard extends LitElement {
             cancel: 'Cancelar', create: 'Crear', newEvent: 'Nuevo evento',
             save: 'Guardar', editEventTitle: 'Editar evento',
             titleRequired: 'El t\u00edtulo es obligatorio',
-            week: 'Semana', biweek: '2 Semanas', month: 'Mes',
+            week: 'Semana', biweek: '2 Semanas', month: 'Mes', fit: 'Ajustado',
             eventRecurrence: 'Repetici\u00f3n', recurrenceNone: 'Sin repetici\u00f3n', recurrenceDaily: 'Diario',
             recurrenceWeekly: 'Semanal', recurrenceMonthly: 'Mensual', recurrenceYearly: 'Anual',
             editThisEvent: 'Solo este evento', editAllEvents: 'Todos los eventos',
@@ -673,7 +677,7 @@ export class FamilyCalendarCard extends LitElement {
             cancel: 'Annulla', create: 'Crea', newEvent: 'Nuovo evento',
             save: 'Salva', editEventTitle: 'Modifica evento',
             titleRequired: 'Il titolo \u00e8 obbligatorio',
-            week: 'Settimana', biweek: '2 Settimane', month: 'Mese',
+            week: 'Settimana', biweek: '2 Settimane', month: 'Mese', fit: 'Adatta',
             eventRecurrence: 'Ripetizione', recurrenceNone: 'Nessuna ripetizione', recurrenceDaily: 'Giornaliero',
             recurrenceWeekly: 'Settimanale', recurrenceMonthly: 'Mensile', recurrenceYearly: 'Annuale',
             editThisEvent: 'Solo questo evento', editAllEvents: 'Tutti gli eventi',
@@ -710,7 +714,7 @@ export class FamilyCalendarCard extends LitElement {
             cancel: 'Annuleren', create: 'Aanmaken', newEvent: 'Nieuw evenement',
             save: 'Opslaan', editEventTitle: 'Evenement bewerken',
             titleRequired: 'Titel is verplicht',
-            week: 'Week', biweek: '2 Weken', month: 'Maand',
+            week: 'Week', biweek: '2 Weken', month: 'Maand', fit: 'Passend',
             eventRecurrence: 'Herhaling', recurrenceNone: 'Geen herhaling', recurrenceDaily: 'Dagelijks',
             recurrenceWeekly: 'Wekelijks', recurrenceMonthly: 'Maandelijks', recurrenceYearly: 'Jaarlijks',
             editThisEvent: 'Alleen dit evenement', editAllEvents: 'Alle evenementen',
@@ -747,7 +751,7 @@ export class FamilyCalendarCard extends LitElement {
             cancel: 'Cancelar', create: 'Criar', newEvent: 'Novo evento',
             save: 'Salvar', editEventTitle: 'Editar evento',
             titleRequired: 'O t\u00edtulo \u00e9 obrigat\u00f3rio',
-            week: 'Semana', biweek: '2 Semanas', month: 'M\u00eas',
+            week: 'Semana', biweek: '2 Semanas', month: 'M\u00eas', fit: 'Ajustado',
             eventRecurrence: 'Repeti\u00e7\u00e3o', recurrenceNone: 'Sem repeti\u00e7\u00e3o', recurrenceDaily: 'Di\u00e1rio',
             recurrenceWeekly: 'Semanal', recurrenceMonthly: 'Mensal', recurrenceYearly: 'Anual',
             editThisEvent: 'Apenas este evento', editAllEvents: 'Todos os eventos',
@@ -1202,6 +1206,11 @@ export class FamilyCalendarCard extends LitElement {
                 this._numberOfDays = 7;
                 this._numberOfDaysIsMonth = false;
                 break;
+            case 'Fit':
+                this._startingDay = 'today';
+                this._numberOfDays = this._getFittingDaysCount();
+                this._numberOfDaysIsMonth = false;
+                break;
             case 'Biweek':
                 this._startingDay = startingDay;
                 this._numberOfDays = 14;
@@ -1253,7 +1262,10 @@ export class FamilyCalendarCard extends LitElement {
             // show/hide on scroll); coalesce so we measure once, not per event.
             this._onResize = () => {
                 clearTimeout(this._resizeTimer);
-                this._resizeTimer = setTimeout(() => this._applyFillHeight(), 150);
+                this._resizeTimer = setTimeout(() => {
+                    this._applyFillHeight();
+                    this._handleFitResize();
+                }, 150);
             };
         }
         window.addEventListener('resize', this._onResize);
@@ -1271,10 +1283,56 @@ export class FamilyCalendarCard extends LitElement {
         if (this._onResize) {
             window.removeEventListener('resize', this._onResize);
         }
+        if (this._resizeObserver) {
+            this._resizeObserver.disconnect();
+            this._resizeObserver = null;
+        }
         if (this._weatherUnsub) {
             this._weatherUnsub.then((unsub) => unsub()).catch(() => {});
             this._weatherUnsub = null;
             this._weatherForecast = null;
+        }
+    }
+
+    _handleFitResize() {
+        if (this._currentView !== 'Fit') return;
+        const newCols = this._getFittingDaysCount();
+        if (newCols !== this._numberOfDays) {
+            this._numberOfDays = newCols;
+            this._startDate = this._getStartDate();
+            if (this.hass) {
+                this._updateEvents(true);
+            }
+        }
+    }
+
+    _getFittingDaysCount() {
+        const grid = this.shadowRoot?.querySelector('.container');
+        if (grid) {
+            const probe = grid.querySelector('.day-probe') || grid.querySelector('.day');
+            if (probe) {
+                const computed = getComputedStyle(probe).getPropertyValue('--days-columns');
+                const parsed = parseInt(computed, 10);
+                if (!isNaN(parsed) && parsed > 0) {
+                    return Math.min(14, Math.max(1, parsed));
+                }
+            }
+        }
+
+        const containerWidth = grid?.getBoundingClientRect().width
+            || this.shadowRoot?.querySelector('ha-card')?.getBoundingClientRect().width
+            || (typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+        if (containerWidth <= 640) {
+            return this._columns?.extraSmall ? parseInt(this._columns.extraSmall, 10) : (this._compact ? 2 : 1);
+        } else if (containerWidth <= 1024) {
+            return this._columns?.small ? parseInt(this._columns.small, 10) : (this._compact ? 4 : 3);
+        } else if (containerWidth <= 1280) {
+            return this._columns?.medium ? parseInt(this._columns.medium, 10) : (this._compact ? 7 : 5);
+        } else if (containerWidth <= 1920) {
+            return this._columns?.large ? parseInt(this._columns.large, 10) : 7;
+        } else {
+            return this._columns?.extraLarge ? parseInt(this._columns.extraLarge, 10) : 7;
         }
     }
 
@@ -1291,6 +1349,19 @@ export class FamilyCalendarCard extends LitElement {
             }
         } else if (this._canvasReady) {
             this._canvasReady = false;
+        }
+        if (typeof ResizeObserver !== 'undefined' && !this._resizeObserver) {
+            const calContainer = this.shadowRoot?.querySelector('.calendar-container');
+            if (calContainer) {
+                this._resizeObserver = new ResizeObserver(() => {
+                    clearTimeout(this._resizeTimer);
+                    this._resizeTimer = setTimeout(() => {
+                        this._applyFillHeight();
+                        this._handleFitResize();
+                    }, 150);
+                });
+                this._resizeObserver.observe(calContainer);
+            }
         }
         this._applyFillHeight();
     }
@@ -1309,7 +1380,7 @@ export class FamilyCalendarCard extends LitElement {
             return;
         }
         const container = this.shadowRoot?.querySelector('.calendar-container');
-        const dayCells = grid ? [...grid.querySelectorAll('.day:not(.header)')] : [];
+        const dayCells = grid ? [...grid.querySelectorAll('.day:not(.header):not(.day-probe)')] : [];
         if (!container || dayCells.length === 0) return;
         // Only run the layout-reading measurement when an input that affects the
         // fill changed (viewport height, view, month, cell count, OR whether the
@@ -1554,8 +1625,9 @@ export class FamilyCalendarCard extends LitElement {
                         </div>
                     </div>
                     <div class="calendar-container">
-                        <div class="container${this._actions ? ' hasActions' : ''}${this._numberOfDaysIsMonth ? ' month-view' : ''}${this._hideWeekend ? ' hide-weekend' : ''}" style="${this._dayHeaderFontSize ? '--day-header-font-size: ' + this._dayHeaderFontSize + ';' : ''}${this._dayHeaderColor ? '--day-header-color: ' + this._dayHeaderColor + ';' : ''}" @click="${this._handleContainerClick}" @pointerdown="${this._handlePointerDown}" @pointerup="${this._handlePointerUp}" @pointercancel="${this._handlePointerCancel}">
+                        <div class="container${this._actions ? ' hasActions' : ''}${this._numberOfDaysIsMonth ? ' month-view' : ''}${this._currentView === 'Fit' ? ' fit-view' : ''}${this._hideWeekend ? ' hide-weekend' : ''}" style="${this._dayHeaderFontSize ? '--day-header-font-size: ' + this._dayHeaderFontSize + ';' : ''}${this._dayHeaderColor ? '--day-header-color: ' + this._dayHeaderColor + ';' : ''}" @click="${this._handleContainerClick}" @pointerdown="${this._handlePointerDown}" @pointerup="${this._handlePointerUp}" @pointercancel="${this._handlePointerCancel}">
                             ${this._fullscreenOverlayOpen() ? '' : html`
+                                <div class="day day-probe" aria-hidden="true"></div>
                                 ${this._renderHeader()}
                                 ${this._renderWeekDays()}
                                 ${this._renderDays()}
@@ -1700,7 +1772,7 @@ export class FamilyCalendarCard extends LitElement {
             return html``;
         }
 
-        if (!this._numberOfDaysIsMonth && this._numberOfDays < 7) {
+        if (this._currentView === 'Fit' || (!this._numberOfDaysIsMonth && this._numberOfDays < 7)) {
             return html``;
         }
 
@@ -1951,11 +2023,17 @@ export class FamilyCalendarCard extends LitElement {
         // Row boundaries of the grid: a banner band is "joined" to a neighbour
         // only within the same visual week row (so it gets rounded ends at the
         // row edges and at the event's real start/end).
-        const rowStartWd = (this._days && this._days[0]) ? this._days[0].date.weekday
-            : (this._startDate ? this._startDate.weekday : 1);
-        const rowEndWd = ((rowStartWd + 5) % 7) + 1;
-        const isRowStart = day.date.weekday === rowStartWd;
-        const isRowEnd = day.date.weekday === rowEndWd;
+        let isRowStart, isRowEnd;
+        if (this._currentView === 'Fit' && this._days && this._days.length > 0) {
+            isRowStart = (day === this._days[0]);
+            isRowEnd = (day === this._days[this._days.length - 1]);
+        } else {
+            const rowStartWd = (this._days && this._days[0]) ? this._days[0].date.weekday
+                : (this._startDate ? this._startDate.weekday : 1);
+            const rowEndWd = ((rowStartWd + 5) % 7) + 1;
+            isRowStart = day.date.weekday === rowStartWd;
+            isRowEnd = day.date.weekday === rowEndWd;
+        }
 
         return html`
             ${dayEvents.map((event) => {
@@ -4926,6 +5004,7 @@ export class FamilyCalendarCard extends LitElement {
         const icons = {
             'Today': 'mdi:calendar-today',
             'Tomorrow': 'mdi:calendar-arrow-right',
+            'Fit': 'mdi:calendar-collapse-horizontal',
             'Week': 'mdi:calendar-week',
             'Biweek': 'mdi:calendar-range',
             'Month': 'mdi:calendar-month',
