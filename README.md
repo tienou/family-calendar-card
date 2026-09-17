@@ -133,6 +133,8 @@ calendars:
 |--------|------|---------|-------------|
 | `title` | string | - | Card title displayed above the calendar |
 | `locale` | string | `en` | Language locale (fr, de, es, it, nl, pt) |
+| `timeFormat` | string | auto | Time format (Luxon tokens), e.g. `HH:mm` (24h) or `h:mm a` (12h, "5:45 PM"). Left unset it follows your Home Assistant **Profile -> Time format** preference |
+| `multiDayTimeFormat` | string | auto | Same, for multi-day events, e.g. `d LLL HH:mm` / `d LLL h:mm a` |
 | `defaultView` | string | `Week` | Default view (Today/Tomorrow/Week/Biweek/Month) |
 | `startingDay` | string | `today` | First day of the week (monday, today, etc.) |
 | `showHeader` | boolean | `true` | Show the date/time/weather header |

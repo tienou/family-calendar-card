@@ -149,8 +149,22 @@ export class FamilyCalendarCard extends LitElement {
         const prev = this._hass;
         this._hass = hass;
         if (!prev) {
+            // First hass: the user's time-format preference is only known now, so
+            // the auto (locale-derived) time formats are resolved here — setConfig
+            // ran without it.
+            this._applyTimeFormats();
             this.requestUpdate();
             return;
+        }
+        // The user changed their HA time format (Profile → Time format) or
+        // language: re-resolve the auto formats and invalidate the per-event
+        // format cache (keyed on _configRev) so already-built events re-render.
+        if (hass.locale?.time_format !== prev.locale?.time_format
+            || hass.locale?.language !== prev.locale?.language) {
+            if (this._applyTimeFormats()) {
+                this._configRev = (this._configRev || 0) + 1;
+                this.requestUpdate();
+            }
         }
         const wEnt = this._weather && this._weather.entity;
         const darkChanged = (hass.themes && hass.themes.darkMode)
@@ -353,8 +367,14 @@ export class FamilyCalendarCard extends LitElement {
             : null;
         this._dayFormat = config.dayFormat ?? null;
         this._dateFormat = config.dateFormat ?? 'cccc d LLLL yyyy';
-        this._timeFormat = config.timeFormat ?? 'HH:mm';
-        this._multiDayTimeFormat = config.multiDayTimeFormat ?? 'd LLL HH:mm';
+        // Time formats: an explicit config value always wins; left unset they are
+        // derived from the user's Home Assistant time-format preference (Profile →
+        // Time format), so a 12-hour user gets "5:45 PM" everywhere instead of a
+        // hardcoded 24-hour clock. Resolved in _applyTimeFormats() because it
+        // needs `hass`, which may not be set yet when setConfig runs.
+        this._timeFormatConfig = config.timeFormat ?? null;
+        this._multiDayTimeFormatConfig = config.multiDayTimeFormat ?? null;
+        this._applyTimeFormats();
         this._multiDayMode = config.multiDayMode ?? 'banner';
         // Only accept an http(s) base — guards against a javascript:/data: URL in
         // the config landing in an <a href> (clickable script execution).
@@ -1059,6 +1079,52 @@ export class FamilyCalendarCard extends LitElement {
         event._fmtCache = fmt;
         event._fmtCacheRev = this._configRev;
         return fmt;
+    }
+
+    // Does this setup use a 12-hour clock? Priority:
+    //   1. The HA user's own preference (Profile → Time format): "12" | "24" |
+    //      "language" (follow the HA language) | "system" (follow the browser).
+    //   2. Otherwise the card locale / browser locale, via Intl's hourCycle.
+    // Wrapped in try/catch: an exotic locale tag would otherwise throw inside
+    // setConfig and break the whole card.
+    _uses12HourClock() {
+        const pref = this.hass?.locale?.time_format;
+        if (pref === '12') return true;
+        if (pref === '24') return false;
+        // "system" → let Intl fall back to the browser locale (undefined).
+        const lang = pref === 'system'
+            ? undefined
+            : (this.hass?.locale?.language || this._locale || undefined);
+        try {
+            const hc = new Intl.DateTimeFormat(lang, { hour: 'numeric' }).resolvedOptions().hourCycle;
+            return hc === 'h11' || hc === 'h12';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // Resolve the effective time formats from the config + the 12/24h preference.
+    // Returns true when a format actually changed (so callers can invalidate the
+    // per-event format cache, which is keyed on _configRev).
+    _applyTimeFormats() {
+        const h12 = this._uses12HourClock();
+        const prevTime = this._timeFormat;
+        const prevMulti = this._multiDayTimeFormat;
+        this._timeFormat = this._timeFormatConfig ?? (h12 ? 'h:mm a' : 'HH:mm');
+        this._multiDayTimeFormat = this._multiDayTimeFormatConfig ?? (h12 ? 'd LLL h:mm a' : 'd LLL HH:mm');
+        this._use12Hour = h12;
+        return prevTime !== this._timeFormat || prevMulti !== this._multiDayTimeFormat;
+    }
+
+    // Label for an hour in the create/edit time pickers: "14 h" in 24h mode,
+    // "2 PM" in 12h mode. The underlying value stays 0-23 either way.
+    _hourLabel(h) {
+        if (!this._use12Hour) {
+            return String(h).padStart(2, '0') + ' h';
+        }
+        const suffix = h < 12 ? 'AM' : 'PM';
+        const h12 = h % 12 === 0 ? 12 : h % 12;
+        return h12 + ' ' + suffix;
     }
 
     // "Member · Category" line for an event (shown in the day-events panel / popup
@@ -4699,7 +4765,7 @@ export class FamilyCalendarCard extends LitElement {
         return html`
             <div class="time-dropdowns">
                 <select class="form-input time-select" @change="${onH}">
-                    ${hours.map((h) => html`<option value="${h}" ?selected="${h === selH}">${String(h).padStart(2, '0')} h</option>`)}
+                    ${hours.map((h) => html`<option value="${h}" ?selected="${h === selH}">${this._hourLabel(h)}</option>`)}
                 </select>
                 <span class="time-sep">:</span>
                 <select class="form-input time-select" @change="${onM}">
@@ -4722,7 +4788,7 @@ export class FamilyCalendarCard extends LitElement {
                 <div class="slot-grid">
                     ${hours.map(h => html`
                         <button type="button" class="slot-btn ${h === selH ? 'active' : ''}"
-                            @click="${() => pickH(h)}">${h}h</button>
+                            @click="${() => pickH(h)}">${this._use12Hour ? this._hourLabel(h) : h + 'h'}</button>
                     `)}
                 </div>
                 <div class="slot-grid minutes">

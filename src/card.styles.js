@@ -642,6 +642,15 @@ export default css`
     .container .day .events .event.banner {
         position: relative;
         z-index: 1;
+        /* Outline each banner in its own (darkened) colour so two banners from
+           the SAME calendar — hence the same fill — stay tellable apart when they
+           overlap and stack: each band gets a crisp edge, so where one ends and
+           the next begins is visible instead of reading as one shifting blob.
+           Only the top/bottom edges here; the left/right edges are handled by the
+           join rules below so a continuous multi-day band keeps no inner seam. */
+        border-top: 1px solid var(--banner-edge);
+        border-bottom: 1px solid var(--banner-edge);
+        --banner-edge: color-mix(in srgb, var(--border-color, var(--divider-color, #888)), #000 25%);
         /* Uniform band thickness along the whole strip: every slice is as tall
            as one line of text (its .inner), and the icon is vertically centred
            without adding height — so the titled+icon slice matches the empty
@@ -665,11 +674,20 @@ export default css`
         border-left-width: 0 !important;
     }
 
-    /* Continues to the right: square the edge and bleed right the same amount */
+    /* Continues to the right: square the edge and bleed right the same amount.
+       The end-cap border is dropped here — it must only close the LAST slice. */
     .container .day .events .event.banner.rjoin {
         margin-right: calc(-1 * var(--days-spacing) - 12px);
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
+        border-right-width: 0;
+    }
+
+    /* End cap on the final slice: closes the band so its last day is unambiguous
+       (the first day is already marked by the thick coloured left bar). Without
+       it, two same-colour banners ending on different days looked identical. */
+    .container .day .events .event.banner:not(.rjoin) {
+        border-right: 1px solid var(--banner-edge);
     }
 
     .container .day .events .event.banner .inner {
