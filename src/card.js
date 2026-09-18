@@ -3935,6 +3935,40 @@ export class FamilyCalendarCard extends LitElement {
         }));
     }
 
+    // Transient-failure retry for the handwriting AI calls. Gemini regularly
+    // answers 503 "This model is currently experiencing high demand. Spikes in
+    // demand are usually temporary." — with a single attempt that surfaced as a
+    // hard error in the pen dialog, even though the spike is over seconds later.
+    // Retries 429/500/502/503/504 and network failures; any other status (bad
+    // key, malformed request) fails immediately, since retrying cannot help.
+    async _aiFetchWithRetry(makeRequest, attempts = 3) {
+        const RETRIABLE = [429, 500, 502, 503, 504];
+        let lastError = null;
+        for (let i = 0; i < attempts; i++) {
+            if (i > 0) {
+                // 1.5s then 4s: long enough for a demand spike to pass, short
+                // enough that the dialog does not feel frozen.
+                await new Promise((r) => setTimeout(r, i === 1 ? 1500 : 4000));
+            }
+            let resp;
+            try {
+                resp = await makeRequest();
+            } catch (e) {
+                lastError = e; // network / CORS failure — worth another try
+                continue;
+            }
+            const json = await resp.json().catch(() => null);
+            if (resp.ok) {
+                return json;
+            }
+            lastError = new Error(json?.error?.message || ('HTTP ' + resp.status));
+            if (!RETRIABLE.includes(resp.status)) {
+                break;
+            }
+        }
+        throw lastError || new Error('AI request failed');
+    }
+
     async _analyzeWithGemini(base64) {
         const model = this._geminiModel || 'gemini-2.5-flash';
         // Key must go in the URL query string: the Gemini REST API does not allow
@@ -3942,7 +3976,7 @@ export class FamilyCalendarCard extends LitElement {
         // custom header triggers a CORS preflight that Google rejects, so the call
         // fails from the card. ?key= is the documented browser form.
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(this._geminiApiKey)}`;
-        const resp = await fetch(url, {
+        const json = await this._aiFetchWithRetry(() => fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -3966,16 +4000,14 @@ export class FamilyCalendarCard extends LitElement {
                     },
                 },
             }),
-        });
-        const json = await resp.json();
-        if (!resp.ok) throw new Error(json?.error?.message || ('HTTP ' + resp.status));
+        }));
         return this._extractJson(json.candidates?.[0]?.content?.parts?.[0]?.text);
     }
 
     // Anthropic Messages API — direct browser call (anthropic-dangerous-direct-browser-access)
     async _analyzeWithClaude(base64) {
         const model = this._claudeModel || 'claude-opus-4-8';
-        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        const json = await this._aiFetchWithRetry(() => fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
@@ -4010,9 +4042,7 @@ export class FamilyCalendarCard extends LitElement {
                     },
                 },
             }),
-        });
-        const json = await resp.json();
-        if (!resp.ok) throw new Error(json?.error?.message || ('HTTP ' + resp.status));
+        }));
         const textBlock = (json.content || []).find(b => b.type === 'text');
         return this._extractJson(textBlock?.text);
     }
