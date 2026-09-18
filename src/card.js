@@ -2391,17 +2391,50 @@ export class FamilyCalendarCard extends LitElement {
                         <span>${this._language.advancedOptions}</span>
                     </summary>
                     <div class="advanced-section">
+                    ${this._renderCreateAdvancedBody({ startDateValue, endDateValue, endTimeValue, isAllDay })}
+                    </div>
+                    </details>
+                    <div class="form-actions">
+                        <button class="btn btn-cancel" @click="${this._closeCreateEventDialog}">${this._language.cancel}</button>
+                        <button class="btn btn-submit" @click="${this._handleCreateEvent}">${this._language.create}</button>
+                    </div>
+                </div>
+            </ha-dialog>
+        `;
+    }
+
+    // Corps partage du volet « Options avancees » des DEUX dialogues de creation.
+    // Il etait auparavant inline dans le seul formulaire clavier : le dialogue
+    // manuscrit de la tablette n'avait donc aucune section avancee, rendant la
+    // recurrence (et les cases vacances/feries) inatteignables a la creation au
+    // frigo. Factorise ici pour qu'une option ajoutee ne puisse plus exister d'un
+    // seul cote. `dates` porte les champs dont le formulaire clavier est maitre
+    // (date de debut, heure de fin) ; la tablette les omet — sa date vient de la
+    // case touchee et son heure de l'ecriture — et ne garde que la date de FIN,
+    // que le stylo ne sait pas exprimer. Memes ids des deux cotes : un seul
+    // dialogue de creation est rendu a la fois, et les handlers lisent par id.
+    _renderCreateAdvancedBody(dates) {
+        const d = dates || null;
+        const startDateValue = d ? d.startDateValue : '';
+        const endDateValue = d ? d.endDateValue : '';
+        const endTimeValue = d ? d.endTimeValue : '';
+        const isAllDay = d ? d.isAllDay : false;
+        return html`
+                    ${d ? html`
                     <div class="form-row">
                         <label for="event-start-date">${this._language.eventDate}</label>
                         <input type="date" id="event-start-date" class="form-input" .value="${startDateValue}" required />
                     </div>
+                    ` : ''}
                     <div class="form-row">
                         <label for="event-end-date">${this._language.eventEnd}</label>
                         <div class="datetime-row">
                             <input type="date" id="event-end-date" class="form-input" .value="${endDateValue}"
                                 @input="${() => { this._createEndTouched = true; }}" />
+                    ${d ? html`
                             <input type="time" id="event-end-time" class="form-input" style="${isAllDay ? 'display: none' : ''}" .value="${endTimeValue}"
                                 @input="${() => { this._createEndTouched = true; }}" />
+                    ` : ''}
                         </div>
                     </div>
                     <div class="form-row">
@@ -2498,14 +2531,6 @@ export class FamilyCalendarCard extends LitElement {
                             </select>
                         </div>
                     </div>
-                    </div>
-                    </details>
-                    <div class="form-actions">
-                        <button class="btn btn-cancel" @click="${this._closeCreateEventDialog}">${this._language.cancel}</button>
-                        <button class="btn btn-submit" @click="${this._handleCreateEvent}">${this._language.create}</button>
-                    </div>
-                </div>
-            </ha-dialog>
         `;
     }
 
@@ -2549,6 +2574,15 @@ export class FamilyCalendarCard extends LitElement {
                         <div class="hw-hint">${this._language.handwriteHint}</div>
                     </div>
                     ${this._aiError ? html`<div class="hw-error">${this._aiError}</div>` : ''}
+                    <details class="advanced-details">
+                        <summary class="advanced-toggle">
+                            <ha-icon class="adv-chevron" icon="mdi:chevron-down"></ha-icon>
+                            <span>${this._language.advancedOptions}</span>
+                        </summary>
+                        <div class="advanced-section">
+                        ${this._renderCreateAdvancedBody(null)}
+                        </div>
+                    </details>
                     <div class="hw-modal-actions">
                         <button type="button" class="hw-clear hw-pen ${!this._eraserMode ? 'active' : ''}" @click="${this._usePen}">
                             <ha-icon icon="mdi:pencil"></ha-icon> ${this._language.pen}
@@ -3852,13 +3886,15 @@ export class FamilyCalendarCard extends LitElement {
         const date = this._showCreateEventDialog?.date;
         const calendar = this._createCalendar || this._defaultCalendar
             || (this._calendars && this._calendars[0] && this._calendars[0].entity);
-        // Capture the category before _closeCreateEventDialog resets it.
+        // Capture the category AND the advanced panel before
+        // _closeCreateEventDialog tears the form down — the AI call runs after.
         const category = this._createCategory;
+        const adv = this._readCreateAdvanced();
         this._closeCreateEventDialog();
-        this._backgroundCreateFromImage(provider, base64, date, calendar, category);
+        this._backgroundCreateFromImage(provider, base64, date, calendar, category, adv);
     }
 
-    async _backgroundCreateFromImage(provider, base64, date, calendar, category) {
+    async _backgroundCreateFromImage(provider, base64, date, calendar, category, adv) {
         try {
             if (!date || !calendar) throw new Error('No date or calendar');
             const data = provider === 'claude'
@@ -3873,13 +3909,24 @@ export class FamilyCalendarCard extends LitElement {
             // their marker carried by the calendar's titleEmoji (not a category).
             const calConf = this._calendars.find((c) => c.entity === calendar);
             const infoMode = !!(calConf && calConf.allDayOnly);
-            const summary = this._composeSummary(title, false, infoMode ? '' : (category || ''));
+            const summary = this._composeSummary(title, !!(adv && adv.notify), infoMode ? '' : (category || ''));
+            // Date de fin saisie dans le volet avance (le stylo ne sait pas
+            // l'exprimer). Saisie INCLUSIVE cote formulaire, exclusive cote API.
+            const advEndDay = (adv && adv.endDate) ? DateTime.fromISO(adv.endDate) : null;
+            const endDay = (advEndDay && advEndDay.isValid && advEndDay > date.startOf('day'))
+                ? advEndDay
+                : null;
             let eventData;
             if (time && !infoMode) {
                 const [h, mn] = time.split(':').map(Number);
                 const start = date.set({ hour: h, minute: mn, second: 0, millisecond: 0 });
                 const dur = (durationMin && durationMin > 0) ? durationMin : 60;
-                const end = start.plus({ minutes: dur });
+                let end = start.plus({ minutes: dur });
+                if (endDay) {
+                    // Evenement horaire qui court sur plusieurs jours : meme heure
+                    // de fin, mais le dernier jour choisi.
+                    end = endDay.set({ hour: end.hour, minute: end.minute, second: 0, millisecond: 0 });
+                }
                 eventData = {
                     summary,
                     dtstart: start.toFormat("yyyy-MM-dd'T'HH:mm:ss"),
@@ -3889,8 +3936,14 @@ export class FamilyCalendarCard extends LitElement {
                 eventData = {
                     summary,
                     dtstart: date.toISODate(),
-                    dtend: date.plus({ days: 1 }).toISODate(),
+                    dtend: (endDay || date).plus({ days: 1 }).toISODate(),
                 };
+            }
+            if (adv && adv.rrule) {
+                eventData.rrule = adv.rrule;
+            }
+            if (adv && adv.description) {
+                eventData.description = adv.description;
             }
             await this.hass.callWS({
                 type: 'calendar/event/create',
@@ -4241,6 +4294,55 @@ export class FamilyCalendarCard extends LitElement {
     // Froide"). The guard is set synchronously on entry so the second tap is a
     // no-op, and always released (finally) so a validation early-return or a
     // failed WS call never leaves the button dead.
+    // Lit la recurrence depuis le volet avance (memes ids dans les deux dialogues
+    // de creation). Renvoie '' si aucune repetition n'est choisie.
+    _readRecurrenceFromForm() {
+        const q = (sel) => this.shadowRoot?.querySelector(sel);
+        const freq = q('#event-recurrence')?.value;
+        if (!freq) {
+            return '';
+        }
+        const interval = parseInt(q('#event-recurrence-interval')?.value) || 1;
+        let byDay = [];
+        if (freq === 'FREQ=WEEKLY') {
+            byDay = [...this.shadowRoot.querySelectorAll('#event-day-picker .day-btn.active')]
+                .map((btn) => btn.dataset.day);
+        }
+        const byMonthDay = freq === 'FREQ=MONTHLY'
+            ? parseInt(q('#event-recurrence-monthday')?.value)
+            : null;
+        const endType = q('#event-recurrence-end')?.value || 'never';
+        const endDate = q('#event-recurrence-end-date')?.value || '';
+        const endCount = parseInt(q('#event-recurrence-end-count')?.value) || 10;
+        return this._buildRrule(freq, interval, byDay, byMonthDay, endType, endDate, endCount);
+    }
+
+    // Capture tout le volet avance en UNE fois. Indispensable au flux manuscrit :
+    // celui-ci ferme la fenetre AVANT d'appeler l'IA (l'analyse tourne en tache de
+    // fond), donc les champs doivent etre lus tant qu'ils sont encore dans le DOM.
+    _readCreateAdvanced() {
+        const q = (sel) => this.shadowRoot?.querySelector(sel);
+        const rrule = this._readRecurrenceFromForm();
+        const notify = !!q('#event-notify')?.checked;
+        const reminderDelay = q('#event-reminder-delay')?.value || '20m';
+        const tags = [];
+        if (notify && reminderDelay !== '20m') {
+            tags.push(`[r:${reminderDelay}]`);
+        }
+        if (rrule && this._vacationCalendar && q('#event-skip-vacation')?.checked) {
+            tags.push('[hv]');
+        }
+        if (rrule && this._holidayCalendar && q('#event-skip-holiday')?.checked) {
+            tags.push('[hf]');
+        }
+        return {
+            endDate: q('#event-end-date')?.value || '',
+            rrule,
+            notify,
+            description: tags.join(' '),
+        };
+    }
+
     async _handleCreateEvent() {
         if (this._savingEvent) {
             return;
@@ -4306,22 +4408,7 @@ export class FamilyCalendarCard extends LitElement {
             dtend = end.toFormat("yyyy-MM-dd'T'HH:mm:ss");
         }
 
-        let rrule = '';
-        if (freq) {
-            const interval = parseInt(this.shadowRoot.querySelector('#event-recurrence-interval')?.value) || 1;
-            let byDay = [];
-            if (freq === 'FREQ=WEEKLY') {
-                byDay = [...this.shadowRoot.querySelectorAll('#event-day-picker .day-btn.active')]
-                    .map(btn => btn.dataset.day);
-            }
-            const byMonthDay = freq === 'FREQ=MONTHLY'
-                ? parseInt(this.shadowRoot.querySelector('#event-recurrence-monthday')?.value)
-                : null;
-            const endType = this.shadowRoot.querySelector('#event-recurrence-end')?.value || 'never';
-            const endDate = this.shadowRoot.querySelector('#event-recurrence-end-date')?.value || '';
-            const endCount = parseInt(this.shadowRoot.querySelector('#event-recurrence-end-count')?.value) || 10;
-            rrule = this._buildRrule(freq, interval, byDay, byMonthDay, endType, endDate, endCount);
-        }
+        const rrule = this._readRecurrenceFromForm();
 
         // Info calendars (allDayOnly) carry their marker via the calendar's
         // titleEmoji (display-only), so they don't use the per-event category.
