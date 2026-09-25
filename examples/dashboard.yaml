@@ -6,7 +6,7 @@
 #  The card handles everything natively:
 #    - Event creation, editing, and deletion (built-in forms)
 #    - Calendar filter buttons (legend toggle)
-#    - View selector (Today, Tomorrow, Week, 2 Weeks, Month)
+#    - View selector (Today, Tomorrow, Fit, Week, 2 Weeks, Month)
 #    - Weather display per day
 #    - Recurrence support (daily, weekly, monthly, yearly)
 #    - Notification markers (🔔 prefix in event title)
@@ -28,7 +28,7 @@ views:
           - type: custom:family-calendar-card
             title: Family Calendar
             locale: fr                  # Language: en, fr, de, es, it, nl, pt
-            defaultView: Month          # Default view: Today, Tomorrow, Week, Biweek, Month
+            defaultView: Month          # Default view: Today, Tomorrow, Fit, Week, Biweek, Month
             startingDay: monday         # First day of week: monday, today, etc.
             showHeader: true            # Show date/time/weather header
             showNavigation: true        # Show month/week navigation arrows

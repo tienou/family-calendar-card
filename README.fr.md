@@ -138,8 +138,8 @@ calendars:
 | `locale` | string | `en` | Langue (fr, de, es, it, nl, pt) |
 | `timeFormat` | string | auto | Format d'heure (jetons Luxon), ex. `HH:mm` (24h) ou `h:mm a` (12h, « 5:45 PM »). Non renseigne, il suit la preference **Profil -> Format de l'heure** de Home Assistant |
 | `multiDayTimeFormat` | string | auto | Idem pour les evenements multi-jours, ex. `d LLL HH:mm` / `d LLL h:mm a` |
-| `defaultView` | string | `Week` | Vue par defaut (Today/Tomorrow/Week/Biweek/Month) |
-| `startingDay` | string | `today` | Premier jour de la semaine (monday, today, etc.) |
+| `defaultView` | string | `Week` | Vue par defaut (`Today`, `Tomorrow`, `Fit`, `Week`, `Biweek`, `Month`) |
+| `startingDay` | string | `today` | Premier jour de la semaine (`monday`, `today`, etc.). *Remarque : ignoré par la vue `Fit` qui commence toujours aujourd'hui.* |
 | `showHeader` | boolean | `true` | Afficher l'en-tete date/heure/meteo |
 | `showHeaderDate` | boolean | `true` | Afficher la date dans l'en-tete |
 | `showHeaderClock` | boolean | `true` | Afficher l'horloge dans l'en-tete |
@@ -160,7 +160,7 @@ calendars:
 | `compact` | boolean | `true` | Mode d'affichage compact |
 | `fillHeight` | boolean | `false` | Étire les rangées de jours pour occuper toute la hauteur de l'écran (idéal en vue panneau, ex. tablette murale) |
 | `materialSymbols` | boolean | `false` | Utilise les icônes [Material Symbols](https://github.com/beecho01/material-symbols). Activé : les calendriers utilisent leur `iconMaterial` et les catégories affichent leur `icon` au lieu de l'emoji (nécessite l'intégration Material Symbols) |
-| `views` | list | toutes | Vues a afficher (ex. `Week,Month`) |
+| `views` | list | toutes | Vues a afficher (ex. `Fit,Week,Month`). Options : `Today`, `Tomorrow`, `Fit`, `Week`, `Biweek`, `Month`. (La vue `Fit` affiche dynamiquement uniquement le nombre de jours qui tiennent sur une ligne sans retour à la ligne, à partir d'aujourd'hui) |
 | `defaultCalendar` | string | - | Calendrier par defaut pour la creation d'evenements |
 | `googleApiKey` | string | - | Cle API Google Places pour l'autocompletion du lieu |
 | `weather` | object | - | Entite meteo et options d'affichage |

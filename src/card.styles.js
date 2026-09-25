@@ -512,6 +512,23 @@ export default css`
         display: none;
     }
 
+    ha-card .container.fit-view .day .date .text.mobile-only {
+        display: inline;
+    }
+
+    .container .day.day-probe {
+        position: absolute;
+        visibility: hidden;
+        pointer-events: none;
+        width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+    }
+
     .container .day.header .date .text {
         font-size: var(--day-header-font-size, var(--day-date-text-font-size));
         color: var(--day-header-color, var(--primary-text-color));

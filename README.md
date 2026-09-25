@@ -135,8 +135,8 @@ calendars:
 | `locale` | string | `en` | Language locale (fr, de, es, it, nl, pt) |
 | `timeFormat` | string | auto | Time format (Luxon tokens), e.g. `HH:mm` (24h) or `h:mm a` (12h, "5:45 PM"). Left unset it follows your Home Assistant **Profile -> Time format** preference |
 | `multiDayTimeFormat` | string | auto | Same, for multi-day events, e.g. `d LLL HH:mm` / `d LLL h:mm a` |
-| `defaultView` | string | `Week` | Default view (Today/Tomorrow/Week/Biweek/Month) |
-| `startingDay` | string | `today` | First day of the week (monday, today, etc.) |
+| `defaultView` | string | `Week` | Default view (`Today`, `Tomorrow`, `Fit`, `Week`, `Biweek`, `Month`) |
+| `startingDay` | string | `today` | First day of the week (`monday`, `today`, etc.). *Note: Ignored by `Fit` view which always starts on today.* |
 | `showHeader` | boolean | `true` | Show the date/time/weather header |
 | `showHeaderDate` | boolean | `true` | Show date in header |
 | `showHeaderClock` | boolean | `true` | Show clock in header |
@@ -157,7 +157,7 @@ calendars:
 | `compact` | boolean | `true` | Compact display mode |
 | `fillHeight` | boolean | `false` | Stretch the day rows so the calendar fills the screen height (best in a panel / full-height view, e.g. a wall-mounted tablet) |
 | `materialSymbols` | boolean | `false` | Use [Material Symbols](https://github.com/beecho01/material-symbols) icons. When on, calendars use their `iconMaterial` and categories show their `icon` instead of the emoji (requires the Material Symbols integration) |
-| `views` | list | all | Which view buttons to show (e.g. `Week,Month`) |
+| `views` | list | all | Which view buttons to show (e.g. `Fit,Week,Month`). Options: `Today`, `Tomorrow`, `Fit`, `Week`, `Biweek`, `Month`. (`Fit` view dynamically shows only as many days as fit in one row without wrapping, starting on current day) |
 | `defaultCalendar` | string | - | Default calendar entity for event creation |
 | `googleApiKey` | string | - | Google Places API key for location autocomplete |
 | `weather` | object | - | Weather entity and display options |

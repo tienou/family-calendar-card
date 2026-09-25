@@ -81,6 +81,7 @@ export class FamilyCalendarCardEditor extends LitElement {
                         ${this.addSelectField('defaultView', 'Default view', [
                             { value: 'Today', label: 'Today' },
                             { value: 'Tomorrow', label: 'Tomorrow' },
+                            { value: 'Fit', label: 'Fit' },
                             { value: 'Week', label: 'Week' },
                             { value: 'Biweek', label: 'Biweek' },
                             { value: 'Month', label: 'Month' },
@@ -298,8 +299,8 @@ export class FamilyCalendarCardEditor extends LitElement {
                     'Views',
                     html`
                         <p>Select which view buttons are displayed. Leave empty for all views.</p>
-                        ${this.addTextField('views', 'Views (comma separated: Today,Tomorrow,Week,Biweek,Month)')}
-                        ${this.addHint('e.g. "Week,Month" to show only these two views')}
+                        ${this.addTextField('views', 'Views (comma separated: Today,Tomorrow,Fit,Week,Biweek,Month)')}
+                        ${this.addHint('e.g. "Fit,Month" to show only these two views')}
                     `
                 )}
                 ${this.addExpansionPanel(
