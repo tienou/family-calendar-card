@@ -1803,7 +1803,13 @@ export class FamilyCalendarCard extends LitElement {
             || (ev.originalStart && ev.originalStart.hasSame(day.date, 'day')));
         const first = evs[0];
         const idx = first.calendars.findIndex((c) => this._hideCalendars.indexOf(c) === -1);
+        // Une période forme UNE bande continue, comme les bandeaux : raccord
+        // avec la case voisine sauf en début/fin de période et de ligne.
+        const pos = first.multiDayPosition ?? 'middle';
+        const rowEnd = day.date.weekday === ((this._rowStartWeekday() + 5) % 7) + 1;
         return {
+            ljoin: !!first.multiDay && pos !== 'start' && !rowStart,
+            rjoin: !!first.multiDay && pos !== 'end' && !rowEnd,
             color: first.colors[idx] ?? first.colors[0],
             label: named.map((ev) => ev.summary).join(' · '),
             title: evs.map((ev) => ev.summary).join(' · '),
@@ -1828,7 +1834,7 @@ export class FamilyCalendarCard extends LitElement {
                 const tag = this._dayHeaderTag(day);
                 return html`
                     <div class="day ${day.class}${isSelected ? ' selected' : ''}${this._highlightWeekend && this._weekendDays.includes(day.date.weekday) ? ' weekend' : ''}" data-date="${day.date.day}" data-weekday="${day.date.weekday}" data-month="${day.date.month}" data-year="${day.date.year}" data-week="${day.date.weekNumber}" @click="${(e) => { if (this._numberOfDaysIsMonth) { e.stopPropagation(); this._selectDay(day); } }}">
-                        <div class="day-header${tag ? ' has-tag' : ''}" style="${tag ? '--day-tag-color: ' + tag.color : ''}" title="${tag ? tag.title : ''}">
+                        <div class="day-header${tag ? ' has-tag' + (tag.ljoin ? ' ljoin' : '') + (tag.rjoin ? ' rjoin' : '') : ''}" style="${tag ? '--day-tag-color: ' + tag.color : ''}" title="${tag ? tag.title : ''}">
                             <div class="date">
                                 ${this._dayFormat ?
                                     html`${day.date.toFormat(this._dayFormat)}` :

@@ -408,10 +408,33 @@ export default css`
     /* Vacances / fériés dans l'en-tête du jour (option calendars[].dayHeader) :
        teinte de la couleur du calendrier + nom sur UNE ligne, tronqué, pour ne
        pas changer la hauteur de l'en-tête (le calcul « +N » la mesure). */
+    /* Teinte OPAQUE (mélangée au fond de case) : deux en-têtes voisins se
+       chevauchent au raccord, une teinte transparente y ferait une bande plus
+       foncée. Le padding compense exactement la marge négative : la date et
+       le « + » restent à la même place que dans une case sans teinte. */
     .container .day .day-header.has-tag {
-        background: color-mix(in srgb, var(--day-tag-color) 20%, transparent);
+        background: color-mix(in srgb, var(--day-tag-color) 20%, var(--fam-cell, var(--card-background-color, #fff)));
         border-radius: 6px;
         gap: 4px;
+        position: relative;
+        margin-left: -4px;
+        margin-right: -4px;
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+    /* Raccord avec la case voisine : même débord que les bandeaux (.ljoin /
+       .rjoin des événements) pour passer par-dessus la bordure de case. */
+    .container .day .day-header.has-tag.ljoin {
+        margin-left: calc(-1 * var(--days-spacing) - 12px);
+        padding-left: calc(var(--days-spacing) + 12px);
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    .container .day .day-header.has-tag.rjoin {
+        margin-right: calc(-1 * var(--days-spacing) - 12px);
+        padding-right: calc(var(--days-spacing) + 12px);
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
     }
     /* La date garde sa largeur (sinon « 19 lundi » passe sur 2 lignes) :
        c'est le nom qui se tronque. */
