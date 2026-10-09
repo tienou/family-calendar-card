@@ -413,6 +413,12 @@ export default css`
         border-radius: 6px;
         gap: 4px;
     }
+    /* La date garde sa largeur (sinon « 19 lundi » passe sur 2 lignes) :
+       c'est le nom qui se tronque. */
+    .container .day .day-header.has-tag .date {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
     .container .day .day-header .day-tag {
         flex: 1 1 auto;
         min-width: 0;
