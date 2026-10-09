@@ -499,7 +499,7 @@ export class FamilyCalendarCardEditor extends LitElement {
             { emoji: '🏃', label: 'Sport', icon: 'm3rf:directions-run' },
             { emoji: '🩺', label: 'Médical', icon: 'm3rf:stethoscope' },
             { emoji: '🎓', label: 'École', icon: 'm3rf:school' },
-            { emoji: '💼', label: 'Travail', icon: 'm3rf:work' },
+            { emoji: '💼', label: 'Travail', icon: 'm3rf:business-center' },
             { emoji: '🍽️', label: 'Repas', icon: 'm3rf:restaurant' },
             { emoji: '🚐', label: 'Vacances', icon: 'm3rf:luggage' },
             { emoji: '🎉', label: 'Fête', icon: 'm3rf:celebration' },

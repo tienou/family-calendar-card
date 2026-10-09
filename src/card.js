@@ -189,7 +189,7 @@ export class FamilyCalendarCard extends LitElement {
             { emoji: '\u{1F3C3}', fr: 'Sport', en: 'Sport', icon: 'm3rf:directions-run' },
             { emoji: '\u{1FA7A}', fr: 'Médical', en: 'Medical', icon: 'm3rf:stethoscope' },
             { emoji: '\u{1F393}', fr: 'École', en: 'School', icon: 'm3rf:school' },
-            { emoji: '\u{1F4BC}', fr: 'Travail', en: 'Work', icon: 'm3rf:work' },
+            { emoji: '\u{1F4BC}', fr: 'Travail', en: 'Work', icon: 'm3rf:business-center' },
             { emoji: '\u{1F37D}\u{FE0F}', fr: 'Repas', en: 'Meal', icon: 'm3rf:restaurant' },
             { emoji: '\u{1F690}', fr: 'Vacances', en: 'Holidays', icon: 'm3rf:luggage' },
             { emoji: '\u{1F389}', fr: 'Fête', en: 'Party', icon: 'm3rf:celebration' },
