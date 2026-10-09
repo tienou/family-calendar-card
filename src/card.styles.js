@@ -405,6 +405,26 @@ export default css`
         justify-content: space-between;
     }
 
+    /* Vacances / fériés dans l'en-tête du jour (option calendars[].dayHeader) :
+       teinte de la couleur du calendrier + nom sur UNE ligne, tronqué, pour ne
+       pas changer la hauteur de l'en-tête (le calcul « +N » la mesure). */
+    .container .day .day-header.has-tag {
+        background: color-mix(in srgb, var(--day-tag-color) 20%, transparent);
+        border-radius: 6px;
+        gap: 4px;
+    }
+    .container .day .day-header .day-tag {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 0.72em;
+        font-weight: 600;
+        line-height: 1.2;
+        color: color-mix(in srgb, var(--day-tag-color) 55%, var(--primary-text-color, #222));
+    }
+
     .container .day .date {
         position: relative;
         z-index: 1;
@@ -2087,6 +2107,9 @@ export default css`
     /* Labels "Membres"/"Catégories" masqués : les pastilles rondes (membres) vs
        carrées (catégories) distinguent déjà les deux groupes. */
     ha-card.theme-familial .filter-group-label { display: none; }
+    ha-card.theme-familial .container .day .day-header .day-tag {
+        color: color-mix(in srgb, var(--day-tag-color) 55%, var(--fam-ink));
+    }
     ha-card.theme-familial .calendar-filters { display: flex; flex-wrap: wrap; gap: 6px; }
     ha-card.theme-familial .filter-btn {
         display: inline-flex; align-items: center; gap: 6px;

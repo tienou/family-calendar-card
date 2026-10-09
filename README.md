@@ -231,6 +231,7 @@ calendars:
 | `iconMaterial` | string | Material Symbols icon used instead of `icon` when `materialSymbols` is on (e.g. `m3rf:home`) |
 | `initiallyHidden` | boolean | Events hidden on load, until the calendar's filter chip is switched on |
 | `allDayOnly` | boolean | "Info" calendar (e.g. birthdays): the create form asks for the title only and saves a single all-day event |
+| `dayHeader` | boolean | Show this calendar in the **day header** instead of the cell (desktop/tablet): the header takes the calendar colour and the name is written next to the date — on the first day of a period and at the start of each week row. Meant for school / public holidays. Phones keep the dots view |
 | `titleEmoji` | string | Emoji shown before every title of this calendar (display only, e.g. `🎂`) |
 | `group` | string | Familial theme: force the chip group, `member` or `category` |
 | `filter` | string | Regex: hide this calendar's events whose title matches |

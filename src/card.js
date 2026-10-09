@@ -127,6 +127,7 @@ export class FamilyCalendarCard extends LitElement {
         this._aiError = null;
         this._eraserMode = false;
         this._createCategory = '';
+        this._narrow = false;
     }
 
     // `hass` is set by Home Assistant on every state change (can fire many times
@@ -259,7 +260,8 @@ export class FamilyCalendarCard extends LitElement {
             _aiError: { state: true },
             _eraserMode: { state: true },
             _createCategory: { state: true },
-            _dayEventsPopup: { state: true }
+            _dayEventsPopup: { state: true },
+            _narrow: { state: true }
             // _createCalendar is intentionally NOT reactive: selecting a calendar
             // in the handwriting overlay updates the active button via direct DOM
             // so it never triggers a (costly) re-render of the overlay/canvas.
@@ -288,6 +290,9 @@ export class FamilyCalendarCard extends LitElement {
         this._locale = config.locale ?? 'en';
         this._title = config.title ?? null;
         this._calendars = this._applyDefaultColors(config.calendars);
+        // Calendriers affichés dans l'en-tête du jour (vacances, fériés…) au lieu
+        // d'occuper une ligne dans la case.
+        this._dayHeaderCals = new Set(this._calendars.filter((c) => c.dayHeader).map((c) => c.entity));
         this._categories = this._buildCategories(config.eventCategories);
         // Lookups built once per config (not per event/render): O(1) calendar
         // lookup by entity, and the category-emoji list pre-sorted longest-first
@@ -1303,6 +1308,16 @@ export class FamilyCalendarCard extends LitElement {
             };
         }
         window.addEventListener('resize', this._onResize);
+        // Largeur de la CARTE (pas de la fenêtre) : même seuil que la requête
+        // @container weekplanner (≤ 640 px = affichage mobile, inchangé).
+        if (!this._resizeObs && window.ResizeObserver) {
+            this._resizeObs = new ResizeObserver((entries) => {
+                const w = entries[0]?.contentRect?.width || 0;
+                const narrow = w > 0 && w <= 640;
+                if (narrow !== this._narrow) this._narrow = narrow;
+            });
+        }
+        this._resizeObs?.observe(this);
         if (this._initialized) {
             this._waitForHassAndConfig();
         }
@@ -1317,6 +1332,7 @@ export class FamilyCalendarCard extends LitElement {
         if (this._onResize) {
             window.removeEventListener('resize', this._onResize);
         }
+        this._resizeObs?.disconnect();
         if (this._weatherUnsub) {
             this._weatherUnsub.then((unsub) => unsub()).catch(() => {});
             this._weatherUnsub = null;
@@ -1754,6 +1770,46 @@ export class FamilyCalendarCard extends LitElement {
         `;
     }
 
+    // Weekday of the first cell of each grid row (banners and day-header tags
+    // restart there).
+    _rowStartWeekday() {
+        return (this._days && this._days[0]) ? this._days[0].date.weekday
+            : (this._startDate ? this._startDate.weekday : 1);
+    }
+
+    // An event belongs in the day header when ALL its visible calendars are
+    // flagged dayHeader (a combined event that is also on a normal calendar
+    // stays in the cell).
+    _isDayHeaderEvent(ev) {
+        if (!ev || !this._dayHeaderCals || this._dayHeaderCals.size === 0) return false;
+        const visible = ev.calendars.filter((c) => this._hideCalendars.indexOf(c) === -1);
+        return visible.length > 0 && visible.every((c) => this._dayHeaderCals.has(c));
+    }
+
+    // Tint + label of a day header (school holidays, public holidays…). A
+    // multi-day period is named only on its first day and at the start of each
+    // grid row, so the name isn't repeated in every cell; a single-day event
+    // (public holiday) is always named. Mobile (narrow card) is unchanged.
+    _dayHeaderTag(day) {
+        if (this._narrow || !this._dayHeaderCals || this._dayHeaderCals.size === 0) return null;
+        const evs = day.events
+            .map((k) => this._calendarEvents?.[k])
+            .filter((ev) => this._isDayHeaderEvent(ev));
+        if (evs.length === 0) return null;
+        // A public holiday wins the tint over a holiday period.
+        evs.sort((a, b) => (a.multiDay ? 1 : 0) - (b.multiDay ? 1 : 0));
+        const rowStart = day.date.weekday === this._rowStartWeekday();
+        const named = evs.filter((ev) => !ev.multiDay || rowStart
+            || (ev.originalStart && ev.originalStart.hasSame(day.date, 'day')));
+        const first = evs[0];
+        const idx = first.calendars.findIndex((c) => this._hideCalendars.indexOf(c) === -1);
+        return {
+            color: first.colors[idx] ?? first.colors[0],
+            label: named.map((ev) => ev.summary).join(' · '),
+            title: evs.map((ev) => ev.summary).join(' · '),
+        };
+    }
+
     _renderDays() {
         if (!this._days) {
             return html``;
@@ -1769,9 +1825,10 @@ export class FamilyCalendarCard extends LitElement {
                     return html``;
                 }
                 const isSelected = this._selectedDay && this._selectedDay.date.day === day.date.day && this._selectedDay.date.month === day.date.month && this._selectedDay.date.year === day.date.year;
+                const tag = this._dayHeaderTag(day);
                 return html`
                     <div class="day ${day.class}${isSelected ? ' selected' : ''}${this._highlightWeekend && this._weekendDays.includes(day.date.weekday) ? ' weekend' : ''}" data-date="${day.date.day}" data-weekday="${day.date.weekday}" data-month="${day.date.month}" data-year="${day.date.year}" data-week="${day.date.weekNumber}" @click="${(e) => { if (this._numberOfDaysIsMonth) { e.stopPropagation(); this._selectDay(day); } }}">
-                        <div class="day-header">
+                        <div class="day-header${tag ? ' has-tag' : ''}" style="${tag ? '--day-tag-color: ' + tag.color : ''}" title="${tag ? tag.title : ''}">
                             <div class="date">
                                 ${this._dayFormat ?
                                     html`${day.date.toFormat(this._dayFormat)}` :
@@ -1784,6 +1841,7 @@ export class FamilyCalendarCard extends LitElement {
                                     `
                                 }
                             </div>
+                            ${tag && tag.label ? html`<div class="day-tag">${tag.label}</div>` : ''}
                             ${this._showWeather && day.weather ?
                                 html`
                                     <div class="weather" @click="${this._handleWeatherClick}">
@@ -1892,9 +1950,16 @@ export class FamilyCalendarCard extends LitElement {
         // When nothing is hidden (the common case) we can use the cached event
         // objects directly — no per-event clone/array-copy on every render.
         const hasHidden = this._hideCalendars && this._hideCalendars.length > 0;
+        // Vacances / fériés : affichés dans l'en-tête du jour (grille, hors
+        // mobile), donc retirés de la case. Les listes (panneau du jour, popup
+        // « +N ») les gardent.
+        const headerOut = !plain && !this._narrow && this._dayHeaderCals && this._dayHeaderCals.size > 0;
         day.events.map((eventKey) => {
             const cached = this._calendarEvents[eventKey];
             if (!cached) {
+                return;
+            }
+            if (headerOut && this._isDayHeaderEvent(cached)) {
                 return;
             }
 
@@ -1973,8 +2038,7 @@ export class FamilyCalendarCard extends LitElement {
         // Row boundaries of the grid: a banner band is "joined" to a neighbour
         // only within the same visual week row (so it gets rounded ends at the
         // row edges and at the event's real start/end).
-        const rowStartWd = (this._days && this._days[0]) ? this._days[0].date.weekday
-            : (this._startDate ? this._startDate.weekday : 1);
+        const rowStartWd = this._rowStartWeekday();
         const rowEndWd = ((rowStartWd + 5) % 7) + 1;
         const isRowStart = day.date.weekday === rowStartWd;
         const isRowEnd = day.date.weekday === rowEndWd;

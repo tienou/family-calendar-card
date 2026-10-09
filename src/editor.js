@@ -117,6 +117,8 @@ export class FamilyCalendarCardEditor extends LitElement {
                             ${this.addHint(t('Ses événements sont cachés jusqu’à ce qu’on active sa pastille de filtre.', 'Its events stay hidden until its filter chip is switched on.'))}
                             ${this.addBooleanField('calendars.' + index + '.allDayOnly', t('Calendrier d’information (journée entière)', 'Info calendar (all-day only)'))}
                             ${this.addHint(t('Crée des événements sans heure ni durée, ex. anniversaires.', 'Creates events with no time or duration, e.g. birthdays.'))}
+                            ${this.addBooleanField('calendars.' + index + '.dayHeader', t('Afficher dans l’en-tête du jour', 'Show in the day header'))}
+                            ${this.addHint(t('Pour les vacances scolaires et jours fériés : le jour prend la couleur du calendrier et le nom s’écrit à côté de la date, au lieu d’une ligne dans la case (ordinateur et tablette).', 'For school and public holidays: the day takes the calendar colour and the name is written next to the date instead of a line in the cell (desktop and tablet).'))}
                             ${this.addEmojiField('calendars.' + index + '.titleEmoji', t('Emoji devant les titres', 'Emoji before titles'))}
                             ${this.addHint(t('Affiché devant chaque titre de ce calendrier (affichage seulement), ex. 🎂.', 'Shown before every title of this calendar (display only), e.g. 🎂.'))}
                             <div class="sk-row">

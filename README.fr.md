@@ -232,6 +232,7 @@ calendars:
 | `iconMaterial` | texte | Icône Material Symbols utilisée à la place d'`icon` quand `materialSymbols` est activé (ex. `m3rf:home`) |
 | `initiallyHidden` | booléen | Événements masqués au chargement, jusqu'à ce qu'on active le filtre du calendrier |
 | `allDayOnly` | booléen | Calendrier « info » (ex. anniversaires) : le formulaire de création ne demande que le titre et enregistre un seul événement sur la journée |
+| `dayHeader` | booléen | Afficher ce calendrier dans l'**en-tête du jour** au lieu de la case (ordinateur/tablette) : l'en-tête prend la couleur du calendrier et le nom s'écrit à côté de la date — au premier jour d'une période et en début de chaque ligne de semaine. Pensé pour les vacances scolaires et jours fériés. Le téléphone garde l'affichage en pastilles |
 | `titleEmoji` | texte | Emoji affiché devant chaque titre de ce calendrier (affichage seulement, ex. `🎂`) |
 | `group` | texte | Thème familial : forcer le groupe du filtre, `member` ou `category` |
 | `filter` | texte | Regex : masque les événements de ce calendrier dont le titre correspond |
