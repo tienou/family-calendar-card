@@ -1445,7 +1445,22 @@ export class FamilyCalendarCard extends LitElement {
                 // Usable height per cell (below the header). The month view uses
                 // this to decide PER CELL between detailed (roomy) and single-line
                 // compact (tight) event rendering — see _renderEvents.
-                const usable = Math.max(0, per - headerH);
+                // Mesurée sur la zone .events réelle (flex qui remplit la case
+                // sous l'en-tête) : per - headerH oubliait le padding de case et
+                // surestimait de ~7 px — d'où une ligne de moins que possible.
+                const evBox = grid.querySelector('.day:not(.header) .events');
+                const usable = (evBox && evBox.clientHeight > 0)
+                    ? evBox.clientHeight
+                    : Math.max(0, per - headerH);
+                // Hauteur réelle d'une ligne compacte (mois serré), si présente.
+                const compactEls = [...grid.querySelectorAll('.day:not(.header) .events .event.compact-line')];
+                const compactH = compactEls.length
+                    ? Math.min(...compactEls.map((e) => e.offsetHeight + (parseFloat(getComputedStyle(e).marginBottom) || 0)))
+                    : 0;
+                if (compactH && compactH !== this._fillCompactH) {
+                    this._fillCompactH = compactH;
+                    this.requestUpdate();
+                }
                 if (cap !== this._fillEventCap || usable !== this._fillUsable) {
                     this._fillEventCap = cap;
                     this._fillUsable = usable;
@@ -2021,7 +2036,9 @@ export class FamilyCalendarCard extends LitElement {
         let eventLimit = 0;
         if (!plain) {
             if (isMonthGrid && this._fillHeight && this._fillUsable > 0) {
-                const COMPACT_H = 22; // a single-line chip
+                // Ligne compacte : hauteur MESURÉE (16 px sur la tablette frigo) ;
+                // 22 px supposés faisaient perdre une ligne par case.
+                const COMPACT_H = this._fillCompactH || 16;
                 const DETAILED_H = 46; // time + title (+ room for a location line)
                 const detailedCap = Math.max(1, Math.floor(this._fillUsable / DETAILED_H));
                 const compactCap = Math.max(1, Math.floor(this._fillUsable / COMPACT_H));

@@ -2410,7 +2410,8 @@ export default css`
         margin-bottom: 2px;
     }
     ha-card.theme-familial.fill-height .container.month-view .day .events .event.compact-line {
-        padding: 1px 6px;
+        /* 0 en vertical : 16 px par ligne → 4 lignes dans une case du frigo. */
+        padding: 0 6px;
         margin-bottom: 1px;
     }
     ha-card.theme-familial.fill-height .container.month-view .day .events .event .title {
