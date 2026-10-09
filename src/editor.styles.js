@@ -100,4 +100,42 @@ export default css`
       color: var(--text-primary-color, #fff);
       border-color: var(--primary-color, #03a9f4);
     }
+    .sk-editor {
+      display: flex;
+      flex-direction: column;
+    }
+    .sk-hint {
+      color: var(--secondary-text-color, #888);
+      font-size: 0.8em;
+      line-height: 1.4;
+      margin: -4px 0 10px 0;
+      padding: 0;
+    }
+    .sk-subtitle {
+      margin: 16px 0 4px 0;
+      font-size: 0.85em;
+      font-weight: 600;
+      color: var(--primary-text-color, #333);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .sk-warning {
+      margin: 12px 0 4px 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.82em;
+      line-height: 1.45;
+      background: rgba(255, 152, 0, 0.12);
+      border: 1px solid rgba(255, 152, 0, 0.45);
+      color: var(--primary-text-color, #333);
+    }
+    .sk-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .sk-row-fields > .sk-field {
+      flex: 1 1 140px;
+    }
 `;

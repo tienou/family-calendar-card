@@ -75,7 +75,6 @@ export class FamilyCalendarCard extends LitElement {
     _startDate;
     _hideWeekend;
     _startingDay;
-    _startingDayOffset;
     _weatherForecast = null;
     _weatherUnsub = null;
     _showLocation;
@@ -87,9 +86,6 @@ export class FamilyCalendarCard extends LitElement {
     _filterText;
     _replaceTitleText;
     _combineSimilarEvents;
-    _showLegend;
-    _legendToggle;
-    _actions;
     _columns;
     _loader;
     _showNavigation;
@@ -105,8 +101,8 @@ export class FamilyCalendarCard extends LitElement {
     _canvasReady = false;
     _createCalendar = null;
     // NOTE: reactive properties (_calendarVisibility, _currentView, _createDuration,
-    // _createShowAdvanced, _createTitle, _createStartTime, _aiLoading, _aiError,
-    // _aiResult, _eraserMode) are initialised in the constructor — declaring them
+    // _createTitle, _createStartTime, _aiError, _eraserMode) are initialised in
+    // the constructor — declaring them
     // as class fields here would shadow Lit's reactive accessors, so assigning to
     // them would update the value but NOT trigger a re-render.
     _selectedDay = null;
@@ -126,12 +122,9 @@ export class FamilyCalendarCard extends LitElement {
         this._calendarVisibility = {};
         this._currentView = 'Week';
         this._createDuration = '60';
-        this._createShowAdvanced = false;
         this._createTitle = null;
         this._createStartTime = null;
-        this._aiLoading = false;
         this._aiError = null;
-        this._aiResult = null;
         this._eraserMode = false;
         this._createCategory = '';
     }
@@ -261,12 +254,9 @@ export class FamilyCalendarCard extends LitElement {
             _createRecurrenceType: { state: true },
             _createRecurrenceEndType: { state: true },
             _createDuration: { state: true },
-            _createShowAdvanced: { state: true },
             _createTitle: { state: true },
             _createStartTime: { state: true },
-            _aiLoading: { state: true },
             _aiError: { state: true },
-            _aiResult: { state: true },
             _eraserMode: { state: true },
             _createCategory: { state: true },
             _dayEventsPopup: { state: true }
@@ -295,7 +285,6 @@ export class FamilyCalendarCard extends LitElement {
         // for the next event refresh to rebuild the cache.
         this._configRev = (this._configRev || 0) + 1;
 
-        this._numberOfDaysIsMonth = this._isNumberOfDaysMonth(config.days ?? 7);
         this._locale = config.locale ?? 'en';
         this._title = config.title ?? null;
         this._calendars = this._applyDefaultColors(config.calendars);
@@ -317,10 +306,9 @@ export class FamilyCalendarCard extends LitElement {
         this._regexCache = new Map();
         this._defaultCalendar = config.defaultCalendar ?? null;
         this._weather = this._getWeatherConfig(config.weather);
-        this._numberOfDays = this._getNumberOfDays(config.days ?? 7);
         this._hideWeekend = config.hideWeekend ?? false;
         this._highlightWeekend = config.highlightWeekend ?? false;
-        this._weekendColor = config.weekendColor || null;
+        this._weekendColor = this._cssValue(config.weekendColor) || null;
         // Which weekdays count as "weekend" for the tint (Luxon: Mon=1 … Sun=7).
         this._weekendDays = (Array.isArray(config.weekendDays) && config.weekendDays.length)
             ? config.weekendDays.map((d) => parseInt(d)).filter((d) => d >= 1 && d <= 7)
@@ -328,15 +316,10 @@ export class FamilyCalendarCard extends LitElement {
         this._showNavigation = config.showNavigation ?? true;
         // Swipe left/right (touch) to change period. Opt-out via swipeNavigation: false.
         this._swipeNavigation = config.swipeNavigation ?? true;
-        this._startingDay = config.startingDay ?? 'today';
-        this._startingDayOffset = config.startingDayOffset ?? 0;
         this._showWeekDayText = config.showWeekDayText ?? true;
-        this._startDate = this._getStartDate();
         this._updateInterval = config.updateInterval ?? 60;
         this._slotStartHour = parseInt(config.slotStartHour) || 7;
         this._slotEndHour = parseInt(config.slotEndHour) || 22;
-        this._aiTaskEntity = config.aiTaskEntity ?? null;
-        this._aiQuickAdd = config.aiQuickAdd ?? null; // null = auto-detect an ai_task entity
         // Reference calendars for the "skip school holidays" ([hv]) / "skip public
         // holidays" ([hf]) recurrence options. When set, the create/edit dialogs
         // show the corresponding checkbox and the card hides occurrences of tagged
@@ -355,7 +338,7 @@ export class FamilyCalendarCard extends LitElement {
         this._claudeModel = config.claudeModel ?? 'claude-opus-4-8';
         this._aiProvider = config.aiProvider ?? null; // 'gemini' | 'claude' | null (auto)
         this._noCardBackground = config.noCardBackground ?? false;
-        this._eventBackground = config.eventBackground ?? 'var(--card-background-color, inherit)';
+        this._eventBackground = this._cssValue(config.eventBackground) ?? 'var(--card-background-color, inherit)';
         this._compact = config.compact ?? true;
         this._theme = config.theme ?? 'skylight';
         // Optional floating action button (FAB) overlaid at the bottom-right of
@@ -391,8 +374,8 @@ export class FamilyCalendarCard extends LitElement {
         this._googleApiKey = config.googleApiKey ?? '';
         this._showTime = config.showTime ?? false;
         this._showDayName = config.showDayName ?? false;
-        this._dayHeaderFontSize = config.dayHeaderFontSize ?? null;
-        this._dayHeaderColor = config.dayHeaderColor ?? null;
+        this._dayHeaderFontSize = this._cssValue(config.dayHeaderFontSize) ?? null;
+        this._dayHeaderColor = this._cssValue(config.dayHeaderColor) ?? null;
         this._showDate = config.showDate ?? false;
         this._showCalendarName = config.showCalendarName ?? false;
         this._showWeather = config.showWeather ?? true;
@@ -410,10 +393,8 @@ export class FamilyCalendarCard extends LitElement {
         this._stripTitlePrefixes = Array.isArray(config.stripTitlePrefixes) ? config.stripTitlePrefixes : [];
         this._stripTitleRegexes = this._buildStripTitleRegexes(this._stripTitlePrefixes);
         this._combineSimilarEvents = config.combineSimilarEvents ?? false;
-        this._showLegend = config.showLegend ?? false;
-        this._legendToggle = config.legendToggle ?? false;
-        this._actions = config.actions ?? false;
-        this._columns = config.columns ?? {};
+        this._columns = Object.fromEntries(Object.entries(config.columns ?? {})
+            .map(([k, v]) => [k, this._cssValue(v)]).filter(([, v]) => v != null));
         this._maxEvents = config.maxEvents ?? false;
         this._maxDayEvents = config.maxDayEvents ?? false;
         this._hideCalendars = (config.calendars || []).reduce((acc, calendar) => {
@@ -445,8 +426,6 @@ export class FamilyCalendarCard extends LitElement {
                 editEvent: 'Edit',
                 deleteEvent: 'Delete',
                 eventTitle: 'Title',
-                eventCalendar: 'Calendar',
-                eventStart: 'Start',
                 eventEnd: 'End',
                 eventLocation: 'Location',
                 cancel: 'Cancel',
@@ -465,7 +444,7 @@ export class FamilyCalendarCard extends LitElement {
                 recurrenceMonthly: 'Monthly',
                 recurrenceYearly: 'Yearly',
                 editThisEvent: 'This event only',
-                editAllEvents: 'All events',
+                editAllEvents: 'This and following events',
                 editRecurringTitle: 'Edit recurring event',
                 deleteThisEvent: 'This event only',
                 deleteAllEvents: 'All events',
@@ -481,12 +460,11 @@ export class FamilyCalendarCard extends LitElement {
                 recurrenceMonths: 'months',
                 recurrenceMonthlyOn: 'Monthly on day',
                 eventNotify: 'Notification',
-                eventDuration: 'Duration',
                 eventDate: 'Date',
                 advancedOptions: 'Advanced options',
+                openInMaps: 'Open in Maps',
                 eventSkipVacation: 'Skip school holidays',
                 eventSkipHoliday: 'Skip public holidays',
-                quickAdd: 'e.g. 9am dentist',
                 aiAnalyze: 'Analyze with AI',
                 handwriteHint: 'Write the event here (e.g. 9am dentist)',
                 clearDrawing: 'Clear',
@@ -569,23 +547,19 @@ export class FamilyCalendarCard extends LitElement {
         return { ...base, rows: 4, min_rows: 2 };
     }
 
-    _isNumberOfDaysMonth(numberOfDays) {
-        return String(numberOfDays).toLowerCase().trim() === 'month';
-    }
-
     static LOCALE_TEXTS = {
         fr: {
             fullDay: 'Toute la journ\u00e9e', noEvents: 'Aucun \u00e9v\u00e9nement', moreEvents: 'Plus d\'\u00e9v\u00e9nements',
             today: 'Aujourd\'hui', tomorrow: 'Demain', yesterday: 'Hier',
             editEvent: 'Modifier', deleteEvent: 'Supprimer', eventTitle: 'Titre',
-            eventCalendar: 'Calendrier', eventStart: 'D\u00e9but', eventEnd: 'Fin', eventLocation: 'Lieu',
+ eventEnd: 'Fin', eventLocation: 'Lieu',
             cancel: 'Annuler', create: 'Cr\u00e9er', newEvent: 'Nouvel \u00e9v\u00e9nement',
             save: 'Enregistrer', editEventTitle: 'Modifier l\'\u00e9v\u00e9nement',
             titleRequired: 'Le titre est requis',
             week: 'Semaine', biweek: '2 Semaines', month: 'Mois',
             eventRecurrence: 'R\u00e9p\u00e9tition', recurrenceNone: 'Pas de r\u00e9p\u00e9tition', recurrenceDaily: 'Journalier',
             recurrenceWeekly: 'Hebdomadaire', recurrenceMonthly: 'Mensuelle', recurrenceYearly: 'Annuelle',
-            editThisEvent: 'Cet \u00e9v\u00e9nement uniquement', editAllEvents: 'Tous les \u00e9v\u00e9nements',
+            editThisEvent: 'Cet \u00e9v\u00e9nement uniquement', editAllEvents: 'Cet \u00e9v\u00e9nement et les suivants',
             editRecurringTitle: 'Modifier l\'\u00e9v\u00e9nement r\u00e9current',
             deleteThisEvent: 'Cet \u00e9v\u00e9nement uniquement', deleteAllEvents: 'Tous les \u00e9v\u00e9nements',
             deleteRecurringTitle: 'Supprimer l\'\u00e9v\u00e9nement r\u00e9current',
@@ -600,12 +574,11 @@ export class FamilyCalendarCard extends LitElement {
             recurrenceMonths: 'mois',
             recurrenceMonthlyOn: 'Chaque mois le',
             eventNotify: 'Notification',
-            eventDuration: 'Durée',
             eventDate: 'Date',
             advancedOptions: 'Options avancées',
+            openInMaps: 'Ouvrir dans Maps',
             eventSkipVacation: 'Hors vacances scolaires',
             eventSkipHoliday: 'Hors jours fériés',
-            quickAdd: 'ex : 9h dentiste',
             aiAnalyze: 'Analyser avec l’IA',
             handwriteHint: 'Écrivez l’événement ici (ex : 9h dentiste)',
             clearDrawing: 'Effacer',
@@ -615,14 +588,14 @@ export class FamilyCalendarCard extends LitElement {
             fullDay: 'Ganzt\u00e4gig', noEvents: 'Keine Termine', moreEvents: 'Mehr Termine',
             today: 'Heute', tomorrow: 'Morgen', yesterday: 'Gestern',
             editEvent: 'Bearbeiten', deleteEvent: 'L\u00f6schen', eventTitle: 'Titel',
-            eventCalendar: 'Kalender', eventStart: 'Beginn', eventEnd: 'Ende', eventLocation: 'Ort',
+ eventEnd: 'Ende', eventLocation: 'Ort',
             cancel: 'Abbrechen', create: 'Erstellen', newEvent: 'Neuer Termin',
             save: 'Speichern', editEventTitle: 'Termin bearbeiten',
             titleRequired: 'Titel ist erforderlich',
             week: 'Woche', biweek: '2 Wochen', month: 'Monat',
             eventRecurrence: 'Wiederholung', recurrenceNone: 'Keine Wiederholung', recurrenceDaily: 'T\u00e4glich',
             recurrenceWeekly: 'W\u00f6chentlich', recurrenceMonthly: 'Monatlich', recurrenceYearly: 'J\u00e4hrlich',
-            editThisEvent: 'Nur dieses Ereignis', editAllEvents: 'Alle Ereignisse',
+            editThisEvent: 'Nur dieses Ereignis', editAllEvents: 'Dieses und folgende Ereignisse',
             editRecurringTitle: 'Wiederkehrendes Ereignis bearbeiten',
             deleteThisEvent: 'Nur dieses Ereignis', deleteAllEvents: 'Alle Ereignisse',
             deleteRecurringTitle: 'Wiederkehrendes Ereignis l\u00f6schen',
@@ -637,12 +610,10 @@ export class FamilyCalendarCard extends LitElement {
             recurrenceMonths: 'Monaten',
             recurrenceMonthlyOn: 'Monatlich am',
             eventNotify: 'Benachrichtigung',
-            eventDuration: 'Dauer',
             eventDate: 'Datum',
             advancedOptions: 'Erweiterte Optionen',
             eventSkipVacation: 'Außerhalb der Schulferien',
             eventSkipHoliday: 'Außerhalb der Feiertage',
-            quickAdd: 'z. B. 9 Uhr Zahnarzt',
             aiAnalyze: 'Mit KI analysieren',
             handwriteHint: 'Termin hier schreiben (z. B. 9 Uhr Zahnarzt)',
             clearDrawing: 'Löschen',
@@ -652,14 +623,14 @@ export class FamilyCalendarCard extends LitElement {
             fullDay: 'Todo el d\u00eda', noEvents: 'Sin eventos', moreEvents: 'M\u00e1s eventos',
             today: 'Hoy', tomorrow: 'Ma\u00f1ana', yesterday: 'Ayer',
             editEvent: 'Editar', deleteEvent: 'Eliminar', eventTitle: 'T\u00edtulo',
-            eventCalendar: 'Calendario', eventStart: 'Inicio', eventEnd: 'Fin', eventLocation: 'Ubicaci\u00f3n',
+ eventEnd: 'Fin', eventLocation: 'Ubicaci\u00f3n',
             cancel: 'Cancelar', create: 'Crear', newEvent: 'Nuevo evento',
             save: 'Guardar', editEventTitle: 'Editar evento',
             titleRequired: 'El t\u00edtulo es obligatorio',
             week: 'Semana', biweek: '2 Semanas', month: 'Mes',
             eventRecurrence: 'Repetici\u00f3n', recurrenceNone: 'Sin repetici\u00f3n', recurrenceDaily: 'Diario',
             recurrenceWeekly: 'Semanal', recurrenceMonthly: 'Mensual', recurrenceYearly: 'Anual',
-            editThisEvent: 'Solo este evento', editAllEvents: 'Todos los eventos',
+            editThisEvent: 'Solo este evento', editAllEvents: 'Este y los siguientes',
             editRecurringTitle: 'Editar evento recurrente',
             deleteThisEvent: 'Solo este evento', deleteAllEvents: 'Todos los eventos',
             deleteRecurringTitle: 'Eliminar evento recurrente',
@@ -674,12 +645,10 @@ export class FamilyCalendarCard extends LitElement {
             recurrenceMonths: 'meses',
             recurrenceMonthlyOn: 'Cada mes el',
             eventNotify: 'Notificación',
-            eventDuration: 'Duración',
             eventDate: 'Fecha',
             advancedOptions: 'Opciones avanzadas',
             eventSkipVacation: 'Fuera de vacaciones escolares',
             eventSkipHoliday: 'Fuera de festivos',
-            quickAdd: 'ej.: 9h dentista',
             aiAnalyze: 'Analizar con IA',
             handwriteHint: 'Escribe el evento aquí (ej.: 9h dentista)',
             clearDrawing: 'Borrar',
@@ -689,14 +658,14 @@ export class FamilyCalendarCard extends LitElement {
             fullDay: 'Tutto il giorno', noEvents: 'Nessun evento', moreEvents: 'Pi\u00f9 eventi',
             today: 'Oggi', tomorrow: 'Domani', yesterday: 'Ieri',
             editEvent: 'Modifica', deleteEvent: 'Elimina', eventTitle: 'Titolo',
-            eventCalendar: 'Calendario', eventStart: 'Inizio', eventEnd: 'Fine', eventLocation: 'Luogo',
+ eventEnd: 'Fine', eventLocation: 'Luogo',
             cancel: 'Annulla', create: 'Crea', newEvent: 'Nuovo evento',
             save: 'Salva', editEventTitle: 'Modifica evento',
             titleRequired: 'Il titolo \u00e8 obbligatorio',
             week: 'Settimana', biweek: '2 Settimane', month: 'Mese',
             eventRecurrence: 'Ripetizione', recurrenceNone: 'Nessuna ripetizione', recurrenceDaily: 'Giornaliero',
             recurrenceWeekly: 'Settimanale', recurrenceMonthly: 'Mensile', recurrenceYearly: 'Annuale',
-            editThisEvent: 'Solo questo evento', editAllEvents: 'Tutti gli eventi',
+            editThisEvent: 'Solo questo evento', editAllEvents: 'Questo e i successivi',
             editRecurringTitle: 'Modifica evento ricorrente',
             deleteThisEvent: 'Solo questo evento', deleteAllEvents: 'Tutti gli eventi',
             deleteRecurringTitle: 'Elimina evento ricorrente',
@@ -711,12 +680,10 @@ export class FamilyCalendarCard extends LitElement {
             recurrenceMonths: 'mesi',
             recurrenceMonthlyOn: 'Ogni mese il',
             eventNotify: 'Notifica',
-            eventDuration: 'Durata',
             eventDate: 'Data',
             advancedOptions: 'Opzioni avanzate',
             eventSkipVacation: 'Escludi vacanze scolastiche',
             eventSkipHoliday: 'Escludi giorni festivi',
-            quickAdd: 'es.: 9 dentista',
             aiAnalyze: 'Analizza con IA',
             handwriteHint: 'Scrivi qui l’evento (es.: 9 dentista)',
             clearDrawing: 'Cancella',
@@ -726,14 +693,14 @@ export class FamilyCalendarCard extends LitElement {
             fullDay: 'Hele dag', noEvents: 'Geen evenementen', moreEvents: 'Meer evenementen',
             today: 'Vandaag', tomorrow: 'Morgen', yesterday: 'Gisteren',
             editEvent: 'Bewerken', deleteEvent: 'Verwijderen', eventTitle: 'Titel',
-            eventCalendar: 'Agenda', eventStart: 'Begin', eventEnd: 'Einde', eventLocation: 'Locatie',
+ eventEnd: 'Einde', eventLocation: 'Locatie',
             cancel: 'Annuleren', create: 'Aanmaken', newEvent: 'Nieuw evenement',
             save: 'Opslaan', editEventTitle: 'Evenement bewerken',
             titleRequired: 'Titel is verplicht',
             week: 'Week', biweek: '2 Weken', month: 'Maand',
             eventRecurrence: 'Herhaling', recurrenceNone: 'Geen herhaling', recurrenceDaily: 'Dagelijks',
             recurrenceWeekly: 'Wekelijks', recurrenceMonthly: 'Maandelijks', recurrenceYearly: 'Jaarlijks',
-            editThisEvent: 'Alleen dit evenement', editAllEvents: 'Alle evenementen',
+            editThisEvent: 'Alleen dit evenement', editAllEvents: 'Dit en volgende evenementen',
             editRecurringTitle: 'Terugkerend evenement bewerken',
             deleteThisEvent: 'Alleen dit evenement', deleteAllEvents: 'Alle evenementen',
             deleteRecurringTitle: 'Terugkerend evenement verwijderen',
@@ -748,12 +715,10 @@ export class FamilyCalendarCard extends LitElement {
             recurrenceMonths: 'maanden',
             recurrenceMonthlyOn: 'Maandelijks op',
             eventNotify: 'Melding',
-            eventDuration: 'Duur',
             eventDate: 'Datum',
             advancedOptions: 'Geavanceerde opties',
             eventSkipVacation: 'Buiten schoolvakanties',
             eventSkipHoliday: 'Buiten feestdagen',
-            quickAdd: 'bijv.: 9u tandarts',
             aiAnalyze: 'Analyseren met AI',
             handwriteHint: 'Schrijf hier het evenement (bijv.: 9u tandarts)',
             clearDrawing: 'Wissen',
@@ -763,14 +728,14 @@ export class FamilyCalendarCard extends LitElement {
             fullDay: 'Dia inteiro', noEvents: 'Sem eventos', moreEvents: 'Mais eventos',
             today: 'Hoje', tomorrow: 'Amanh\u00e3', yesterday: 'Ontem',
             editEvent: 'Editar', deleteEvent: 'Excluir', eventTitle: 'T\u00edtulo',
-            eventCalendar: 'Calend\u00e1rio', eventStart: 'In\u00edcio', eventEnd: 'Fim', eventLocation: 'Local',
+ eventEnd: 'Fim', eventLocation: 'Local',
             cancel: 'Cancelar', create: 'Criar', newEvent: 'Novo evento',
             save: 'Salvar', editEventTitle: 'Editar evento',
             titleRequired: 'O t\u00edtulo \u00e9 obrigat\u00f3rio',
             week: 'Semana', biweek: '2 Semanas', month: 'M\u00eas',
             eventRecurrence: 'Repeti\u00e7\u00e3o', recurrenceNone: 'Sem repeti\u00e7\u00e3o', recurrenceDaily: 'Di\u00e1rio',
             recurrenceWeekly: 'Semanal', recurrenceMonthly: 'Mensal', recurrenceYearly: 'Anual',
-            editThisEvent: 'Apenas este evento', editAllEvents: 'Todos os eventos',
+            editThisEvent: 'Apenas este evento', editAllEvents: 'Este e os seguintes',
             editRecurringTitle: 'Editar evento recorrente',
             deleteThisEvent: 'Apenas este evento', deleteAllEvents: 'Todos os eventos',
             deleteRecurringTitle: 'Excluir evento recorrente',
@@ -785,12 +750,10 @@ export class FamilyCalendarCard extends LitElement {
             recurrenceMonths: 'meses',
             recurrenceMonthlyOn: 'Todo m\u00eas no dia',
             eventNotify: 'Notifica\u00e7\u00e3o',
-            eventDuration: 'Dura\u00e7\u00e3o',
             eventDate: 'Data',
             advancedOptions: 'Op\u00e7\u00f5es avan\u00e7adas',
             eventSkipVacation: 'Fora das f\u00e9rias escolares',
             eventSkipHoliday: 'Fora dos feriados',
-            quickAdd: 'ex.: 9h dentista',
             aiAnalyze: 'Analisar com IA',
             handwriteHint: 'Escreva o evento aqui (ex.: 9h dentista)',
             clearDrawing: 'Limpar',
@@ -826,8 +789,21 @@ export class FamilyCalendarCard extends LitElement {
     // keyword 'inherit': it would inherit the card background — invisible on a
     // light card, a solid black bar on a dark one. Fall back to a stable pastel
     // based on the calendar's position so colourless calendars stay visible.
+    // Valeur de config destinée à un attribut style : rejetée si elle peut sortir
+    // de la déclaration (« red; background:url(https://…) ») ou charger une
+    // ressource. Aucune couleur/taille légitime n'utilise ces caractères (hex,
+    // rgb(), hsl(), color-mix(), var(--x), 12px, 1.2em passent tous).
+    _cssValue(value) {
+        if (value === undefined || value === null || value === '') return null;
+        const v = String(value);
+        return /[;{}<>\\]|url\s*\(|expression\s*\(|@import/i.test(v) ? null : v;
+    }
+
     _calendarColor(calendar) {
-        if (calendar && calendar.color) return calendar.color;
+        if (calendar && calendar.color) {
+            const safe = this._cssValue(calendar.color);
+            if (safe) return safe;
+        }
         const list = this._calendars || [];
         const idx = list.findIndex((c) => c.entity === (calendar && calendar.entity));
         const palette = this.constructor.PASTEL_COLORS;
@@ -1008,10 +984,12 @@ export class FamilyCalendarCard extends LitElement {
         // current data build (_calendarEvents is reset on each _updateEvents), so
         // the cache can never persist past a refresh.
         const calKey = (event.calendars && event.calendars[0]) || '';
-        if (event._markerCache
-            && event._markerCacheKey === calKey
-            && event._markerCacheRev === this._configRev) {
-            return event._markerCache;
+        // Table par calendrier, sur l'original : un même événement peut avoir un
+        // premier calendrier différent selon les pastilles de filtre.
+        const host = event._origin || event;
+        const hit = host._markerCacheMap && host._markerCacheMap.get(calKey);
+        if (hit && hit.rev === this._configRev) {
+            return hit.result;
         }
         const result = this._computeEventMarker(event);
         // Glue a leading 🔔 reminder to the start of the title (non-breaking
@@ -1019,9 +997,10 @@ export class FamilyCalendarCard extends LitElement {
         if (result.title) {
             result.title = result.title.replace(/^(\u{1F514})\s+/u, '$1 ');
         }
-        event._markerCache = result;
-        event._markerCacheKey = calKey;
-        event._markerCacheRev = this._configRev;
+        if (!host._markerCacheMap) {
+            host._markerCacheMap = new Map();
+        }
+        host._markerCacheMap.set(calKey, { rev: this._configRev, result });
         return result;
     }
 
@@ -1062,8 +1041,9 @@ export class FamilyCalendarCard extends LitElement {
     // event's own start/end, which never change for a given event object — and the
     // object is rebuilt on every data refresh — so the cache can never go stale.
     _eventFmt(event) {
-        if (event._fmtCache && event._fmtCacheRev === this._configRev) {
-            return event._fmtCache;
+        const host = event._origin || event;
+        if (host._fmtCache && host._fmtCacheRev === this._configRev) {
+            return host._fmtCache;
         }
         const tf = this._timeFormat;
         const s = event.start;
@@ -1076,8 +1056,8 @@ export class FamilyCalendarCard extends LitElement {
             startText: (!event.fullDay && s) ? s.toFormat(tf) : '',
             rangeText: event.fullDay ? '' : ((s ? s.toFormat(tf) : '') + (e ? ' - ' + e.toFormat(tf) : '')),
         };
-        event._fmtCache = fmt;
-        event._fmtCacheRev = this._configRev;
+        host._fmtCache = fmt;
+        host._fmtCacheRev = this._configRev;
         return fmt;
     }
 
@@ -1276,7 +1256,7 @@ export class FamilyCalendarCard extends LitElement {
             case 'Month':
                 this._startingDay = startingDay;
                 this._numberOfDaysIsMonth = true;
-                this._numberOfDays = this._getNumberOfDays('month');
+                this._numberOfDays = DateTime.now().daysInMonth;
                 break;
             default:
                 this._startingDay = startingDay;
@@ -1342,6 +1322,7 @@ export class FamilyCalendarCard extends LitElement {
             this._weatherUnsub = null;
             this._weatherForecast = null;
         }
+        this._releaseWeatherLoading();
     }
 
     updated() {
@@ -1587,7 +1568,7 @@ export class FamilyCalendarCard extends LitElement {
                                     <div class="full-date">${now.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</div>
                                 ` : ''}
                                 ${this._showHeaderClock ? html`
-                                    <div class="clock">${now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</div>
+                                    <div class="clock">${DateTime.now().toFormat(this._timeFormat)}</div>
                                 ` : ''}
                             </div>
                             ${this._showCurrentWeather ? this._renderHeaderWeather() : ''}
@@ -1620,7 +1601,7 @@ export class FamilyCalendarCard extends LitElement {
                         </div>
                     </div>
                     <div class="calendar-container">
-                        <div class="container${this._actions ? ' hasActions' : ''}${this._numberOfDaysIsMonth ? ' month-view' : ''}${this._hideWeekend ? ' hide-weekend' : ''}" style="${this._dayHeaderFontSize ? '--day-header-font-size: ' + this._dayHeaderFontSize + ';' : ''}${this._dayHeaderColor ? '--day-header-color: ' + this._dayHeaderColor + ';' : ''}" @click="${this._handleContainerClick}" @pointerdown="${this._handlePointerDown}" @pointerup="${this._handlePointerUp}" @pointercancel="${this._handlePointerCancel}">
+                        <div class="container${this._numberOfDaysIsMonth ? ' month-view' : ''}${this._hideWeekend ? ' hide-weekend' : ''}" style="${this._dayHeaderFontSize ? '--day-header-font-size: ' + this._dayHeaderFontSize + ';' : ''}${this._dayHeaderColor ? '--day-header-color: ' + this._dayHeaderColor + ';' : ''}" @pointerdown="${this._handlePointerDown}" @pointerup="${this._handlePointerUp}" @pointercancel="${this._handlePointerCancel}">
                             ${this._fullscreenOverlayOpen() ? '' : html`
                                 ${this._renderHeader()}
                                 ${this._renderWeekDays()}
@@ -1704,42 +1685,13 @@ export class FamilyCalendarCard extends LitElement {
         // The familial theme hoists the month + navigation up into the top
         // controls row (.buttons-row), so don't render it again above the grid.
         const navHere = this._theme !== 'familial';
-        if (!this._showLegend && !(this._showNavigation && navHere)) {
+        if (!navHere || !this._showNavigation) {
             return html``;
         }
 
         return html`
             <div class="header">
-                ${navHere ? this._renderNavigation() : ''}
-                ${this._renderLegend()}
-            </div>
-        `;
-    }
-
-    _renderLegend() {
-        if (!this._showLegend) {
-            return html``;
-        }
-
-        return html`
-            <div class="legend">
-                <ul>
-                    ${this._calendars.map((calendar) => {
-                        if (!calendar.hideInLegend) {
-                            return html`
-                                <li class="${this._resolveCalendarIcon(calendar) ? 'icon' : 'noIcon'}${this._legendToggle ? ' hasToggle' : ''}${this._hideCalendars.indexOf(calendar.entity) === -1 ? '' : ' hidden'}" style="--legend-calendar-color: ${calendar.color ?? 'inherit'}" @click="${() => {
-                                    this._handleLegendClick(calendar)
-                                }}">
-                                    ${this._resolveCalendarIcon(calendar) ?
-                                        html`<ha-icon icon="${this._resolveCalendarIcon(calendar)}"></ha-icon>` :
-                                        ''
-                                    }
-                                    ${this._getCalendarDisplayName(calendar)}
-                                </li>
-                            `;
-                        }
-                    })}
-                </ul>
+                ${this._renderNavigation()}
             </div>
         `;
     }
@@ -1952,6 +1904,10 @@ export class FamilyCalendarCard extends LitElement {
             }
 
             const event = Object.assign({}, cached);
+            // Les mémos (_eventFmt, _eventMarker) s'écrivent sur l'ORIGINAL : sur
+            // le clone, recréé à chaque rendu, ils étaient jetés aussitôt — la
+            // mémoïsation ne servait plus à rien dès qu'un calendrier était masqué.
+            event._origin = cached;
 
             // Remove events and colors for calendars that are hidden
             const eventCalendars = [...event.calendars];
@@ -2263,7 +2219,9 @@ export class FamilyCalendarCard extends LitElement {
                 ${start.toFormat(this._dateFormat + ' ' + this._timeFormat)}
             `;
         } else if (this._isFullDay(start, end, true)) {
-            if (Math.abs(start.diff(end, 'hours').toObject().hours) <= 24) {
+            // Comparer les DATES, pas une durée : le jour du passage à l'heure
+            // d'hiver dure 25 h et faisait afficher « 25 oct. - 25 oct. ».
+            if (end.minus({ days: 1 }).hasSame(start, 'day')) {
                 return html`
                     ${start.toFormat(this._dateFormat)}
                 `;
@@ -2480,6 +2438,7 @@ export class FamilyCalendarCard extends LitElement {
                         <div class="form-row">
                             <label>${this._language.recurrenceEnds}</label>
                             <select id="event-recurrence-end" class="form-input"
+                                .value="${this._createRecurrenceEndType || 'never'}"
                                 @change="${(e) => { this._createRecurrenceEndType = e.target.value; }}">
                                 <option value="never">${this._language.recurrenceEndsNever}</option>
                                 <option value="date">${this._language.recurrenceEndsOnDate}</option>
@@ -2913,9 +2872,7 @@ export class FamilyCalendarCard extends LitElement {
                         </button>
                         <span style="flex:1"></span>
                         <button class="btn btn-cancel" @click="${this._closeEditEventDialog}">${this._language.cancel}</button>
-                        <button class="btn btn-submit" ?disabled="${this._aiLoading}" @click="${this._handleEditOverlaySave}">
-                            ${this._aiLoading ? html`<ha-icon class="spin" icon="mdi:loading"></ha-icon> ` : ''}${this._language.save}
-                        </button>
+                        <button class="btn btn-submit" @click="${this._handleEditOverlaySave}">${this._language.save}</button>
                     </div>
                 </div>
             </div>
@@ -3045,18 +3002,19 @@ export class FamilyCalendarCard extends LitElement {
         }
         this._loading++;
         this._updateLoader();
-        let loadingWeather = true;
+        // Sur l'instance (et non en variable locale) : si la carte est débranchée
+        // avant le premier message, disconnectedCallback doit pouvoir rendre ce
+        // jeton de chargement — sinon l'indicateur restait affiché pour toujours.
+        this._weatherLoading = true;
         this._weatherUnsub = this.hass.connection.subscribeMessage((event) => {
             this._weatherForecast = event.forecast ?? [];
-            if (loadingWeather) {
-                this._loading--;
-                loadingWeather = false;
-            }
+            this._releaseWeatherLoading();
             // Per-cell weather is baked into _days by _updateCard; rebuild so a
             // forecast that lands after the calendar data actually paints (else the
             // day-cell weather stays empty until the next refresh). Only once the
-            // grid exists — the initial calendar fetch will include it otherwise.
-            if (this._days) this._updateCard();
+            // grid exists — the initial calendar fetch will include it otherwise —
+            // and not during a calendar fetch, which repaints with it at the end.
+            if (this._days && !this._eventsLoading) this._updateCard();
         }, {
             type: 'weather/subscribe_forecast',
             forecast_type: this._weather.useTwiceDaily ? 'twice_daily' : 'daily',
@@ -3065,11 +3023,17 @@ export class FamilyCalendarCard extends LitElement {
         this._weatherUnsub.catch(() => {
             this._weatherUnsub = null;
             this._weatherForecast = [];
-            if (loadingWeather) {
-                this._loading--;
-                loadingWeather = false;
-            }
+            this._releaseWeatherLoading();
         });
+    }
+
+    // Rend (une seule fois) le jeton de chargement pris par l'abonnement météo.
+    _releaseWeatherLoading() {
+        if (this._weatherLoading) {
+            this._weatherLoading = false;
+            this._loading = Math.max(0, this._loading - 1);
+            this._updateLoader();
+        }
     }
 
     async _updateEvents(force = true) {
@@ -3089,86 +3053,110 @@ export class FamilyCalendarCard extends LitElement {
 
         this._clearUpdateEventsTimeouts();
 
-        this._events = {};
-        this._calendarEvents = {};
+        try {
+            // Dans le try : une exception ici (calcul de date) ne doit jamais
+            // laisser _eventsLoading bloqué à true — la carte resterait figée.
+            this._startDate = this._getStartDate();
+            if (this._numberOfDaysIsMonth) {
+                this._numberOfDays = this._startDate.daysInMonth;
+            }
+            const startDate = this._startDate;
+            const endDate = this._startDate.plus({ days: this._numberOfDays });
+            const runStartdate = this._startDate.toISO();
+            const range = '?start=' + encodeURIComponent(startDate.toISO())
+                + '&end=' + encodeURIComponent(endDate.toISO());
 
-        this._startDate = this._getStartDate();
-        if (this._numberOfDaysIsMonth) {
-            this._numberOfDays = this._startDate.daysInMonth;
-        }
-        const startDate = this._startDate;
-        const endDate = this._startDate.plus({ days: this._numberOfDays });
-        const now = DateTime.now();
-        const runStartdate = this._startDate.toISO();
+            if (this._weather && this._weatherForecast === null) {
+                this._subscribeToWeatherForecast();
+            }
 
-        if (this._weather && this._weatherForecast === null) {
-            this._subscribeToWeatherForecast();
-        }
+            // 1) Téléchargement en parallèle. On ne garde que les réponses BRUTES :
+            //    _events / _calendarEvents ne sont pas touchés pendant l'attente
+            //    réseau, sinon un rendu intermédiaire (tick, météo, thème)
+            //    affichait une grille vide le temps du chargement.
+            const results = [];
+            const errors = [];
+            const fetches = [];
+            let calendarNumber = 0;
+            this._calendars.forEach((calendar, order) => {
+                if (!calendar.entity || !this.hass.states[calendar.entity]) {
+                    return;
+                }
+                let cal = calendar;
+                if (!cal.name) {
+                    cal = { ...cal, name: this.hass.formatEntityAttributeValue(this.hass.states[cal.entity], 'friendly_name') };
+                }
+                if (!cal.sorting) {
+                    cal = { ...cal, sorting: calendarNumber };
+                }
+                calendarNumber++;
+                fetches.push(
+                    this.hass.callApi('get', 'calendars/' + cal.entity + range)
+                        .then((response) => { results.push({ order, cal, response }); })
+                        .catch((error) => {
+                            errors.push('Error while fetching calendar "' + cal.entity + '": ' + (error.error ?? 'Unknown error'));
+                        })
+                );
+            });
+            // Périodes vacances/fériés des calendriers de référence NON affichés :
+            // lancées en même temps (et mises en cache), pas en série avant.
+            const shown = new Set(this._calendars.map((c) => c.entity));
+            const externalSkip = this._fetchExternalSkipRanges(range, shown);
+            await Promise.allSettled(fetches);
+            const external = await externalSkip;
 
-        // Périodes de référence pour les récurrences taguées [hv]/[hf] : elles
-        // doivent être connues AVANT le traitement des événements (les fetches
-        // calendriers ci-dessous sont parallèles et filtrent en synchrone).
-        if (this._vacationCalendar || this._holidayCalendar) {
-            await this._fetchSkipRanges(startDate, endDate);
-        }
-
-        const fetches = [];
-        let calendarNumber = 0;
-        this._calendars.forEach(calendar => {
-            if (!calendar.entity || !this.hass.states[calendar.entity]) {
+            // Une navigation a remplacé ce chargement : on ne peint rien.
+            if (this._startDate.toISO() !== runStartdate) {
                 return;
             }
-            let cal = calendar;
-            if (!cal.name) {
-                cal = { ...cal, name: this.hass.formatEntityAttributeValue(this.hass.states[cal.entity], 'friendly_name') };
-            }
-            if (!cal.sorting) {
-                cal = { ...cal, sorting: calendarNumber };
-            }
-            const currentCalendarNumber = calendarNumber;
-            fetches.push(
-                this.hass.callApi(
-                    'get',
-                    'calendars/' + cal.entity + '?start=' + encodeURIComponent(startDate.toISO()) + '&end=' + encodeURIComponent(endDate.toISO())
-                ).then(response => {
-                    if (this._startDate.toISO() !== runStartdate) {
-                        return;
-                    }
-                    this._calendarErrors[currentCalendarNumber] = '';
-                    response.forEach(event => {
-                        if (this._isFilterEvent(event, cal.filter ?? '')) {
-                            return;
-                        }
-                        const evStart = this._convertApiDate(event.start);
-                        const evEnd = this._convertApiDate(event.end);
-                        if (this._hidePastEvents && evEnd < now) {
-                            return;
-                        }
-                        // Récurrence « hors vacances scolaires » / « hors fériés » :
-                        // masque l'occurrence qui chevauche une période de référence.
-                        if (this._skipOccurrence(event, evStart, evEnd)) {
-                            return;
-                        }
-                        const fullDay = this._isFullDay(evStart, evEnd);
-                        if (!fullDay && !this._isSameDay(evStart, evEnd)) {
-                            this._handleMultiDayEvent(event, evStart, evEnd, cal);
-                        } else {
-                            this._addEvent(event, evStart, evEnd, fullDay, cal);
-                        }
-                    });
-                }).catch(error => {
-                    this._calendarErrors[currentCalendarNumber] = 'Error while fetching calendar "' + cal.entity + '": ' + (error.error ?? 'Unknown error');
-                })
-            );
-            calendarNumber++;
-        });
 
-        try {
-            await Promise.allSettled(fetches);
-            // Skip painting if a newer run (navigation) has superseded this one.
-            if (this._startDate.toISO() === runStartdate) {
-                this._updateCard();
+            // 2) Reconstruction EN UN BLOC SYNCHRONE (aucun await) : aucun rendu
+            //    ne peut s'intercaler et voir une grille à moitié construite.
+            const conv = (d) => this._convertApiDate(d);
+            const skip = { hv: [], hf: [] };
+            for (const [key, entity] of [['hv', this._vacationCalendar], ['hf', this._holidayCalendar]]) {
+                if (!entity) continue;
+                // Calendrier de référence déjà affiché : sa réponse sert telle quelle.
+                const own = results.find((r) => r.cal.entity === entity);
+                skip[key] = own
+                    ? own.response.map((ev) => [conv(ev.start), conv(ev.end)])
+                    : (external[key] || []);
             }
+            this._skipRanges = skip;
+            this._events = {};
+            this._calendarEvents = {};
+            const now = DateTime.now();
+            results.sort((a, b) => a.order - b.order);
+            for (const { cal, response } of results) {
+                for (const event of response) {
+                    if (this._isFilterEvent(event, cal.filter ?? '')) {
+                        continue;
+                    }
+                    const evStart = conv(event.start);
+                    const evEnd = conv(event.end);
+                    if (this._hidePastEvents && evEnd < now) {
+                        continue;
+                    }
+                    // Récurrence « hors vacances scolaires » / « hors fériés ».
+                    if (this._skipOccurrence(event, evStart, evEnd)) {
+                        continue;
+                    }
+                    const fullDay = this._isFullDay(evStart, evEnd);
+                    // Un événement qui finit pile à minuit appartient à son jour de
+                    // début (« 20:00 → 00:00 ») : il ne doit pas devenir un bandeau
+                    // multi-jours collé à une case vide.
+                    const lastInstant = evEnd > evStart ? evEnd.minus({ milliseconds: 1 }) : evEnd;
+                    if (!fullDay && !this._isSameDay(evStart, lastInstant)) {
+                        this._handleMultiDayEvent(event, evStart, evEnd, cal);
+                    } else {
+                        this._addEvent(event, evStart, evEnd, fullDay, cal);
+                    }
+                }
+            }
+            // Tableau neuf à chaque passage : l'ancien, indexé par un compteur qui
+            // sautait les entités absentes, pouvait garder une erreur périmée.
+            this._calendarErrors = errors;
+            this._updateCard();
         } finally {
             // Always release the guard — if _updateCard threw, leaving it set
             // would freeze every future refresh (created/edited events would
@@ -3198,27 +3186,37 @@ export class FamilyCalendarCard extends LitElement {
         this._updateEventsTimeouts = [];
     }
 
-    // Fetch the school-holiday ([hv]) / public-holiday ([hf]) reference periods
-    // for the visible range. Failure (entity absent, API error) leaves the
-    // ranges empty → tagged events simply show everywhere (fail open, never
-    // hide events on a fetch error).
-    async _fetchSkipRanges(startDate, endDate) {
-        this._skipRanges = { hv: [], hf: [] };
-        const refs = [['hv', this._vacationCalendar], ['hf', this._holidayCalendar]];
-        await Promise.all(refs.map(async ([key, entity]) => {
-            if (!entity || !this.hass.states[entity]) {
-                return;
-            }
+    // Périodes de référence vacances ([hv]) / fériés ([hf]) pour les calendriers
+    // de référence qui ne sont PAS affichés par la carte (ceux qui le sont
+    // réutilisent leur propre réponse). Elles changent quelques fois par an : mise
+    // en cache 6 h par plage, au lieu de 2 requêtes toutes les 60 s. Un échec
+    // laisse la plage vide (on n'affiche jamais moins à cause d'une panne) et
+    // n'est pas mis en cache, pour réessayer au passage suivant.
+    async _fetchExternalSkipRanges(range, shownEntities) {
+        const out = { hv: [], hf: [] };
+        const refs = [['hv', this._vacationCalendar], ['hf', this._holidayCalendar]]
+            .filter(([, entity]) => entity && !shownEntities.has(entity) && this.hass.states[entity]);
+        if (!refs.length) {
+            return out;
+        }
+        const key = range + '|' + refs.map(([, entity]) => entity).join(',');
+        const cache = this._skipCache;
+        if (cache && cache.key === key && (Date.now() - cache.at) < 6 * 3600 * 1000) {
+            return cache.ranges;
+        }
+        let complete = true;
+        await Promise.all(refs.map(async ([k, entity]) => {
             try {
-                const response = await this.hass.callApi(
-                    'get',
-                    'calendars/' + entity + '?start=' + encodeURIComponent(startDate.toISO()) + '&end=' + encodeURIComponent(endDate.toISO())
-                );
-                this._skipRanges[key] = response.map(ev => [this._convertApiDate(ev.start), this._convertApiDate(ev.end)]);
+                const response = await this.hass.callApi('get', 'calendars/' + entity + range);
+                out[k] = response.map((ev) => [this._convertApiDate(ev.start), this._convertApiDate(ev.end)]);
             } catch (e) {
-                // fail open
+                complete = false;
             }
         }));
+        if (complete) {
+            this._skipCache = { key, at: Date.now(), ranges: out };
+        }
+        return out;
     }
 
     // True when the event carries a [hv]/[hf] tag AND its occurrence overlaps a
@@ -3239,7 +3237,11 @@ export class FamilyCalendarCard extends LitElement {
         const summary = event.summary ?? '';
         const gf = this._safeRegex(this._filter || '');
         const cf = this._safeRegex(calendarFilter || '');
-        return !!((gf && summary.match(gf)) || (cf && summary.match(cf)));
+        // Titre borné : la regex vient de l'admin mais le titre d'un agenda
+        // partagé, d'un tiers. Une regex fragile + un titre géant piégé
+        // figeraient l'onglet (ReDoS) à chaque rafraîchissement.
+        const probe = summary.slice(0, 500);
+        return !!((gf && probe.match(gf)) || (cf && probe.match(cf)));
     }
 
     _addEvent(event, startDate, endDate, fullDay, calendar, multiDay, multiDayPosition) {
@@ -3276,6 +3278,11 @@ export class FamilyCalendarCard extends LitElement {
         } else {
             this._calendarEvents[eventKey] = {
                 summary: title,
+                // Titre TEL QUE STOCKÉ : summary ci-dessus est le titre d'AFFICHAGE
+                // (filterText / replaceTitleText / eventTitleField / titleEmoji
+                // appliqués). L'édition doit repartir du brut, sinon un simple
+                // « Enregistrer » réécrit le titre transformé dans le calendrier.
+                rawSummary: event.summary ?? '',
                 description: event.description ?? null,
                 location: event.location ?? null,
                 start: startDate,
@@ -3348,6 +3355,9 @@ export class FamilyCalendarCard extends LitElement {
         if (!summary) {
             return '';
         }
+        // Même borne que _isFilterEvent avant les remplacements par regex (un
+        // titre de plus de 500 caractères n'est de toute façon pas affichable).
+        summary = String(summary).slice(0, 500);
 
         const calRe = this._safeRegex(calendar.filterText);
         if (calRe) {
@@ -3601,30 +3611,7 @@ export class FamilyCalendarCard extends LitElement {
         }
     }
 
-    _handleContainerClick(e) {
-        if (!this._actions) {
-            return;
-        }
-
-        const event = new Event(
-            'hass-action', {
-                bubbles: true,
-                composed: true,
-            }
-        );
-        event.detail = {
-            config: this._actions,
-            action: 'tap',
-        }
-        this.dispatchEvent(event);
-
-        e.stopImmediatePropagation();
-    }
-
     _handleEventClick(event) {
-        if (this._actions) {
-            return;
-        }
         // Read-only calendars (holidays, school holidays): show details only,
         // never the edit form (editing/deleting would fail at the source).
         if (event.uid && !this._eventIsReadOnly(event)) {
@@ -3641,13 +3628,10 @@ export class FamilyCalendarCard extends LitElement {
     _handleAddEventClick(e, day) {
         e.stopImmediatePropagation();
         this._createDuration = '60';
-        this._createShowAdvanced = false;
         this._createEndTouched = false;
         this._createTitle = null;
         this._createCategory = '';
-        this._aiLoading = false;
         this._aiError = null;
-        this._aiResult = null;
         this._drawing = false;
         this._hasDrawing = false;
         this._canvasReady = false;
@@ -3667,41 +3651,15 @@ export class FamilyCalendarCard extends LitElement {
         this._createRecurrenceType = null;
         this._createRecurrenceEndType = 'never';
         this._createDuration = '60';
-        this._createShowAdvanced = false;
         this._createEndTouched = false;
         this._createTitle = null;
         this._createCategory = '';
         this._createStartTime = null;
-        this._aiLoading = false;
         this._aiError = null;
-        this._aiResult = null;
         this._drawing = false;
         this._hasDrawing = false;
         this._canvasReady = false;
         this._eraserMode = false;
-    }
-
-    // Keyboard quick-add (desktop / phone). The tablet handwriting canvas is a
-    // separate minimal dialog (_renderHandwritingCreateDialog).
-    _renderQuickAdd() {
-        return html`
-            <div class="form-row">
-                <div class="input-clear-wrapper with-icon quick-add-row">
-                    <ha-icon class="field-icon" icon="mdi:flash-outline"></ha-icon>
-                    <input type="text" id="event-quick" class="form-input" placeholder="${this._language.quickAdd}"
-                        @change="${(e) => this._handleQuickAdd(e.target.value)}" />
-                    <button type="button" class="input-clear" @click="${() => this._clearInput('event-quick')}" title="${this._language.cancel}">
-                        <ha-icon icon="mdi:close-circle"></ha-icon>
-                    </button>
-                </div>
-                ${this._isAiQuickAddAvailable() ? html`
-                <button type="button" class="ai-analyze-btn" ?disabled="${this._aiLoading}" @click="${this._runAiQuickAdd}">
-                    <ha-icon class="${this._aiLoading ? 'spin' : ''}" icon="${this._aiLoading ? 'mdi:loading' : 'mdi:auto-fix'}"></ha-icon>
-                    <span>${this._language.aiAnalyze}</span>
-                </button>
-                ` : ''}
-            </div>
-        `;
     }
 
     _initCanvas() {
@@ -3722,7 +3680,6 @@ export class FamilyCalendarCard extends LitElement {
     _clearCanvas() {
         this._initCanvas();
         this._aiError = null;
-        this._aiResult = null;
         const hint = this.shadowRoot?.querySelector('.hw-hint');
         if (hint) hint.style.display = '';
     }
@@ -4023,7 +3980,7 @@ export class FamilyCalendarCard extends LitElement {
     }
 
     async _analyzeWithGemini(base64) {
-        const model = this._geminiModel || 'gemini-2.5-flash';
+        const model = encodeURIComponent(this._geminiModel || 'gemini-2.5-flash');
         // Key must go in the URL query string: the Gemini REST API does not allow
         // the x-goog-api-key header in a cross-origin (browser) request — adding a
         // custom header triggers a CORS preflight that Google rejects, so the call
@@ -4098,100 +4055,6 @@ export class FamilyCalendarCard extends LitElement {
         }));
         const textBlock = (json.content || []).find(b => b.type === 'text');
         return this._extractJson(textBlock?.text);
-    }
-
-    _getAiTaskEntity() {
-        if (this._aiTaskEntity) return this._aiTaskEntity;
-        if (!this.hass) return null;
-        return Object.keys(this.hass.states).find(e => e.startsWith('ai_task.')) ?? null;
-    }
-
-    _isAiQuickAddAvailable() {
-        return this._aiQuickAdd !== false && !!this._getAiTaskEntity();
-    }
-
-    // Ask the HA-configured LLM (ai_task) to parse the quick-add text into a
-    // structured {title, time, duration}. Falls back to the local regex parser.
-    async _runAiQuickAdd() {
-        const text = this.shadowRoot.querySelector('#event-quick')?.value?.trim();
-        if (!text || this._aiLoading) return;
-        const entity = this._getAiTaskEntity();
-        if (!entity) { this._handleQuickAdd(text); return; }
-
-        this._aiLoading = true;
-        try {
-            const res = await this.hass.callWS({
-                type: 'call_service',
-                domain: 'ai_task',
-                service: 'generate_data',
-                service_data: {
-                    task_name: 'quick_add_calendar_event',
-                    entity_id: entity,
-                    instructions: `Extract a single calendar event from this text written by a user: "${text}".\n`
-                        + `- title: the subject only, without any time or date words.\n`
-                        + `- time: the start time in 24-hour HH:MM format if a clock time is mentioned, otherwise an empty string.\n`
-                        + `- duration_minutes: the duration in minutes (default 60 when unspecified; use 0 for an all-day event).\n`
-                        + `Keep the title in the same language as the input. Do not invent a time that is not present.`,
-                    structure: {
-                        title: { selector: { text: {} }, description: 'Event title, without the time', required: true },
-                        time: { selector: { text: {} }, description: 'Start time HH:MM (24h), or empty if none' },
-                        duration_minutes: { selector: { number: {} }, description: 'Duration in minutes, 0 means all-day' },
-                    },
-                },
-                return_response: true,
-            });
-            const data = res?.response?.data ?? res?.response ?? {};
-            this._applyAiQuickAdd(data);
-        } catch (e) {
-            console.error('Family Calendar: AI quick-add failed, using local parser', e);
-            this._handleQuickAdd(text);
-        } finally {
-            this._aiLoading = false;
-        }
-    }
-
-    _applyAiQuickAdd(data) {
-        const { title, time, durationMin } = this._parseAiResult(data);
-        if (title) {
-            this._createTitle = title;
-        }
-        if (time) {
-            this._createStartTime = time;
-            if (durationMin && durationMin > 0) {
-                this._createDuration = String(durationMin);
-            } else if (this._createDuration === 'allday') {
-                this._createDuration = '60';
-            }
-        } else {
-            // No clock time → all-day event (matches the manual quick-add rule)
-            this._createDuration = 'allday';
-        }
-        return { title: this._createTitle, time };
-    }
-
-    // Quick add: from one handwritten string, extract the start time (token
-    // with h or :) and use the rest as the title. No time → all-day event.
-    _handleQuickAdd(text) {
-        if (!text || !text.trim()) return;
-        const raw = text.trim();
-        const m = raw.match(/(\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?|\d{1,2}\s*[hH:]\s*\d{0,2})/i);
-        let title = raw;
-        let time = null;
-        if (m) {
-            time = this._parseTime(m[0]);
-            if (time) {
-                title = (raw.slice(0, m.index) + raw.slice(m.index + m[0].length));
-            }
-        }
-        title = title.replace(/\s{2,}/g, ' ').replace(/^[-–,:\s]+|[-–,:\s]+$/g, '').trim();
-
-        this._createTitle = title;
-        if (time) {
-            this._createStartTime = time;
-            if (this._createDuration === 'allday') this._createDuration = '60';
-        } else {
-            this._createDuration = 'allday';
-        }
     }
 
     _clearInput(id) {
@@ -4373,6 +4236,7 @@ export class FamilyCalendarCard extends LitElement {
         const allDay = (targetCal && targetCal.allDayOnly) || durationValue === 'allday';
 
         if (!title) {
+            this._notify(this._language.titleRequired);
             return;
         }
 
@@ -4484,7 +4348,6 @@ export class FamilyCalendarCard extends LitElement {
     _openEditEventDialog(event) {
         // Reset the pen canvas state (shared with the create overlay)
         this._aiError = null;
-        this._aiLoading = false;
         this._drawing = false;
         this._hasDrawing = false;
         this._canvasReady = false;
@@ -4497,7 +4360,7 @@ export class FamilyCalendarCard extends LitElement {
             rruleStr = event.recurrence_rule;
         }
         const parsed = this._parseRrule(rruleStr);
-        const rawTitle = event.summary || '';
+        const rawTitle = event.rawSummary ?? event.summary ?? '';
         // Unwrap the display title in the SAME order it was built, outermost first:
         //   [calendar titleEmoji] [🔔 reminder] [category] <title>
         // titleEmoji is prepended for display only (in _filterEventSummary), so it
@@ -4554,7 +4417,6 @@ export class FamilyCalendarCard extends LitElement {
         this._showEditEventDialog = null;
         this._editFormData = null;
         this._aiError = null;
-        this._aiLoading = false;
         this._drawing = false;
         this._hasDrawing = false;
         this._canvasReady = false;
@@ -4586,6 +4448,7 @@ export class FamilyCalendarCard extends LitElement {
             this._updateEvents();
         } catch (e) {
             console.error('Family Calendar: Failed to delete event:', e);
+            this._notify('⚠️ ' + (e?.message || e?.code || this._language.deleteEvent));
         }
     }
 
@@ -4613,6 +4476,7 @@ export class FamilyCalendarCard extends LitElement {
             this._updateEvents();
         } catch (e) {
             console.error('Family Calendar: Failed to delete single event:', e);
+            this._notify('⚠️ ' + (e?.message || e?.code || this._language.deleteEvent));
         }
     }
 
@@ -4640,6 +4504,7 @@ export class FamilyCalendarCard extends LitElement {
             this._updateEvents();
         } catch (e) {
             console.error('Family Calendar: Failed to delete all events:', e);
+            this._notify('⚠️ ' + (e?.message || e?.code || this._language.deleteEvent));
         }
     }
 
@@ -4706,6 +4571,7 @@ export class FamilyCalendarCard extends LitElement {
 
         if (!title || !startInput) {
             console.error('Family Calendar: Missing required fields', { title, startInput });
+            if (!title) this._notify(this._language.titleRequired);
             return;
         }
 
@@ -4759,7 +4625,10 @@ export class FamilyCalendarCard extends LitElement {
         const buildEventData = () => {
             const data = { summary: summary, dtstart: dtstart, dtend: dtend };
             if (location) data.location = location;
-            if (recurrence) data.rrule = recurrence;
+            // Une seule occurrence ne porte jamais de règle : l'envoyer est refusé
+            // (« rrule must be null ») ou, lors d'un changement de calendrier,
+            // recrée une série complète dans la cible → doublon.
+            if (recurrence && recurringMode !== 'this') data.rrule = recurrence;
             if (descriptionFinal) data.description = descriptionFinal;
             return data;
         };
@@ -4771,9 +4640,8 @@ export class FamilyCalendarCard extends LitElement {
             };
             if (recurringMode === 'this') {
                 deleteData.recurrence_id = event.recurrence_id;
-            } else if (recurringMode === 'all') {
-                // No recurrence_id
             } else if (event.recurrence_id) {
+                // « Cet événement et les suivants » : voir la mise à jour plus bas.
                 deleteData.recurrence_id = event.recurrence_id;
                 deleteData.recurrence_range = 'THISANDFUTURE';
             }
@@ -4782,13 +4650,16 @@ export class FamilyCalendarCard extends LitElement {
 
         try {
             if (movedCalendar) {
-                // Move between calendars: delete here, recreate there.
-                await deleteOriginal();
+                // Déplacement entre calendriers : CRÉER dans la cible d'abord,
+                // supprimer l'original seulement si la création a réussi. Dans
+                // l'ordre inverse, un calendrier cible en panne (jeton Google
+                // expiré) faisait perdre l'événement.
                 await this.hass.callWS({
                     type: 'calendar/event/create',
                     entity_id: targetEntity,
                     event: buildEventData(),
                 });
+                await deleteOriginal();
             } else if (event.uid) {
                 // Same calendar: native update on the entity that holds the event.
                 const wsData = {
@@ -4798,12 +4669,14 @@ export class FamilyCalendarCard extends LitElement {
                     event: buildEventData(),
                 };
                 if (recurringMode === 'this') {
-                    // This event only: send recurrence_id without recurrence_range
+                    // Cette occurrence seulement : recurrence_id sans plage.
                     wsData.recurrence_id = event.recurrence_id;
-                } else if (recurringMode === 'all') {
-                    // All events: don't send recurrence_id at all
                 } else if (event.recurrence_id) {
-                    // Default fallback (shouldn't happen with new flow)
+                    // « Cet événement et les suivants » (THISANDFUTURE), comme
+                    // l'interface de Home Assistant. L'ancien mode « tous » envoyait
+                    // la mise à jour SANS recurrence_id mais avec le dtstart de
+                    // l'occurrence cliquée : la série entière repartait de cette
+                    // date, effaçant les occurrences passées (et recomptant COUNT).
                     wsData.recurrence_id = event.recurrence_id;
                     wsData.recurrence_range = 'THISANDFUTURE';
                 }
@@ -4817,17 +4690,20 @@ export class FamilyCalendarCard extends LitElement {
             // Fallback: delete + recreate in the SAME calendar if update isn't supported.
             if (e.code === 'not_supported' && event.uid && !movedCalendar) {
                 try {
-                    await deleteOriginal();
+                    // Même règle : créer avant de supprimer (au pire un doublon
+                    // visible, jamais une perte silencieuse).
                     await this.hass.callWS({
                         type: 'calendar/event/create',
                         entity_id: originalEntity,
                         event: buildEventData(),
                     });
+                    await deleteOriginal();
                     this._showEditEventDialog = null;
                     this._editFormData = null;
                     this._updateEvents();
                 } catch (fallbackError) {
                     console.error('Family Calendar: Failed to update event (fallback):', fallbackError);
+                    this._notify('⚠️ ' + (fallbackError?.message || fallbackError?.code || this._language.save));
                 }
             } else {
                 console.error('Family Calendar: Failed to update event:', e);
@@ -4860,6 +4736,10 @@ export class FamilyCalendarCard extends LitElement {
     _getDefaultMonthDay() {
         const startInput = this.shadowRoot?.querySelector('#event-start-date')?.value;
         if (startInput) return DateTime.fromISO(startInput).day;
+        // Dialogue manuscrit (tablette) : pas de champ date de début — c'est la
+        // case touchée qui fait foi, pas « aujourd'hui ».
+        const dialogDate = this._showCreateEventDialog?.date;
+        if (dialogDate && dialogDate.isValid) return dialogDate.day;
         return DateTime.now().day;
     }
 
@@ -5125,26 +5005,6 @@ export class FamilyCalendarCard extends LitElement {
         return calendar.entity?.replace('calendar.', '') ?? '';
     }
 
-    _handleLegendClick(calendar) {
-        if (!this._legendToggle) {
-            return;
-        }
-
-        const hideIndex = this._hideCalendars.indexOf(calendar.entity);
-        const hideCalendars = [...this._hideCalendars];
-        if (hideIndex > -1) {
-            hideCalendars.splice(hideIndex, 1);
-        } else {
-            hideCalendars.push(calendar.entity);
-        }
-        this._hideCalendars = hideCalendars;
-        // Keep the filter-pill state in sync so it doesn't desync from the legend.
-        this._calendarVisibility = {
-            ...this._calendarVisibility,
-            [calendar.entity]: hideIndex > -1,
-        };
-    }
-
     _handleNavigationOriginalClick() {
         this._navigationOffset = 0;
         this._updateEvents();
@@ -5232,14 +5092,6 @@ export class FamilyCalendarCard extends LitElement {
         e.stopImmediatePropagation();
     }
 
-    _getNumberOfDays(numberOfDays) {
-        if (this._numberOfDaysIsMonth) {
-            numberOfDays = DateTime.now().daysInMonth;
-        }
-
-        return numberOfDays;
-    }
-
     _getStartDate(alternativeStartingDay) {
         let startDate = DateTime.now();
 
@@ -5306,12 +5158,14 @@ export class FamilyCalendarCard extends LitElement {
                 break;
         }
 
-        if (this._startingDayOffset !== 0 && !isMonthViewWithWeekdayStart) {
-            startDate = startDate.plus({ days: this._startingDayOffset });
-        }
-
-        if (this._hideWeekend && startDate.weekday >= 6) {
-            startDate = this._getStartDate('monday');
+        // Week-end masqué : une période qui commence un samedi/dimanche saute au
+        // lundi SUIVANT. La vue mois à départ « jour de semaine » est exemptée :
+        // sa grille démarre déjà sur ce jour dans _updateCard. L'ancien code
+        // rappelait _getStartDate('monday'), qui en vue mois retombait sur le
+        // même 1er du mois → récursion infinie (août/novembre 2026, carte figée)
+        // et, hors vue mois, reculait au lundi PRÉCÉDENT.
+        if (this._hideWeekend && !isMonthViewWithWeekdayStart && startDate.weekday >= 6) {
+            startDate = startDate.plus({ days: 8 - startDate.weekday });
         }
         return startDate.startOf('day');
     }

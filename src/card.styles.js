@@ -313,40 +313,6 @@ export default css`
         overflow: visible;
     }
 
-    /* ── Calendar Card Content ────────── */
-
-    .card-header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .card-header-row .card-title {
-        margin: 0;
-    }
-
-    .current-weather {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        font-size: var(--weather-temperature-font-size);
-    }
-
-    .current-weather .icon {
-        display: inline-block;
-        vertical-align: middle;
-        background-size: cover;
-        width: var(--weather-icon-size);
-        height: var(--weather-icon-size);
-    }
-
-    .current-weather .icon img {
-        max-width: var(--weather-icon-size);
-        max-height: var(--weather-icon-size);
-    }
-
     .errors {
         white-space: pre-line;
     }
@@ -369,65 +335,11 @@ export default css`
         user-select: none;
     }
 
-    .container.hasActions {
-        cursor: pointer;
-    }
-
     .container .header {
         width: 100%;
         display: flex;
         flex-wrap: wrap;
         gap: var(--header-spacing);
-    }
-
-    .container .legend {
-        display: flex;
-        align-items: center;
-    }
-
-    .container .legend ul {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--legend-spacing);
-        margin: 0;
-        padding: 0;
-        list-style: none;
-    }
-
-    .container .legend ul li {
-        display: block;
-        --mdc-icon-size: 16px;
-    }
-
-    .container .legend ul li.hasToggle {
-        cursor: pointer;
-    }
-
-    .container .legend ul li.hidden {
-        opacity: .5;
-    }
-
-    .container .legend ul li ha-icon {
-        color: var(--legend-calendar-color, var(--divider-color, #ffffff));
-    }
-
-    .container .legend ul li.hidden ha-icon {
-        color: var(--divider-color, #ffffff);
-    }
-
-    .container .legend ul li.noIcon:before {
-        content: '';
-        display: inline-block;
-        width: var(--legend-dot-size);
-        height: var(--legend-dot-size);
-        background-color: var(--legend-calendar-color, var(--divider-color, #ffffff));
-        border-radius: 50%;
-        margin: 0 5px 0 0;
-        vertical-align: middle;
-    }
-
-    .container .legend ul li.hidden.noIcon:before {
-        background-color: var(--divider-color, #ffffff);
     }
 
     .container .navigation {
@@ -1112,7 +1024,6 @@ export default css`
     }
 
     @container weekplanner (width <= 1024px) {
-        ha-card .container .header .legend,
         ha-card .container .header .navigation {
             width: 100%;
         }
@@ -1827,14 +1738,6 @@ export default css`
         color: var(--primary-text-color);
     }
 
-    /* ── Quick-add field (write time + title in one go) ── */
-    .create-event-form .quick-add-row .form-input {
-        border-color: var(--primary-color, #03a9f4);
-        border-width: 2px;
-    }
-    .create-event-form .quick-add-row > .field-icon {
-        color: var(--primary-color, #03a9f4);
-    }
     /* ── Full-screen handwriting overlay (tablet) — own modal, not ha-dialog ── */
     .hw-overlay {
         position: fixed;
@@ -1948,10 +1851,6 @@ export default css`
         flex-direction: column;
         gap: 10px;
     }
-    .hw-overlay .hw-zone-edit {
-        flex: none;
-        height: 26vh;
-    }
     .hw-overlay .hw-current-title {
         display: flex;
         align-items: center;
@@ -1992,11 +1891,6 @@ export default css`
         font-size: 0.95em;
         pointer-events: none;
     }
-    .create-event-form .hw-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 8px;
-    }
     .create-event-form .hw-error {
         margin-top: 8px;
         padding: 8px 10px;
@@ -2005,19 +1899,6 @@ export default css`
         color: #fff;
         font-size: 0.85em;
         word-break: break-word;
-    }
-    .create-event-form .hw-result {
-        margin-top: 8px;
-        padding: 8px 10px;
-        border-radius: 4px;
-        background: var(--success-color, #43a047);
-        color: #fff;
-        font-size: 0.9em;
-        word-break: break-word;
-    }
-    .create-event-form .hw-actions .ai-analyze-btn {
-        flex: 1;
-        margin-top: 0;
     }
     .create-event-form .hw-clear {
         display: flex;
@@ -2033,29 +1914,6 @@ export default css`
         font-size: 0.95em;
     }
 
-    .create-event-form .ai-analyze-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        width: 100%;
-        margin-top: 8px;
-        padding: 10px;
-        border: none;
-        border-radius: 4px;
-        background-color: var(--primary-color, #03a9f4);
-        color: var(--text-primary-color, #fff);
-        font-size: 0.95em;
-        font-family: var(--skylight-font);
-        cursor: pointer;
-    }
-    .create-event-form .ai-analyze-btn[disabled] {
-        opacity: 0.6;
-        cursor: default;
-    }
-    .create-event-form .ai-analyze-btn ha-icon.spin {
-        animation: skylight-spin 1s linear infinite;
-    }
     @keyframes skylight-spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
